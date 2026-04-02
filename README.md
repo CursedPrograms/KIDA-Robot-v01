@@ -394,8 +394,8 @@ uname -r
 <div align="center">
   <img src="/images/demo/KIDA002.jpg" alt="KIDA Robot" width="600"/>
 </div>
-
-<div align="center">© Cursed Entertainment 2025</div>
+<br>
+<div align="center">© Cursed Entertainment 2026</div>
 
 <br>
 
