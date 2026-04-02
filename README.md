@@ -20,7 +20,7 @@
 # KIDA: Kinetic Interactive Drive Automaton
 
 <div align="center">
-  <img src="/images/demo/background.jpeg" alt="KIDA Robot" width="600"/>
+  <img src="/images/demo/background.jpg" alt="KIDA Robot" width="600"/>
 </div>
 
 ## Overview
@@ -30,7 +30,7 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 ---
 
 <div align="center">
-  <img src="/images/demo/KIDA001.jpeg" alt="KIDA Robot" width="600"/>
+  <img src="/images/demo/KIDA001.jpg" alt="KIDA Robot" width="600"/>
 </div>
 
 ## Hardware Specifications
@@ -392,7 +392,7 @@ uname -r
 ---
 
 <div align="center">
-  <img src="/images/demo/KIDA002.jpeg" alt="KIDA Robot" width="600"/>
+  <img src="/images/demo/KIDA002.jpg" alt="KIDA Robot" width="600"/>
 </div>
 
 <div align="center">© Cursed Entertainment 2025</div>
