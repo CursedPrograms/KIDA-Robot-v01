@@ -13,7 +13,8 @@ from ultralytics import YOLO
 import os
 import urllib.request
 
-import llm_tts_openrouter_pytts as voice_ai
+import kida_chat as voice_ai
+#import llm_tts_openrouter_pytts as voice_ai
 
 def signal_handler(sig, frame):
     print("👋 Exiting...")

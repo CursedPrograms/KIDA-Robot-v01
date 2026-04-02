@@ -1,11 +1,9 @@
 import pygame
-import threading
-import state_machine
-import ObstacleAvoidance
 from leds import toggle_leds
 from camera_actions import take_photo, start_video, stop_video, check_recording_timeout
 from music import play_next_track, stop_music, skip_music
 from arduino import send_command
+import state_machine
 
 class Button:
     def __init__(self, rect, color, text, action):
@@ -42,23 +40,14 @@ def create_buttons():
     pink = (255, 182, 193)
 
     def enable_keyboard():
-        send_command("dev00", "KEYBOARDCONTROL")
+        send_command("dev00", "AUTO_OFF")
         state_machine.keyboard_control = True
         print("🔑 Keyboard control mode enabled")
 
     def enable_autonomous():
-        send_command("dev00", "SELFCONTROL")
+        send_command("dev00", "AUTO_ON")  # ← Arduino handles obstacle avoidance
         state_machine.keyboard_control = False
-        print("🤖 Autonomous mode enabled")
-
-        # Start obstacle avoidance in a separate thread
-        if not hasattr(state_machine, "obstacle_thread") or not state_machine.obstacle_thread.is_alive():
-            state_machine.obstacle_thread = threading.Thread(
-                target=ObstacleAvoidance.run_obstacle_avoidance,
-                daemon=True
-            )
-            state_machine.obstacle_thread.start()
-            print("🟢 Obstacle avoidance thread started")
+        print("🤖 Autonomous mode enabled (Arduino controlling)")
 
     return [
         Button((650, 20, 160, 40), pink, "Take Photo", take_photo),

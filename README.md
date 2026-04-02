@@ -24,68 +24,6 @@
 
 # KIDA: Kinetic Interactive Drive Automaton
 
-### Parts:
-
-- Robot Tank Chassis (XiaoR Geek [Recommended!])
-- L298N Motor Driver
-- Rasberry Pi 5
-- Pi 5 Speaker  Hat
-- Pi NVME + AI Hat
-- NVME
-- HAILO 8 (13 TOPS)
-- 1x Pi 5 Nightvision Camera (Slot 0)
-- 1x Pi 5 AI Camera Camera (Slot 1)
-- 2x Pi Camera Holder
-- 2x Ardiuno
-- 1x Motion Detector
-- 2x Ultrasonic Sensor
-- 1 VL53L0X T-o-F Sensor
-- 1x Metal Detector
-- 1x UV Sensor
-- 1x 3 channel line tracker
-- 1 ball tiltswitch
-- 1/2x LED Strip
-- 2x MOSFET Switches (+ 12v LEDs)
-- I2C Devices: 
--- 3x 16850 Pi UPS*
-
-- Servo Motor
-- 2 x Power Switches
-- 2x 12v DCMotor
-- DuPont Cables
-- 3s 21700 Batteryholder - Connected to buck converter set to 11.5v
-- 3x 21700 Batteries
-- 3x 16850 Batteries
-- 1 USB Microphone
-
-### Electonic Schematic:
-
-#### Motor A (Left)
-L298N Pin	Function	Pi GPIO
-IN1	Direction	GPIO 17
-IN2	Direction	GPIO 27
-ENA	Speed (PWM)	GPIO 18 (hardware PWM capable)*
-
-#### Motor B (Right)
-L298N Pin	Function	Pi GPIO
-IN3	Direction	GPIO 22
-IN4	Direction	GPIO 23
-
-(11.1V)
-
-[12V Battery Pack 3S 21700 Battery 3.7v]
- ├── + ─────────► L298N VS       (motor power input)
- ├── + ─────────► LM2596S IN+    (step-down input for Pi)
- ├── – ─────────► L298N GND
- └── – ─────────► LM2596S IN–
-
-[LM2596S Output]
- ├── OUT+ ──────► Pi 5V (GPIO pin 2 [[Not Recommended!] Pi UPS via USB-C cable [Recommended!]])
- └── OUT– ──────► Pi GND (GPIO pin 6 or 9)
-
-![Demo Image](https://github.com/CursedPrograms/Kida-Robot-v01/raw/main/images/demo/KIDA-V00%20(1).jpg)
-![Demo Image](https://github.com/CursedPrograms/Kida-Robot-v01/raw/main/images/demo/KIDA-V00%20(2).jpg)
-
 dtparam=rtc_bbat_vchg=3000000
 sudo mount -o remount,rw /boot/firmware
 sudo nano /boot/firmware/config.txt
@@ -209,12 +147,202 @@ libcamera-hello
 
 sudo -u kida-01 DISPLAY=:0 /usr/bin/python3 /home/kida-01/Desktop/Kida-Robot/scripts/camera_preview.py
 
+# 1. Make sure you have venv and pip installed
+sudo apt update
+sudo apt install python3-venv python3-pip
+
+# 2. Create a virtual environment
+python3 -m venv ~/kida-venv
+
+# 3. Activate the environment
+source ~/kida-venv/bin/activate
+
+# 4. Install whisper inside the venv
+pip install --upgrade pip
+pip install git+https://github.com/openai/whisper.git
+
+cd /home/kida-01/Desktop/Kida-Robot && python3 main.py &
+sudo crontab -e
+@reboot cd /home/kida-01/Desktop/Kida-Robot && python3 main.py &
+ctrl+x ctrl+s
+
+source ~/kida-venv/bin/activate
+python3 /home/kida-01/Desktop/Kida-Robot/main.py
+python3 /home/kida-01/Desktop/Kida-Robot/pi-chat.py
+
+sudo nano /etc/systemd/system/kida-camera.service
+
+
+[Unit]
+Description=KIDA Camera Live Preview
+After=graphical.target
+
+[Service]
+User=kida-01
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/python3 /home/kida-01/Desktop/Kida-Robot/scripts/camera_preview.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
+
+
+
+sudo systemctl daemon-reload
+sudo systemctl enable kida-camera.service
+sudo systemctl start kida-camera.service
+
+sudo systemctl status kida-camera.service
+journalctl -u kida-camera.service -f
+
+sudo fuser -v /dev/video0
+
+ps -ef | grep -i camera
+
+sudo -u kida-01 DISPLAY=:0 /usr/bin/python3 /home/kida-01/Desktop/Kida-Robot/scripts/camera_preview.py
+
+ps aux | grep -E 'libcamera|picamera'
+sudo kill -9 <PID>
+
+sudo apt install -y portaudio19-dev python3-pyaudio
+
+
+libcamera-hello
+
+sudo -u kida-01 DISPLAY=:0 /usr/bin/python3 /home/kida-01/Desktop/Kida-Robot/scripts/camera_preview.py
+
+lsmod | grep hailo
+hailortcli fw-control identify
+
+
+List Cameras
+
+rpicam-hello --list-cameras
+
+rpicam-hello -t 0s --post-process-file /usr/share/rpi-camera-assets/imx500_mobilenet_ssd.json --viewfinder-width 1920 --viewfinder-height 1080 --framerate 30
+
+Pi AI Camera Inference
+
+rpicam-hello --camera 1 -t 0 \
+--post-process-file /usr/share/rpi-camera-assets/imx500_mobilenet_ssd.json \
+--viewfinder-width 1920 \
+--viewfinder-height 1080 \
+--framerate 30
+
+
+Activate venv
+
+cd /home/kida-01/Desktop/Kida-Robot/
+source venv/bin/activate
+ollama run deepseek-r1:1.5b
+
+
+pip install piper-tts
+
+(venv) kida-01@kida01:~/Desktop/Kida-Robot $ ollama pull gemma3:4b-it-qat
+
+
+kida-01@kida01:~ $ hailortcli fw-control identify
+[HailoRT] [error] Can't find hailort driver class. Can happen if the driver is not installed, if the kernel was updated or on some driver failure (then read driver dmesg log)
+[HailoRT] [error] CHECK_SUCCESS failed with status=HAILO_DRIVER_NOT_INSTALLED(64) - Failed listing hailo devices
+[HailoRT] [error] CHECK_SUCCESS failed with status=HAILO_DRIVER_NOT_INSTALLED(64)
+[HailoRT] [error] CHECK_SUCCESS failed with status=HAILO_DRIVER_NOT_INSTALLED(64)
+[HailoRT] [error] CHECK_SUCCESS failed with status=HAILO_DRIVER_NOT_INSTALLED(64)
+[HailoRT] [error] CHECK_SUCCESS failed with status=HAILO_DRIVER_NOT_INSTALLED(64)
+[HailoRT CLI] [error] CHECK_SUCCESS failed with status=HAILO_DRIVER_NOT_INSTALLED(64)
+kida-01@kida01:~ $ uname -r  
+6.12.62+rpt-rpi-2712
+kida-01@kida01:~ $ lsmod | grep hailo 
+kida-01@kida01:~ $ sudo dmesg | grep hailo 
+kida-01@kida01:~ $ lspci | grep Hailo 
+0001:03:00.0 Co-processor: Hailo Technologies Ltd. Hailo-8 AI Processor (rev 01)
+kida-01@kida01:~ $ sudo apt update && sudo apt full-upgrade -y
+
+sudo dpkg --configure -a
+sudo apt --fix-broken install -y
+
+lsmod | grep hailo
+hailortcli fw-control identify
+
+Step 2 — Reboot (Hailo userspace is already installed)
+bashsudo reboot
+Step 3 — After reboot, verify Hailo works
+bashlsmod | grep hailo
+hailortcli fw-control identify
+If lsmod still shows nothing after the reboot, the DKMS module didn't build. In that case pin back to 4.19 which has stable kernel module support:
+bash# Hold the current kernel so it stops trying to upgrade
+sudo apt-mark hold linux-image-rpi-2712 linux-headers-rpi-2712
+
+# Downgrade only the Hailo driver to 4.19
+sudo apt install hailort=4.19.0 hailo-all=4.19.0 -y
+sudo apt-mark hold hailort hailo-all
+
+sudo reboot
+Step 4 — After reboot confirm
+bash# Should show hailo_pci
+lsmod | grep hailo
+
+# Should show device info
+hailortcli fw-control identify
+You should see Board Name: Hailo-8 and matching firmware/driver versions. The lspci already confirmed the hardware is seated correctly so once the module loads it should work immediately.
+
+
+
 ## Rasberry Pi 5 Robot
 
 pip install git+https://github.com/elevenlabs/elevenlabs-python@v3
 
 ### OS:
 Rasberry OS [Recommended!] (you can use any distro you choose)
+
+### Parts:
+
+- Robot Tank Chassis (XiaoR Geek [Recommended!])
+- L298N Motor Driver
+- Rasberry Pi 5/4
+- Pi Speakers
+- 3x 16850 Pi UPS*
+- Pi NVME + AI Hat
+- 1x Pi 5 Nightvision Camera (Slot 0)
+- 1x Pi 5 AI Camera Camera (Slot 1)
+- 2x Pi Camera Holder
+- Servo Motor
+- NVME
+- HAILO 13 TOPS
+- 1x Ultrasonic Senser
+- 2 x Power Switches
+- DuPont Cables
+- 3x 21700 Batteries
+- 3 21700 Sieries Batterholder
+- 3x 16850 Batteries*
+- 1 USB Microphone
+- 22 AWG Wire (21700 Battery Pack to L298N)
+
+### Electonic Schematic:
+
+#### Motor A (Left)
+L298N Pin	Function	Pi GPIO
+IN1	Direction	GPIO 17
+IN2	Direction	GPIO 27
+ENA	Speed (PWM)	GPIO 18 (hardware PWM capable)*
+
+#### Motor B (Right)
+L298N Pin	Function	Pi GPIO
+IN3	Direction	GPIO 22
+IN4	Direction	GPIO 23
+
+(11.1V)
+
+[12V Battery Pack 3S 21700 Battery 3.7v]
+ ├── + ─────────► L298N VS       (motor power input)
+ ├── + ─────────► LM2596S IN+    (step-down input for Pi)
+ ├── – ─────────► L298N GND
+ └── – ─────────► LM2596S IN–
+
+[LM2596S Output]
+ ├── OUT+ ──────► Pi 5V (GPIO pin 2 [[Not Recommended!] Pi UPS via USB-C cable [Recommended!]])
+ └── OUT– ──────► Pi GND (GPIO pin 6 or 9)
 
 ## How to Run:
 
@@ -297,44 +425,16 @@ Unix-like systems (Linux/macOS):
 ## Requirements:
 
 playsound
-openai-whisper
-sounddevice==0.5.1
+openai-whisper 
+sounddevice 
 numpy
+whisper
 SpeechRecognition
 pygame
 requests
 elevenlabs==0.2.26
-torch==2.6.0
+torch
 torchaudio
-gTTS
-soundfile
-sseclient
-RPi.GPIO
-flask
-psutil
-opencv-python
-picamera2
-smbus2
-jinja2
-Werkzeug
-itsdangerous
-click
-pyserial
-ultralytics
-loguru
-scipy==1.9.3
-lap
-cython_bbox
-transformers==4.50.1
-tqdm
-deepface
-pillow
-sounddevice==0.5.1
-tqdm
-tf-keras
-faster-whisper
-
-
 
 <br>
 <div align="center">
