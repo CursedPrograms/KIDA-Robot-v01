@@ -24,6 +24,56 @@
 
 # KIDA: Kinetic Interactive Drive Automaton
 
+<div align="center">
+  <img src="images/kida_robot.jpg" alt="KIDA Robot" width="600"/>
+</div>
+
+## Overview
+
+KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring dual-camera vision (night vision + AI camera), Hailo-8 AI accelerator (13 TOPS), and local LLM capabilities. The robot supports voice interaction, autonomous navigation, and real-time AI inference.
+
+## Software Stack
+
+### Operating System
+- **Recommended:** Raspberry Pi OS (Bookworm)
+- **Kernel:** 6.12.62+rpt-rpi-2712
+
+### AI & ML
+| Component | Technology |
+|-----------|------------|
+| LLM | Ollama (DeepSeek-R1:1.5b, Gemma3:4b) |
+| STT | OpenAI Whisper |
+| TTS | Piper / ElevenLabs API |
+| Vision | Hailo-8 AI Processor, IMX500 |
+
+## Hardware Specifications
+
+### Chassis & Motion
+- **Chassis:** XiaoR Geek Robot Tank Chassis
+- **Motor Driver:** L298N (2x)
+- **Motors:** Dual DC motors with tank steering
+
+### Computing
+- **Main Board:** Raspberry Pi 5/4
+- **AI Accelerator:** Hailo-8 (13 TOPS) on NVME+AI Hat
+- **Storage:** NVME SSD
+
+### Power System
+- **Primary Battery:** 3x 21700 (12.6V) in series
+- **Backup Battery:** 3x 18650 via Pi UPS
+- **Voltage Regulator:** LM2596S (12V → 5V)
+- **Power Switches:** 2x (Main + Pi)
+
+### Sensors & Cameras
+- **Camera 0:** Raspberry Pi Nightvision Camera
+- **Camera 1:** Raspberry Pi AI Camera (with IMX500)
+- **Ultrasonic Sensor:** 1x HC-SR04
+- **Microphone:** USB Microphone
+
+### Audio
+- **Output:** Pi Speakers
+- **TTS:** Piper / ElevenLabs
+
 dtparam=rtc_bbat_vchg=3000000
 sudo mount -o remount,rw /boot/firmware
 sudo nano /boot/firmware/config.txt
