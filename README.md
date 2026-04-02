@@ -20,7 +20,7 @@
 # KIDA: Kinetic Interactive Drive Automaton
 
 <div align="center">
-  <img src="/images/demo/KIDA001.jpg" alt="KIDA Robot" width="600"/>
+  <img src="/images/demo/background.jpeg" alt="KIDA Robot" width="600"/>
 </div>
 
 ## Overview
@@ -28,6 +28,10 @@
 KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring dual-camera vision (night vision + AI camera), a Hailo-8 AI accelerator (13 TOPS), and local LLM capabilities. The robot supports voice interaction, autonomous navigation, and real-time AI inference.
 
 ---
+
+<div align="center">
+  <img src="/images/demo/KIDA001.jpeg" alt="KIDA Robot" width="600"/>
+</div>
 
 ## Hardware Specifications
 
@@ -388,7 +392,7 @@ uname -r
 ---
 
 <div align="center">
-  <img src="/images/demo/KIDA002.jpg" alt="KIDA Robot" width="600"/>
+  <img src="/images/demo/KIDA002.jpeg" alt="KIDA Robot" width="600"/>
 </div>
 
 <div align="center">© Cursed Entertainment 2025</div>
