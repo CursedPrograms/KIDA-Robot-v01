@@ -20,7 +20,7 @@
 # KIDA: Kinetic Interactive Drive Automaton
 
 <div align="center">
-  <img src="/images/demo/background.jpeg" alt="KIDA Robot" width="600"/>
+  <img src="/images/background.jpeg" alt="KIDA Robot" width="600"/>
 </div>
 
 ## Overview
