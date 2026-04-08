@@ -17,6 +17,10 @@
 
 ---
 
+<div align="center">
+  <img src="/images/demo/kida.jpg" alt="KIDA Robot" width="600"/>
+</div>
+
 # KIDA: Kinetic Interactive Drive Automaton
 
 - https://github.com/CursedPrograms/WHIP-Robot-v00
@@ -27,9 +31,6 @@
 <div align="center">
   <img src="/images/background.jpeg" alt="KIDA Robot" width="600"/>
 </div>
-
-
-A Raspberry Pi 3 robot is a small programmable robot powered by a Raspberry Pi 3 Model B, used as its main brain.
 
 ## Overview
 
