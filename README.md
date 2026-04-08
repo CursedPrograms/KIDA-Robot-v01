@@ -28,9 +28,6 @@
   <img src="/images/background.jpeg" alt="KIDA Robot" width="600"/>
 </div>
 
-
-A Raspberry Pi 3 robot is a small programmable robot powered by a Raspberry Pi 3 Model B, used as its main brain.
-
 ## Overview
 
 KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring dual-camera vision (night vision + AI camera), a Hailo-8 AI accelerator (13 TOPS), and local LLM capabilities. The robot supports voice interaction, autonomous navigation, and real-time AI inference.
