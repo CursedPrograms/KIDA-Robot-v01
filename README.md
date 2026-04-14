@@ -24,10 +24,11 @@
 
 # KIDA: Kinetic Interactive Drive Automaton
 
-- https://github.com/CursedPrograms/WHIP-Robot-v00
-- https://github.com/CursedPrograms/NORA-Robot-v00
-- https://github.com/CursedPrograms/KIDA-Robot-v00
-- https://github.com/CursedPrograms/ComCentre
+- [KIDA-Robot-v00](https://github.com/CursedPrograms/KIDA-Robot-v00)
+- [WHIP-Robot-v00](https://github.com/CursedPrograms/WHIP-Robot-v00)
+- [NORA-Robot-v00](https://github.com/CursedPrograms/NORA-Robot-v00)
+- [DREAM](https://github.com/CursedPrograms/DREAM)
+- [RIFT](https://github.com/CursedPrograms/RIFT)
 
 <div align="center">
   <img src="/images/background.jpeg" alt="KIDA Robot" width="600"/>
@@ -43,9 +44,9 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
   <img src="/images/demo/KIDA001.jpg" alt="KIDA Robot" width="600"/>
 </div>
 
-
-
-
+### Prerequisite Software
+- [Raspberry Pi OS](https://www.raspberrypi.com/software/operating-systems/)
+- [Arduino IDE](https://docs.arduino.cc/software/ide/)
 
 ## Hardware Specifications
 
@@ -100,21 +101,6 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 | STT | OpenAI Whisper |
 | TTS | Piper / ElevenLabs API |
 | Vision | Hailo-8 AI Processor, IMX500 |
-
-### Python Requirements
-```
-playsound
-openai-whisper
-sounddevice
-numpy
-whisper
-SpeechRecognition
-pygame
-requests
-elevenlabs==0.2.26
-torch
-torchaudio
-```
 
 ---
 
@@ -190,6 +176,10 @@ pip install git+https://github.com/openai/whisper.git
 ```bash
 sudo apt install pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
 ```
+```bash
+sudo apt install imx500-models
+```
+
 Using pip
 opencv_transforms is available as a pip package:
 
