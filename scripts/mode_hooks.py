@@ -1,39 +1,52 @@
-# mode_hooks.py
+# mode_hooks.py — universal side-effects on every drive-mode change
+#
+# Called by mode_control._on_mode_changed() after every switch.
+#
+# ⚠️  AUTONOMOUS special case:
+#     We must NOT send "STOP" when entering AUTONOMOUS — the Arduino
+#     will start its own obstacleAvoidance() loop immediately after
+#     receiving AUTO_ON (sent by mode_control.py).  Sending STOP
+#     here would race against that and kill the first move.
+
 import state
 from leds import toggle_leds, run_chase_effect
 from music import stop_music
 from arduino import send_command
 from state import DriveMode
 
-def universal_mode_change(new_mode: DriveMode):
+
+def universal_mode_change(new_mode: DriveMode) -> None:
     """
     Runs automatically whenever the drive mode changes.
-    Handles motors, LEDs, music, and other global updates.
+    Handles motors, LEDs, music, and other global state.
     """
-    print(f"🔁 Universal mode hook: switched to {new_mode.value}")
+    print(f"🔁 Mode hook → {new_mode.value}")
 
-    # Safety: stop all motors and reset lights
-    try:
-        send_command("dev00", "STOP")                # Main motor Arduino
-        send_command("dev01", "LIGHT_FRONT_OFF")    # Front lights
-        send_command("dev01", "LIGHT_BACK_ON")      # Back lights (optional)
-    except Exception as e:
-        print(f"⚠️ universal_mode_change motor/light error: {e}")
+    # ── Safety: stop motors on every transition EXCEPT into AUTONOMOUS ──
+    # (AUTONOMOUS stop is handled by the Arduino's own obstacleAvoidance loop;
+    #  sending STOP here would fight the AUTO_ON command sent by mode_control.)
+    if new_mode != DriveMode.AUTONOMOUS:
+        try:
+            send_command("dev00", "STOP")
+            send_command("dev01", "LIGHT_FRONT_OFF")
+            send_command("dev01", "LIGHT_BACK_ON")
+        except Exception as e:
+            print(f"⚠️ mode hook motor/light error: {e}")
 
-    # Mode-specific behavior
+    # ── Mode-specific behaviour ──
     if new_mode == DriveMode.KEYBOARD:
         print("🔑 Keyboard mode active")
-        toggle_leds()  # e.g., flash keyboard LED indicators
+        toggle_leds()
 
     elif new_mode == DriveMode.IR_REMOTE:
         print("🎮 IR Remote mode active")
-        # Optional: update LEDs or feedback for IR
 
     elif new_mode == DriveMode.AUTONOMOUS:
-        print("🤖 Autonomous mode active")
-        # Optional: start AI routines, camera, sensors, etc.
+        print("🤖 Autonomous mode active — Arduino taking control")
+        # AUTO_ON is sent by mode_control._on_mode_changed() before this runs.
+        # Nothing extra needed here; add camera/AI startup hooks if required.
 
     elif new_mode == DriveMode.IDLE:
         print("💤 Idle mode — motors stopped")
         stop_music()
-        run_chase_effect()  # optional idle LED pattern
+        run_chase_effect()

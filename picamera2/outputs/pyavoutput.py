@@ -1,0 +1,105 @@
+from fractions import Fraction
+
+from .output import Output
+
+
+class PyavOutput(Output):
+    """
+    The PyavOutput class outputs an encoded video, and optionally audio, stream using PyAV.
+
+    PyAv is a Python interface to libav, used by FFmpeg, and therefore can accept many different output
+    types and destinations, in the same way as FFmpeg.
+
+    The PyavOutput calls directly into libav through its Python layer, and does not pipe encoded frames
+    out to a separate process like the FfmpegOutput. The PyavOutput integration means we can pass precise
+    timestamps, and are not subject to the hazards of FFmpeg re-timestamping everything as it gets piped
+    back in.
+    """
+
+    def __init__(self, output_name, format=None, pts=None, options=None):
+        # Save low-powered Pis from importing av unless it is needed.
+        global av
+        import av
+        super().__init__(pts=pts)
+        self._output_name = output_name
+        self._format = format
+        self._streams = {}
+        self._container = None
+        self._options = options
+        # A user can set this to get notifications of failures.
+        self.error_callback = None
+        self.needs_add_stream = True
+        self._seen_keyframe = {}
+
+    def _add_stream(self, encoder_stream, codec_name, **kwargs):
+        # The output container that does the muxing needs to know about the streams for which packets
+        # will be sent to it. It literally needs to copy them for the output container.
+        stream = self._container.add_stream(codec_name, **kwargs)
+
+        if codec_name == "mjpeg":
+            # Well, this is nasty. MJPEG seems to need this.
+            stream.codec_context.color_range = 2  # JPEG (full range)
+
+        self._streams[encoder_stream] = stream
+
+    def start(self):
+        """Start the PyavOutput."""
+        self._container = av.open(self._output_name, "w", format=self._format, options=self._options)
+        super().start()
+
+    def stop(self):
+        """Stop the PyavOutput."""
+        super().stop()
+        if self._container:
+            try:
+                self._container.close()
+            except Exception:
+                pass
+            self._container = None
+            self._streams = {}
+            self._seen_keyframe = {}
+
+    def outputframe(self, frame, keyframe=True, timestamp=None, packet=None, audio=False):
+        """Output an encoded frame using PyAv."""
+        if self.recording and self._container:
+            # We must make a packet that looks like it came from our own container's version of the stream.
+            if not packet:
+                # No packet present. It must have come from a video encoder that isn't using libav, so make one up.
+                packet = av.Packet(frame)
+                packet.dts = timestamp
+                packet.pts = timestamp
+                packet.time_base = Fraction(1, 1000000)
+                packet.is_keyframe = keyframe
+                packet.stream = self._streams["video"]
+            else:
+                # We can copy the packet we are given, updating the stream to be our version, and amending
+                # the timestamp in case that has been changed.
+                new_packet = av.Packet(packet)
+                if packet.stream not in self._streams:
+                    raise RuntimeError("Stream not found in PyavOutput")
+                new_packet.stream = self._streams[packet.stream]
+                new_packet.dts = timestamp
+                new_packet.pts = timestamp
+                new_packet.time_base = Fraction(1, 1000000)
+                new_packet.is_keyframe = keyframe
+                packet = new_packet
+
+                # Don't send out packets for this stream until we've seen a keyframe.
+                seen_keyframe = self._seen_keyframe.get(packet.stream, False)
+                seen_keyframe |= keyframe
+                self._seen_keyframe[packet.stream] = seen_keyframe
+                if not seen_keyframe:
+                    return
+
+            try:
+                self._container.mux(packet)
+            except Exception as e:
+                try:
+                    self._container.close()
+                except Exception:
+                    pass
+                self._container = None
+                if self.error_callback:
+                    self.error_callback(e)
+
+            self.outputtimestamp(timestamp)

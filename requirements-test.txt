@@ -1,0 +1,94 @@
+# --- Core Deep Learning & AI ---
+torch>=2.2.0
+torchaudio
+transformers>=4.50.1
+ultralytics           # YOLOv8 for Vision
+faster-whisper        # Optimized for Pi 5 CPU
+deepface              # Face Analysis
+tf-keras
+
+# --- Vision & Imaging ---
+opencv-python
+pillow
+PiDNG
+piexif
+simplejpeg
+v4l2-python3
+pytesseract
+pyopengl
+PyQt5                 # For GUI/Desktop apps
+
+# --- Audio & Speech ---
+librosa
+mir_eval
+sounddevice==0.5.1
+soundfile
+SpeechRecognition
+playsound
+gTTS
+elevenlabs==0.2.26
+pygame                # Audio playback engine
+
+# --- Hardware & System ---
+RPi.GPIO
+smbus2                # I2C Communication
+pyserial              # UART Communication
+psutil                # System monitoring
+loguru                # Advanced logging
+python-prctl          # Process control
+
+# --- Web & API ---
+flask
+werkzeug
+jinja2
+itsdangerous
+click
+requests
+sseclient
+
+# --- Utilities & Math ---
+numpy<2.0.0           # Stay on 1.x for compatibility with older ML models
+scipy>=1.10.0
+pyyaml
+tqdm
+matplotlib
+tensorboardX
+ply
+
+# --- Development, Linting & Build ---
+astroid==2.12.14
+pylint==2.15.10
+flake8>=6.0.0
+flake8-bugbear>=22.10.27
+flake8-comprehensions>=3.10
+flake8-debugger
+flake8-docstrings>=1.6.0
+flake8-isort>=5.0
+flake8-pylint
+flake8-rst-docstrings
+flake8-string-format
+meson
+ninja
+pybind11
+piper-tts
+torchvision
+pathvalidate
+sounddevice 
+soundfile 
+numpy 
+requests 
+faster-whisper 
+pygame 
+psutil 
+requests 
+flask 
+zeroconf 
+pyserial 
+opencv-python 
+scipy 
+tensorflow 
+Pillow 
+diffusers 
+transformers 
+accelerate
+openai-whisper

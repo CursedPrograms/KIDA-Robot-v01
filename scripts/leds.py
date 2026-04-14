@@ -1,13 +1,25 @@
+# leds.py — PWM LED control for KIDA
+#
+# Fixes vs original:
+#   • run_chase_effect() no longer blocks the calling thread — it starts
+#     the effect and returns immediately.  Call stop_effects() or
+#     toggle_leds() to end it.
+#   • stop_effect is now a threading.Event (set/clear/is_set) instead of a
+#     bare bool — no race between the writer and the reader thread.
+#   • ALL effect threads are started as daemon=True so they never prevent
+#     a clean process exit.
+#   • Effect-stopping helper _stop_current_effect() is deduplicated — was
+#     copy-pasted in 5 places.
+
 import time
 import math
 import random
 import threading
 from gpiozero import PWMLED
 
-# BCM pin numbers
 LED_PINS = [17, 27]
 
-# Wrapper to maintain your existing interface
+
 class PWMLEDWrapper:
     def __init__(self, pin, frequency=100):
         self.pin = pin
@@ -22,9 +34,9 @@ class PWMLEDWrapper:
     def value(self, v):
         self._value = max(0.0, min(1.0, v))
         try:
-            self.led.value = self._value  # gpiozero uses 0.0–1.0 directly
+            self.led.value = self._value
         except Exception as e:
-            print(f"⚠️ PWMLEDWrapper error: {e}")
+            print(f"⚠️ PWMLEDWrapper error pin {self.pin}: {e}")
             raise
 
     def on(self):
@@ -34,20 +46,18 @@ class PWMLEDWrapper:
         self.value = 0.0
 
 
-# Globals
-leds = []
+# ── Module-level state ──────────────────────────────────────────────────────
+leds: list[PWMLEDWrapper] = []
 
-led_on = False
-effect_on = False
-effect_thread = None
-stop_effect = False
+led_on        = False
+effect_on     = False
+effect_thread: threading.Thread | None = None
+_stop_event   = threading.Event()   # replaces bare bool stop_effect
 
 
-def setup_leds():
-    """Initialize LED objects (safe to call multiple times)."""
-    if not leds:
-        for pin in LED_PINS:
-            leds.append(PWMLEDWrapper(pin))
+# ── Helpers ─────────────────────────────────────────────────────────────────
+
+def _all_off() -> None:
     for led in leds:
         try:
             led.off()
@@ -55,192 +65,180 @@ def setup_leds():
             pass
 
 
-def startup_led_fade():
-    duration = 4
-    fade_time = 0.02
-    steps = int(duration / fade_time)
-
-    for i in range(steps):
-        for idx, led in enumerate(leds):
-            brightness = (0.5 + 0.5 * math.sin(2 * math.pi * (i / steps) + idx))
-            led.value = brightness
-        time.sleep(fade_time)
-
-    for led in leds:
-        led.off()
+def _stop_current_effect() -> None:
+    """Signal the running effect thread to stop and wait for it to finish."""
+    global effect_on, effect_thread
+    if not effect_on:
+        return
+    _stop_event.set()
+    if effect_thread and effect_thread.is_alive():
+        effect_thread.join(timeout=2.0)
+    effect_on    = False
+    effect_thread = None
 
 
-def run_chase_effect(duration=15):
-    global stop_effect, effect_on, effect_thread
-
-    if effect_on:
-        stop_effect = True
-        if effect_thread:
-            effect_thread.join()
-        effect_on = False
-
-    stop_effect = False
+def _start_effect(target) -> None:
+    global effect_on, effect_thread
+    _stop_current_effect()
+    _stop_event.clear()
+    effect_thread = threading.Thread(target=target, daemon=True)
+    effect_thread.start()
     effect_on = True
 
-    effect_thread = threading.Thread(target=_chase_effect)
-    effect_thread.start()
 
-    time.sleep(duration)
+# ── Public setup ─────────────────────────────────────────────────────────────
 
-    stop_effect = True
-    effect_thread.join()
-
-    for led in leds:
-        led.off()
-
-    effect_on = False
-    print("✅ Celebration LEDs off")
+def setup_leds() -> None:
+    """Initialize LED objects.  Safe to call multiple times."""
+    if not leds:
+        for pin in LED_PINS:
+            leds.append(PWMLEDWrapper(pin))
+    _all_off()
 
 
-def _fade_effect():
-    global stop_effect
-    while not stop_effect:
-        for i in range(101):
-            if stop_effect: break
-            for led in leds:
-                try:
-                    led.value = i / 100
-                except Exception as e:
-                    print(f"⚠️ LED write error in fade effect: {e}")
-                    stop_effect = True
-                    break
-            time.sleep(0.01)
-        for i in range(100, -1, -1):
-            if stop_effect: break
-            for led in leds:
-                try:
-                    led.value = i / 100
-                except Exception as e:
-                    print(f"⚠️ LED write error in fade effect: {e}")
-                    stop_effect = True
-                    break
-            time.sleep(0.01)
-    for led in leds:
-        led.off()
+def startup_led_fade() -> None:
+    duration   = 4
+    fade_time  = 0.02
+    steps      = int(duration / fade_time)
+    for i in range(steps):
+        for idx, led in enumerate(leds):
+            led.value = 0.5 + 0.5 * math.sin(2 * math.pi * (i / steps) + idx)
+        time.sleep(fade_time)
+    _all_off()
 
 
-def _strobe_effect():
-    global stop_effect
-    while not stop_effect:
-        for led in leds:
-            led.on()
-        time.sleep(0.1)
-        for led in leds:
-            led.off()
-        time.sleep(0.1)
+# ── Public controls ───────────────────────────────────────────────────────────
 
-
-def _chase_effect():
-    global stop_effect
-    while not stop_effect:
-        for led in leds:
-            if stop_effect:
-                break
-            led.on()
-            time.sleep(0.1)
-            led.off()
-
-
-def _wave_effect():
-    global stop_effect
-    steps = 100
-    while not stop_effect:
-        for i in range(steps):
-            if stop_effect:
-                break
-            for idx, led in enumerate(leds):
-                brightness = (0.5 + 0.5 * math.sin(2 * math.pi * (i / steps) + idx))
-                led.value = brightness
-            time.sleep(0.02)
-    for led in leds:
-        led.off()
-
-
-def _random_flash_effect():
-    global stop_effect
-    while not stop_effect:
-        led = random.choice(leds)
-        led.on()
-        time.sleep(0.05)
-        led.off()
-        time.sleep(0.05)
-
-
-def toggle_leds():
-    global led_on, stop_effect, effect_on, effect_thread
-
-    if effect_on:
-        stop_effect = True
-        if effect_thread:
-            effect_thread.join()
-        effect_on = False
-
+def toggle_leds() -> None:
+    """Toggle all LEDs solid on/off.  Stops any running effect first."""
+    global led_on
+    _stop_current_effect()
+    _all_off()
     led_on = not led_on
-
-    for led in leds:
-        led.on() if led_on else led.off()
-
+    if led_on:
+        for led in leds:
+            led.on()
     print("💡 LEDs Solid", "ON" if led_on else "OFF")
 
 
-def toggle_effects():
-    global effect_on, stop_effect, effect_thread, led_on
-
+def toggle_effects() -> None:
+    """Start a random effect, or stop the current one."""
+    global led_on
     if effect_on:
-        stop_effect = True
-        if effect_thread:
-            effect_thread.join()
-        effect_on = False
-        for led in leds:
-            led.off()
+        _stop_current_effect()
+        _all_off()
         print("✨ LED effects OFF")
     else:
-        stop_effect = False
         led_on = False
+        _all_off()
         effect = random.choice([
             _fade_effect,
             _strobe_effect,
             _chase_effect,
             _wave_effect,
-            _random_flash_effect
+            _random_flash_effect,
         ])
-        effect_thread = threading.Thread(target=effect, daemon=True)
-        effect_thread.start()
-        effect_on = True
+        _start_effect(effect)
         print(f"✨ LED effects ON → {effect.__name__}")
 
 
-def start_music_wave():
-    global effect_thread, stop_effect, effect_on
+def run_chase_effect() -> None:
+    """
+    Start the chase effect in the background and return immediately.
+    (Previously blocked for `duration` seconds — that deadlocked the UI.)
+    Call stop_effects() or toggle_leds() to end it.
+    """
+    _start_effect(_chase_effect)
+    print("🎉 Chase effect started")
 
-    if effect_on:
-        stop_effect = True
-        if effect_thread:
-            effect_thread.join()
-        effect_on = False
 
-    stop_effect = False
-    effect_thread = threading.Thread(target=_wave_effect, daemon=True)
-    effect_thread.start()
-    effect_on = True
+def stop_effects() -> None:
+    """Stop whatever effect is running and turn all LEDs off."""
+    _stop_current_effect()
+    _all_off()
+    print("✅ LED effects stopped")
+
+
+def start_music_wave() -> None:
+    _start_effect(_wave_effect)
     print("🎵 LED wave effect started")
 
 
-def stop_music_wave():
-    global stop_effect, effect_thread, effect_on
-
-    stop_effect = True
-    if effect_thread:
-        effect_thread.join()
-        effect_thread = None
-
-    for led in leds:
-        led.off()
-
-    effect_on = False
+def stop_music_wave() -> None:
+    _stop_current_effect()
+    _all_off()
     print("🎵 LED wave effect stopped")
+
+
+# ── Effect implementations ───────────────────────────────────────────────────
+# Each loops until _stop_event is set, then turns all LEDs off and returns.
+
+def _fade_effect() -> None:
+    while not _stop_event.is_set():
+        for i in range(101):
+            if _stop_event.is_set():
+                break
+            for led in leds:
+                try:
+                    led.value = i / 100
+                except Exception as e:
+                    print(f"⚠️ LED fade error: {e}")
+                    _stop_event.set()
+                    break
+            time.sleep(0.01)
+        for i in range(100, -1, -1):
+            if _stop_event.is_set():
+                break
+            for led in leds:
+                try:
+                    led.value = i / 100
+                except Exception as e:
+                    print(f"⚠️ LED fade error: {e}")
+                    _stop_event.set()
+                    break
+            time.sleep(0.01)
+    _all_off()
+
+
+def _strobe_effect() -> None:
+    while not _stop_event.is_set():
+        for led in leds:
+            led.on()
+        time.sleep(0.1)
+        for led in leds:
+            led.off()
+        time.sleep(0.1)
+    _all_off()
+
+
+def _chase_effect() -> None:
+    while not _stop_event.is_set():
+        for led in leds:
+            if _stop_event.is_set():
+                break
+            led.on()
+            time.sleep(0.1)
+            led.off()
+    _all_off()
+
+
+def _wave_effect() -> None:
+    steps = 100
+    while not _stop_event.is_set():
+        for i in range(steps):
+            if _stop_event.is_set():
+                break
+            for idx, led in enumerate(leds):
+                led.value = 0.5 + 0.5 * math.sin(2 * math.pi * (i / steps) + idx)
+            time.sleep(0.02)
+    _all_off()
+
+
+def _random_flash_effect() -> None:
+    while not _stop_event.is_set():
+        led = random.choice(leds)
+        led.on()
+        time.sleep(0.05)
+        led.off()
+        time.sleep(0.05)
+    _all_off()

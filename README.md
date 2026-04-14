@@ -17,6 +17,7 @@
 
 ---
 
+
 <div align="center">
   <img src="/images/demo/kida.jpg" alt="KIDA Robot" width="600"/>
 </div>
@@ -41,6 +42,10 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 <div align="center">
   <img src="/images/demo/KIDA001.jpg" alt="KIDA Robot" width="600"/>
 </div>
+
+
+
+
 
 ## Hardware Specifications
 
@@ -145,6 +150,22 @@ torchaudio
 
 ## Installation
 
+```bash
+from facenet_pytorch import InceptionResnetV1
+
+# For a model pretrained on VGGFace2
+model = InceptionResnetV1(pretrained='vggface2').eval()
+
+# For a model pretrained on CASIA-Webface
+model = InceptionResnetV1(pretrained='casia-webface').eval()
+
+# For an untrained model with 100 classes
+model = InceptionResnetV1(num_classes=100).eval()
+
+# For an untrained 1001-class classifier
+model = InceptionResnetV1(classify=True, num_classes=1001).eval()
+```
+
 ### 1. Clone & Set Up Python Environment
 
 ```bash
@@ -169,6 +190,85 @@ pip install git+https://github.com/openai/whisper.git
 ```bash
 sudo apt install pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
 ```
+Using pip
+opencv_transforms is available as a pip package:
+
+pip install opencv_transforms
+Using UV (recommended for development)
+This project now uses UV for dependency management. To install for development:
+
+Install UV if you haven't already:
+curl -LsSf https://astral.sh/uv/install.sh | sh
+Clone the repository and install dependencies:
+git clone https://github.com/jbohnslav/opencv_transforms.git
+cd opencv_transforms
+uv sync --all-extras  # This installs all dependencies including dev dependencies
+Run commands in the UV environment:
+uv run python your_script.py
+# or activate the virtual environment
+source .venv/bin/activate  # On Unix/macOS
+# or
+.venv\Scripts\activate  # On Windows
+Usage
+Breaking change! Please note the import syntax!
+
+from opencv_transforms import transforms
+From here, almost everything should work exactly as the original transforms.
+Example: Image resizing
+import numpy as np
+image = np.random.randint(low=0, high=255, size=(1024, 2048, 3))
+resize = transforms.Resize(size=(256,256))
+image = resize(image)
+Should be 1.5 to 10 times faster than PIL. See benchmarks
+
+```bash
+# Basic debugging
+from opencv_transforms.debug import utils
+result = utils.compare_contrast_outputs(image, contrast_factor=0.5)
+
+# Create test summary across multiple contrast factors
+summary = utils.create_contrast_test_summary(image)
+
+# Analyze PIL precision issues
+utils.analyze_pil_precision_issue(image)
+```
+
+```bash
+
+from facenet_pytorch import MTCNN, InceptionResnetV1
+
+# If required, create a face detection pipeline using MTCNN:
+mtcnn = MTCNN(image_size=<image_size>, margin=<margin>)
+
+# Create an inception resnet (in eval mode):
+resnet = InceptionResnetV1(pretrained='vggface2').eval()
+
+apt-get update
+apt-get install -y libsm6 libxext6 libxrender-dev
+pip install opencv-python
+```
+
+```bash
+
+apt-get update
+apt-get install -y libsm6 libxext6 libxrender-dev
+pip install opencv-contrib-python
+pip install opencv_transforms
+pip install opencv-python
+pip install facenet-pytorch
+pip install piper-tts
+
+sudo apt install pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
+
+https://download.pytorch.org/whl/cpu/torch-1.0.1.post2-cp36-cp36m-linux_x86_64.whl
+https://download.pytorch.org/whl/cpu/torch-1.0.1.post2-cp37-cp37m-linux_x86_64.whl
+
+```
+
+docker run --rm -p 8888:8888
+    -v ./facenet-pytorch:/home/jovyan timesler/jupyter-dl-gpu \
+    -v <path to data>:/home/jovyan/data
+    pip install facenet-pytorch && jupyter lab 
 
 ### 4. Install Piper TTS
 
