@@ -17,7 +17,6 @@
 
 ---
 
-
 <div align="center">
   <img src="/images/demo/kida.jpg" alt="KIDA Robot" width="600"/>
 </div>
@@ -36,7 +35,7 @@
 
 ## Overview
 
-KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring dual-camera vision (night vision + AI camera), a Hailo-8 AI accelerator (13 TOPS), and local LLM capabilities. The robot supports voice interaction, autonomous navigation, and real-time AI inference.
+KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring dual-camera vision (night vision + AI camera), a Hailo-8l AI accelerator (13 TOPS), and local LLM capabilities. The robot supports voice interaction, autonomous navigation, and real-time AI inference.
 
 ---
 
@@ -45,62 +44,60 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 </div>
 
 ### Prerequisite Software
-- [Raspberry Pi OS](https://www.raspberrypi.com/software/operating-systems/)
 - [Arduino IDE](https://docs.arduino.cc/software/ide/)
+- [Raspberry Pi OS](https://www.raspberrypi.com/software/operating-systems/)
+### Operating System
+- **Recommended:** Raspberry Pi OS (Bookworm)
+- **Kernel:** `6.12.62+rpt-rpi-2712`
 
 ## Hardware Specifications
 
 ### Computing
 | Component | Details |
 |-----------|---------|
-| Main Board | Raspberry Pi 5 / 4 |
+| Main Board | Raspberry Pi 5 |
+| PCI-E Board | NVMe + AI Hat |
 | AI Accelerator | Hailo-8 (13 TOPS) via NVMe + AI Hat |
 | Storage | NVMe SSD |
+| Microcontroller 0 | RGBduino Jenny |
+| Microcontroller 1 | Arduino UNO |
+| I2C | Custom |
 
 ### Chassis & Motion
 | Component | Details |
 |-----------|---------|
-| Chassis | XiaoR Geek Robot Tank Chassis |
-| Motor Driver | L298N × 2 |
-| Motors | Dual DC motors with tank steering |
+| Chassis | Robot Tank Chassis |
+| Motor Driver | L298N |
+| Motors | 2× 12v DC Motors |
 
 ### Power System
 | Component | Details |
 |-----------|---------|
-| Primary Battery | 3× 21700 (12.6V in series) |
-| Backup Battery | 3× 18650 via Pi UPS |
-| Voltage Regulator | LM2596S (12V → 5V) |
-| Power Switches | 2× (Main + Pi) |
+| Motor Battery | 3s 21700 (12.6V in series) |
+| Compute Battery | 3s 18650 via Pi UPS |
+| Realtime Battery | 3s 18650 via Pi UPS |
+| Voltage Regulator | LM2596S (12V → 11.5V) |
+| Power Switches | 4× (Main + UPS), 2× MOSFET SWITCHES|
 
 ### Sensors & Cameras
 | Component | Details |
 |-----------|---------|
 | Camera 0 | Raspberry Pi Night Vision Camera |
 | Camera 1 | Raspberry Pi AI Camera (IMX500) |
-| Ultrasonic Sensor | HC-SR04 |
-| Microphone | USB Microphone |
+| Ultrasonic Sensors | HC-SR04 × 2 (one mounted on servo for scanning) |
+| Line Follower | 3-Channel Line Tracking Sensor |
+| Switch Sensor | Ball Switch (Impact Detection) |
+| Infrared | IR Receiver Module |
+| UV Sensor | UV Light Sensor Module |
+| Light Sensor | Photoresistor (LDR) |
+| ToF Sensor | Time-of-Flight Laser Distance Sensor |
+| PIR Sensor | Passive Infrared Motion Sensor |
 
 ### Audio
 | Component | Details |
 |-----------|---------|
 | Output | Pi Speakers |
-| TTS | Piper / ElevenLabs |
-
----
-
-## Software Stack
-
-### Operating System
-- **Recommended:** Raspberry Pi OS (Bookworm)
-- **Kernel:** `6.12.62+rpt-rpi-2712`
-
-### AI & ML
-| Component | Technology |
-|-----------|------------|
-| LLM | Ollama (DeepSeek-R1:1.5b, Gemma3:4b) |
-| STT | OpenAI Whisper |
-| TTS | Piper / ElevenLabs API |
-| Vision | Hailo-8 AI Processor, IMX500 |
+| Input | USB Microphone |
 
 ---
 
@@ -136,22 +133,6 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 
 ## Installation
 
-```bash
-from facenet_pytorch import InceptionResnetV1
-
-# For a model pretrained on VGGFace2
-model = InceptionResnetV1(pretrained='vggface2').eval()
-
-# For a model pretrained on CASIA-Webface
-model = InceptionResnetV1(pretrained='casia-webface').eval()
-
-# For an untrained model with 100 classes
-model = InceptionResnetV1(num_classes=100).eval()
-
-# For an untrained 1001-class classifier
-model = InceptionResnetV1(classify=True, num_classes=1001).eval()
-```
-
 ### 1. Clone & Set Up Python Environment
 
 ```bash
@@ -165,77 +146,72 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+```bash
+sudo snap install ollama
+ollama --version
+```
+
 ### 2. Install OpenAI Whisper
 
 ```bash
 pip install git+https://github.com/openai/whisper.git
 ```
 
+```bash
+python3 -c "import whisper; whisper.load_model('large')"
+python3 -c "import whisper; whisper.load_model('tiny')"
+```
+
 ### 3. Install Audio Dependencies
 
 ```bash
-sudo apt install pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
+sudo apt install ffmpeg alsa-utils -y pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
 ```
+
+### 4. Install Piper TTS
+
+```bash
+pip install piper-tts
+```
+
+```bash
+mkdir -p ~/voices/
+
+# Amy (medium) — recommended
+wget "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/amy/medium/en_US-amy-medium.onnx?download=true" -O en_US-amy-medium.onnx
+wget "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/amy/medium/en_US-amy-medium.onnx.json?download=true" -O en_US-amy-medium.onnx.json
+``` 
+
+#### Test Piper
+
+```bash
+echo "Hello, I am your voice assistant." | \
+piper --model voices/en_US-amy-medium.onnx \
+--output_raw | aplay -D plughw:2,0 -r 22050 -f S16_LE -t raw -
+```
+
+#### Install Piper binary (Not Needed)
+
+```bash
+wget https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz
+tar xzf piper_linux_x86_64.tar.gz
+sudo mv piper/piper /usr/local/bin/
+```
+
+### Cameras
 ```bash
 sudo apt install imx500-models
 ```
-
-Using pip
-opencv_transforms is available as a pip package:
-
-pip install opencv_transforms
-Using UV (recommended for development)
-This project now uses UV for dependency management. To install for development:
-
-Install UV if you haven't already:
-curl -LsSf https://astral.sh/uv/install.sh | sh
-Clone the repository and install dependencies:
-git clone https://github.com/jbohnslav/opencv_transforms.git
-cd opencv_transforms
-uv sync --all-extras  # This installs all dependencies including dev dependencies
-Run commands in the UV environment:
-uv run python your_script.py
-# or activate the virtual environment
-source .venv/bin/activate  # On Unix/macOS
-# or
-.venv\Scripts\activate  # On Windows
-Usage
-Breaking change! Please note the import syntax!
-
-from opencv_transforms import transforms
-From here, almost everything should work exactly as the original transforms.
-Example: Image resizing
-import numpy as np
-image = np.random.randint(low=0, high=255, size=(1024, 2048, 3))
-resize = transforms.Resize(size=(256,256))
-image = resize(image)
-Should be 1.5 to 10 times faster than PIL. See benchmarks
-
+#### AI Camera Inference
 ```bash
-# Basic debugging
-from opencv_transforms.debug import utils
-result = utils.compare_contrast_outputs(image, contrast_factor=0.5)
+rpicam-hello --list-cameras
 
-# Create test summary across multiple contrast factors
-summary = utils.create_contrast_test_summary(image)
-
-# Analyze PIL precision issues
-utils.analyze_pil_precision_issue(image)
-```
-
-```bash
-
-from facenet_pytorch import MTCNN, InceptionResnetV1
-
-# If required, create a face detection pipeline using MTCNN:
-mtcnn = MTCNN(image_size=<image_size>, margin=<margin>)
-
-# Create an inception resnet (in eval mode):
-resnet = InceptionResnetV1(pretrained='vggface2').eval()
-
-apt-get update
-apt-get install -y libsm6 libxext6 libxrender-dev
-pip install opencv-python
+# AI Camera inference (camera slot 1)
+rpicam-hello --camera 1 -t 0 \
+  --post-process-file /usr/share/rpi-camera-assets/imx500_mobilenet_ssd.json \
+  --viewfinder-width 1920 \
+  --viewfinder-height 1080 \
+  --framerate 30
 ```
 
 ```bash
@@ -247,23 +223,12 @@ pip install opencv_transforms
 pip install opencv-python
 pip install facenet-pytorch
 pip install piper-tts
-
-sudo apt install pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
+pip install git+https://github.com/openai/whisper.git
+sudo apt install pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio imx500-models
 
 https://download.pytorch.org/whl/cpu/torch-1.0.1.post2-cp36-cp36m-linux_x86_64.whl
 https://download.pytorch.org/whl/cpu/torch-1.0.1.post2-cp37-cp37m-linux_x86_64.whl
 
-```
-
-docker run --rm -p 8888:8888
-    -v ./facenet-pytorch:/home/jovyan timesler/jupyter-dl-gpu \
-    -v <path to data>:/home/jovyan/data
-    pip install facenet-pytorch && jupyter lab 
-
-### 4. Install Piper TTS
-
-```bash
-pip install piper-tts
 ```
 
 ### 5. Install ElevenLabs (optional)
@@ -314,6 +279,50 @@ pip install hailort
 
 ---
 
+```bash
+from facenet_pytorch import InceptionResnetV1
+
+# For a model pretrained on VGGFace2
+model = InceptionResnetV1(pretrained='vggface2').eval()
+
+# For a model pretrained on CASIA-Webface
+model = InceptionResnetV1(pretrained='casia-webface').eval()
+
+# For an untrained model with 100 classes
+model = InceptionResnetV1(num_classes=100).eval()
+
+# For an untrained 1001-class classifier
+model = InceptionResnetV1(classify=True, num_classes=1001).eval()
+```
+
+
+```bash
+# Basic debugging
+from opencv_transforms.debug import utils
+result = utils.compare_contrast_outputs(image, contrast_factor=0.5)
+
+# Create test summary across multiple contrast factors
+summary = utils.create_contrast_test_summary(image)
+
+# Analyze PIL precision issues
+utils.analyze_pil_precision_issue(image)
+```
+
+```bash
+
+from facenet_pytorch import MTCNN, InceptionResnetV1
+
+# If required, create a face detection pipeline using MTCNN:
+mtcnn = MTCNN(image_size=<image_size>, margin=<margin>)
+
+# Create an inception resnet (in eval mode):
+resnet = InceptionResnetV1(pretrained='vggface2').eval()
+
+apt-get update
+apt-get install -y libsm6 libxext6 libxrender-dev
+pip install opencv-python
+```
+
 ## Running KIDA
 
 ### Activate the virtual environment
@@ -334,17 +343,7 @@ ollama run deepseek-r1:1.5b
 ollama pull gemma3:4b-it-qat
 ```
 
-### Test cameras
-```bash
-rpicam-hello --list-cameras
 
-# AI Camera inference (camera slot 1)
-rpicam-hello --camera 1 -t 0 \
-  --post-process-file /usr/share/rpi-camera-assets/imx500_mobilenet_ssd.json \
-  --viewfinder-width 1920 \
-  --viewfinder-height 1080 \
-  --framerate 30
-```
 
 ---
 
@@ -446,22 +445,6 @@ sudo nano /boot/firmware/config.txt
 sudo hwclock -w
 sudo hwclock -v -r
 ```
-
----
-
-## FFmpeg Setup (Windows)
-
-1. Download the latest static build from: https://www.gyan.dev/ffmpeg/builds/
-2. Extract and rename the folder to `ffmpeg`, placed at `C:\ffmpeg`
-3. Ensure this structure exists:
-   ```
-   C:\ffmpeg\bin\
-   ├── ffmpeg.exe
-   ├── ffplay.exe
-   └── ffprobe.exe
-   ```
-4. Add `C:\ffmpeg\bin` to your system `PATH` via **System Properties → Environment Variables**
-5. Verify: open a new terminal and run `ffmpeg -version`
 
 ---
 
