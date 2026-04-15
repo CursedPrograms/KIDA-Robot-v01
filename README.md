@@ -14,7 +14,6 @@
 <div align="center">
   <img alt="Arduino" src="https://img.shields.io/badge/-Arduino-323330?style=for-the-badge&logo=arduino&logoColor=white"/>
   <img alt="Raspberry Pi" src="https://img.shields.io/badge/-Raspberry_Pi-323330?style=for-the-badge&logo=raspberry-pi&logoColor=white"/>
->
 </div>
 
 <div align="center">
@@ -45,7 +44,7 @@
 ## 📖 Overview
 
 <details>
-<summary><b>View Overview</b></summary>
+<summary><b>Overview</b></summary>
 
 KIDA represents the pinnacle of the RIFT fleet. Built on the **Raspberry Pi 5**, it leverages the **Hailo-8L** AI accelerator to perform high-speed neural processing at the edge. With a dual-camera setup for multi-spectrum vision and local LLM integration, KIDA is designed for sophisticated human-robot interaction and autonomous decision-making without relying on the cloud.
 
@@ -66,7 +65,7 @@ Core Features
 ## Prerequisites
 
 <details>
-<summary><b>View Prerequisites</b></summary>
+<summary><b>Prerequisites</b></summary>
 
 ### Software
 - [Arduino IDE](https://docs.arduino.cc/software/ide/)
@@ -143,8 +142,11 @@ Core Features
 # Schematics
 ## ⚡ Technical Pinouts
 
+> [!CAUTION]
+> **Ground Loop Warning:** All modules must share a common GND. Failure to bridge grounds will cause erratic motor behavior and sensor noise.
+
 <details>
-<summary><b>View Power Distribution Wiring</b></summary>
+<summary><b>Power Distribution Wiring</b></summary>
 
 ### Power Schematic
 ```
@@ -173,7 +175,7 @@ UPS:
 </details>
 
 <details>
-<summary><b>View Power Raspberry Pi Wiring</b></summary>
+<summary><b>Raspberry Pi Wiring</b></summary>
 
 ```
 RASPBERRY PI:
@@ -197,7 +199,7 @@ RASPBERRY PI:
 </details>
 
 <details>
-<summary><b>View Power Arduino 0 Wiring</b></summary>
+<summary><b>Arduino (DEV0) Wiring</b></summary>
 
 ### **ARDUINO (DEV0):**
 #### Libraries:
@@ -254,7 +256,7 @@ VL53L0X:
 </details>
 
 <details>
-<summary><b>View Power Arduino 1 Wiring</b></summary>
+<summary><b>Arduino (DEV1) Wiring</b></summary>
 
 ### **ARDUINO (DEV1):**
 #### Libraries:
@@ -318,7 +320,7 @@ To connect via [RIFT](https://github.com/CursedPrograms/RIFT), ensure KIDA01 is 
 ### MX500 AI Camera
 
 <details>
-<summary><b>View MX500 AI Camera Setup</b></summary>
+<summary><b>MX500 AI Camera Setup</b></summary>
 
 ```bash
 sudo apt update && sudo apt full-upgrade
@@ -378,7 +380,7 @@ https://github.com/raspberrypi/picamera2/tree/main/examples/imx500
 ### Install Ollama
 
 <details>
-<summary><b>View Ollama Setup</b></summary>
+<summary><b>Ollama Setup</b></summary>
 
 ```bash
 sudo snap install ollama
@@ -401,7 +403,7 @@ ollama run deepseek-r1:1.5b
 ### Environment Setup
 
 <details>
-<summary><b>View Environment Setup</b></summary>
+<summary><b>Environment Setup</b></summary>
 
 ```bash
 sudo apt update
@@ -420,7 +422,7 @@ pip install -r requirements.txt
 ### Install OpenAI Whisper
 
 <details>
-<summary><b>View Whisper Setup</b></summary>
+<summary><b>Whisper Setup</b></summary>
 
 ```bash
 pip install git+https://github.com/openai/whisper.git
@@ -437,7 +439,7 @@ python3 -c "import whisper; whisper.load_model('tiny')"
 ### Install Audio Dependencies
 
 <details>
-<summary><b>View Audio Setup</b></summary>
+<summary><b>Audio Setup</b></summary>
 
 ```bash
 sudo apt install ffmpeg alsa-utils -y pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
@@ -449,7 +451,7 @@ sudo apt install ffmpeg alsa-utils -y pulseaudio jackd2 alsa-utils portaudio19-d
 ### Install Piper TTS
 
 <details>
-<summary><b>View Piper Setup</b></summary>
+<summary><b>Piper Setup</b></summary>
 
 ```bash
 pip install piper-tts
@@ -486,7 +488,7 @@ sudo mv piper/piper /usr/local/bin/
 ### Install ElevenLabs (optional)
 
 <details>
-<summary><b>View ElevenLabs Setup</b></summary>
+<summary><b>ElevenLabs Setup</b></summary>
 
 ```bash
 pip install git+https://github.com/elevenlabs/elevenlabs-python@v3
@@ -498,7 +500,7 @@ pip install git+https://github.com/elevenlabs/elevenlabs-python@v3
 ### Install & Set Up Hailo
 
 <details>
-<summary><b>View Hailo8l Setup</b></summary>
+<summary><b>Hailo8l Setup</b></summary>
 
 ```bash
 sudo apt update
@@ -536,6 +538,64 @@ cmake .. && make -j$(nproc) && sudo make install
 echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
 source ~/.bashrc
 pip install hailort
+```
+</details>
+
+#### Diagnostics
+
+<details>
+<summary><b>Diagnostics</b></summary>
+
+```bash
+# Check Hailo kernel module
+lsmod | grep hailo
+
+# Identify Hailo device
+hailortcli fw-control identify
+
+# Check PCI devices
+lspci | grep Hailo
+
+# Kill conflicting camera processes
+ps aux | grep -E 'libcamera|picamera'
+sudo kill -9 <PID>
+
+# Check which process is using the camera
+sudo fuser -v /dev/video0
+
+# Kernel version
+uname -r
+```
+
+</details>
+
+---
+
+### RTC Setup
+
+<details>
+<summary><b>RTC Setup</b></summary>
+
+```bash
+dtparam=rtc_bbat_vchg=3000000
+sudo mount -o remount,rw /boot/firmware
+sudo nano /boot/firmware/config.txt
+sudo hwclock -w
+sudo hwclock -v -r
+```
+
+</details>
+
+---
+
+<details>
+<summary><b>PCIE3 Setup</b></summary>
+
+Enable PCIe Gen 3 speeds for the Hailo Hat
+ - dtparam=pciex1_gen=3
+
+```bash
+/boot/firmware/config.txt
 ```
 
 </details>
@@ -620,14 +680,12 @@ source venv/bin/activate
 ```bash
 python scripts/main.py
 ```
-/boot/firmware/config.txt
-
-- Enable PCIe Gen 3 speeds for the Hailo Hat
-dtparam=pciex1_gen=3
-
 ---
 
 ### Autostart on Boot
+
+<details>
+<summary><b>Autostart on Boot Setup</b></summary>
 
 #### Option A: systemd service (recommended)
 
@@ -714,42 +772,7 @@ Type=Application
 X-GNOME-Autostart-enabled=true
 ```
 
----
-
-### RTC Setup
-
-```bash
-dtparam=rtc_bbat_vchg=3000000
-sudo mount -o remount,rw /boot/firmware
-sudo nano /boot/firmware/config.txt
-sudo hwclock -w
-sudo hwclock -v -r
-```
-
----
-
-### Diagnostics
-
-```bash
-# Check Hailo kernel module
-lsmod | grep hailo
-
-# Identify Hailo device
-hailortcli fw-control identify
-
-# Check PCI devices
-lspci | grep Hailo
-
-# Kill conflicting camera processes
-ps aux | grep -E 'libcamera|picamera'
-sudo kill -9 <PID>
-
-# Check which process is using the camera
-sudo fuser -v /dev/video0
-
-# Kernel version
-uname -r
-```
+</details>
 
 ---
 
