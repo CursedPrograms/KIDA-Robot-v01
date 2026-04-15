@@ -76,6 +76,12 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 | Motor Driver | L298N |
 | Motors | 2× 12v DC Motors |
 
+### User Controllers
+| **Component** | **Details** |
+|-----------|---------|
+| Interface | PC, Android, iPhone |
+| Controller | Wireless Keyboard, IR remote |
+
 ### Power System
 | **Component** | **Details** |
 |-----------|---------|
