@@ -304,6 +304,9 @@ To connect via [RIFT](https://github.com/CursedPrograms/RIFT), ensure KIDA01 is 
 
 ### MX500 AI Camera
 
+<details>
+<summary><b>View MX500 AI Camera Setup</b></summary>
+
 ```bash
 sudo apt update && sudo apt full-upgrade
 ```
@@ -355,8 +358,14 @@ python imx500_pose_estimation_higherhrnet_demo.py
 https://www.raspberrypi.com/documentation/accessories/ai-camera.html
 https://github.com/raspberrypi/picamera2/tree/main/examples/imx500
 
+
+</details>
+
 ---
 ### Install Ollama
+
+<details>
+<summary><b>View Ollama Setup</b></summary>
 
 ```bash
 sudo snap install ollama
@@ -372,8 +381,15 @@ ollama pull gemma3:4b-it-qat
 ```bash
 ollama run deepseek-r1:1.5b
 ```
+
+</details>
+
 ---
-### Clone & Set Up Python Environment
+### Environment Setup
+
+<details>
+<summary><b>View Environment Setup</b></summary>
+
 ```bash
 sudo apt update
 sudo apt install python3-venv python3-pip
@@ -385,8 +401,13 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+</details>
+
 ---
 ### Install OpenAI Whisper
+
+<details>
+<summary><b>View Whisper Setup</b></summary>
 
 ```bash
 pip install git+https://github.com/openai/whisper.git
@@ -396,14 +417,26 @@ pip install git+https://github.com/openai/whisper.git
 python3 -c "import whisper; whisper.load_model('large')"
 python3 -c "import whisper; whisper.load_model('tiny')"
 ```
+
+</details>
+
 ---
 ### Install Audio Dependencies
+
+<details>
+<summary><b>View Audio Setup</b></summary>
 
 ```bash
 sudo apt install ffmpeg alsa-utils -y pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
 ```
+
+</details>
+
 ---
 ### Install Piper TTS
+
+<details>
+<summary><b>View Piper Setup</b></summary>
 
 ```bash
 pip install piper-tts
@@ -433,14 +466,26 @@ wget https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux
 tar xzf piper_linux_x86_64.tar.gz
 sudo mv piper/piper /usr/local/bin/
 ```
+
+</details>
+
 ---
 ### Install ElevenLabs (optional)
+
+<details>
+<summary><b>View ElevenLabs Setup</b></summary>
 
 ```bash
 pip install git+https://github.com/elevenlabs/elevenlabs-python@v3
 ```
+
+</details>
+
 ---
 ### Install & Set Up Hailo
+
+<details>
+<summary><b>View Hailo8l Setup</b></summary>
 
 ```bash
 sudo apt update
@@ -479,6 +524,9 @@ echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
 source ~/.bashrc
 pip install hailort
 ```
+
+</details>
+
 ---
 
 ```bash
