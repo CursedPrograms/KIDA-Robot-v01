@@ -289,6 +289,9 @@ SENSORS (DIGITAL):
 ---
 ## 🌐 Connectivity & Controls
 
+<details>
+<summary><b>Connectivity & Controls</b></summary>
+
 ### Network Configuration
 | Parameter | Value |
 | :--- | :--- |
@@ -298,6 +301,9 @@ SENSORS (DIGITAL):
 ### RIFT Integration
 To connect via [RIFT](https://github.com/CursedPrograms/RIFT), ensure KIDA01 is active on:
 * `localhost:5004`
+
+<details>
+
 ---
 
 ## Installation
