@@ -58,6 +58,35 @@ Core Features
 
 ---
 
+<details>
+<summary><b>Keybindings</b></summary>
+
+### ⚙️ Mode Selection
+Use the numeric keys to hot-swap between drive logics:
+* <kbd>1</kbd> **Switch to Mode 1** (Standard WASD Vectoring)
+* <kbd>2</kbd> **Switch to Mode 2** (Independent Tank-Style Control)
+
+### 🏎️ Movement Controls
+
+| Input | **Mode 1: Coordinated** | **Mode 2: Independent** |
+| :--- | :--- | :--- |
+| <kbd>Q</kbd> | — | **Left Bank Forward** |
+| <kbd>A</kbd> | Rotate Left | **Left Bank Backward** |
+| <kbd>W</kbd> | Move Forward | **Right Bank Forward** |
+| <kbd>S</kbd> | Move Backward | **Right Bank Backward** |
+| <kbd>D</kbd> | Rotate Right | — |
+
+### 🎵 Media & System
+* <kbd>M</kbd> **Play Music**
+* <kbd>Space</kbd> **Stop Music** / Audio Interrupt
+
+</details>
+
+> [!TIP]
+> Use **Mode 2** for heavy terrain or precise pivoting, and **Mode 1** for smooth, cinematic strafing.
+
+---
+
 <div align="center">
   <img src="/images/demo/KIDA001.jpg" alt="KIDA Robot" width="600"/>
 </div>
