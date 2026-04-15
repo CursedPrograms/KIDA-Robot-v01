@@ -292,6 +292,7 @@ python imx500_pose_estimation_higherhrnet_demo.py
 https://www.raspberrypi.com/documentation/accessories/ai-camera.html
 https://github.com/raspberrypi/picamera2/tree/main/examples/imx500
 
+---
 ### Install Ollama
 
 ```bash
@@ -308,7 +309,7 @@ ollama pull gemma3:4b-it-qat
 ```bash
 ollama run deepseek-r1:1.5b
 ```
-
+---
 ### Clone & Set Up Python Environment
 ```bash
 sudo apt update
@@ -320,6 +321,8 @@ source ~/kida-venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+---
 ### Install OpenAI Whisper
 
 ```bash
@@ -330,13 +333,13 @@ pip install git+https://github.com/openai/whisper.git
 python3 -c "import whisper; whisper.load_model('large')"
 python3 -c "import whisper; whisper.load_model('tiny')"
 ```
-
+---
 ### Install Audio Dependencies
 
 ```bash
 sudo apt install ffmpeg alsa-utils -y pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
 ```
-
+---
 ### Install Piper TTS
 
 ```bash
@@ -367,13 +370,13 @@ wget https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux
 tar xzf piper_linux_x86_64.tar.gz
 sudo mv piper/piper /usr/local/bin/
 ```
-
+---
 ### Install ElevenLabs (optional)
 
 ```bash
 pip install git+https://github.com/elevenlabs/elevenlabs-python@v3
 ```
-
+---
 ### Install & Set Up Hailo
 
 ```bash
@@ -432,8 +435,7 @@ https://download.pytorch.org/whl/cpu/torch-1.0.1.post2-cp37-cp37m-linux_x86_64.w
 
 ```
 
-
-
+---
 
 #### InceptionResnetV1
 
@@ -481,7 +483,7 @@ apt-get update
 apt-get install -y libsm6 libxext6 libxrender-dev
 pip install opencv-python
 ```
-
+---
 ## Running KIDA
 
 ### Activate the virtual environment
@@ -494,12 +496,9 @@ source venv/bin/activate
 ```bash
 python scripts/main.py
 ```
-
-
-
 /boot/firmware/config.txt
 
-# Enable PCIe Gen 3 speeds for the Hailo Hat
+- Enable PCIe Gen 3 speeds for the Hailo Hat
 dtparam=pciex1_gen=3
 
 ---
@@ -533,7 +532,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable kida.service
 sudo systemctl start kida.service
 ```
-
+---
 #### Option B: Camera preview service
 
 ```bash
@@ -567,7 +566,7 @@ Check status / logs:
 sudo systemctl status kida-camera.service
 journalctl -u kida-camera.service -f
 ```
-
+---
 #### Option C: crontab
 
 ```bash
@@ -575,7 +574,7 @@ crontab -e
 # Add:
 @reboot cd /home/kida-01/Desktop/Kida-Robot && python3 main.py &
 ```
-
+---
 #### Option D: Desktop autostart
 
 ```bash
