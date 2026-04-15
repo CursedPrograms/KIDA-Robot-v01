@@ -239,27 +239,65 @@ SENSORS (DIGITAL):
 
 ## Installation
 
-### Cameras
+### MX500 AI Camera
+
+```bash
+sudo apt update && sudo apt full-upgrade
+```
 ```bash
 sudo apt install imx500-models
 ```
-#### AI Camera Inference
 ```bash
 rpicam-hello --list-cameras
-
-# AI Camera inference (camera slot 1)
+```
+#### AI Camera Object Detection (Realtime)
+```bash
 rpicam-hello --camera 1 -t 0 \
   --post-process-file /usr/share/rpi-camera-assets/imx500_mobilenet_ssd.json \
   --viewfinder-width 1920 \
   --viewfinder-height 1080 \
   --framerate 30
 ```
+#### AI Camera Object Detection (Video)
+```bash
+rpicam-vid --camera 1 -t 10s -o output.264 
+--post-process-file /usr/share/rpi-camera-assets/imx500_mobilenet_ssd.json 
+--width 1920 
+--height 1080 
+--framerate 30
+```
+
+#### AI Camera Pose Estimation (Realtime)
+
+```bash
+rpicam-hello --camera 1 -t 0s 
+--post-process-file /usr/share/rpi-camera-assets/imx500_posenet.json 
+--viewfinder-width 1920 
+--viewfinder-height 1080 
+--framerate 30
+```
+#### Picamera2
+
+```bash
+sudo apt install python3-opencv python3-munkres
+```
+```bash
+python imx500_object_detection_demo.py --model /usr/share/imx500-models/imx500_network_ssd_mobilenetv2_fpnlite_320x320_pp.rpk
+```
+```bash
+python imx500_pose_estimation_higherhrnet_demo.py
+```
+
+#### Documentation
+https://www.raspberrypi.com/documentation/accessories/ai-camera.html
+https://github.com/raspberrypi/picamera2/tree/main/examples/imx500
+
+### Install Ollama
 
 ```bash
 sudo snap install ollama
 ollama --version
 ```
-
 ### 2. Clone & Set Up Python Environment
 ```bash
 sudo apt update
@@ -271,9 +309,6 @@ source ~/kida-venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-
-
-
 ### 2. Install OpenAI Whisper
 
 ```bash
@@ -319,9 +354,6 @@ wget https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux
 tar xzf piper_linux_x86_64.tar.gz
 sudo mv piper/piper /usr/local/bin/
 ```
-
-
-
 ```bash
 
 apt-get update

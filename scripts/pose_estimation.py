@@ -18,9 +18,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from common.hailo_inference import HailoAsyncInference
 from common.toolbox import load_input_images, validate_images, divide_list_to_batches
 
-
-
-
 def parse_args() -> argparse.Namespace:
     """
     Initialize argument parser for the script.

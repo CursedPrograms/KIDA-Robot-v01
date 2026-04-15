@@ -30,22 +30,6 @@ class Button:
         surface.blit(label, label_rect)
 
     def update(self, mouse_pos, mouse_down):
-/*************  ✨ Windsurf Command ⭐  *************/
-    """
-    Update the button's hover and press states based on the mouse position and click state.
-
-    Parameters
-    ----------
-    mouse_pos : tuple
-        The current position of the mouse cursor
-    mouse_down : bool
-        Whether the left mouse button is currently pressed
-
-    Returns
-    -------
-    None
-    """
-/*******  7af6485e-7b5c-49f7-aa87-508649d8ce63  *******/
         self.is_hovered = self.rect.collidepoint(mouse_pos)
         self.is_pressed = self.is_hovered and mouse_down
 
