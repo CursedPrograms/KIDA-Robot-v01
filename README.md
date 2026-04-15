@@ -298,7 +298,18 @@ https://github.com/raspberrypi/picamera2/tree/main/examples/imx500
 sudo snap install ollama
 ollama --version
 ```
-### 2. Clone & Set Up Python Environment
+
+#### Pull Ollama Model
+
+```bash
+ollama pull gemma3:4b-it-qat
+```
+#### Run Ollama Model
+```bash
+ollama run deepseek-r1:1.5b
+```
+
+### Clone & Set Up Python Environment
 ```bash
 sudo apt update
 sudo apt install python3-venv python3-pip
@@ -309,27 +320,29 @@ source ~/kida-venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-### 2. Install OpenAI Whisper
+### Install OpenAI Whisper
 
 ```bash
 pip install git+https://github.com/openai/whisper.git
 ```
+
 ```bash
 python3 -c "import whisper; whisper.load_model('large')"
 python3 -c "import whisper; whisper.load_model('tiny')"
 ```
 
-### 3. Install Audio Dependencies
+### Install Audio Dependencies
 
 ```bash
 sudo apt install ffmpeg alsa-utils -y pulseaudio jackd2 alsa-utils portaudio19-dev python3-pyaudio
 ```
 
-### 4. Install Piper TTS
+### Install Piper TTS
 
 ```bash
 pip install piper-tts
 ```
+#### Download Voices
 
 ```bash
 mkdir -p ~/voices/
@@ -354,6 +367,54 @@ wget https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux
 tar xzf piper_linux_x86_64.tar.gz
 sudo mv piper/piper /usr/local/bin/
 ```
+
+### Install ElevenLabs (optional)
+
+```bash
+pip install git+https://github.com/elevenlabs/elevenlabs-python@v3
+```
+
+### Install & Set Up Hailo
+
+```bash
+sudo apt update
+sudo apt install hailo-all
+```
+### Test Hailo
+- Verify the installation:
+```bash
+hailortcli fw-control identify
+```
+- Expected output:
+```
+Device: Hailo-8l
+PCIe Address: 0001:03:00.0
+Firmware Version: x.x.x
+```
+
+**Troubleshooting:** 
+- If the driver is not detected after install, a DKMS module may have failed to build. Pin back to version 4.19 which has stable kernel module support:
+```bash
+sudo apt-mark hold linux-image-rpi-2712 linux-headers-rpi-2712
+sudo apt install hailort=4.19.0 hailo-all=4.19.0 -y
+sudo apt-mark hold hailort hailo-all
+sudo reboot
+```
+
+#### Manual Hailo Build (if package unavailable)
+```bash
+sudo apt install -y git build-essential cmake python3-dev python3-pip
+
+git clone https://github.com/hailo-ai/hailort.git
+cd hailort && mkdir build && cd build
+cmake .. && make -j$(nproc) && sudo make install
+
+echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
+source ~/.bashrc
+pip install hailort
+```
+---
+
 ```bash
 
 apt-get update
@@ -371,53 +432,10 @@ https://download.pytorch.org/whl/cpu/torch-1.0.1.post2-cp37-cp37m-linux_x86_64.w
 
 ```
 
-### 5. Install ElevenLabs (optional)
 
-```bash
-pip install git+https://github.com/elevenlabs/elevenlabs-python@v3
-```
 
-### 6. Install & Set Up Hailo
 
-```bash
-sudo apt update
-sudo apt install hailo-all
-```
-
-Verify the installation:
-```bash
-hailortcli fw-control identify
-```
-
-Expected output:
-```
-Device: Hailo-8
-PCIe Address: 0001:03:00.0
-Firmware Version: x.x.x
-```
-
-> **Troubleshooting:** If the driver is not detected after install, a DKMS module may have failed to build. Pin back to version 4.19 which has stable kernel module support:
-> ```bash
-> sudo apt-mark hold linux-image-rpi-2712 linux-headers-rpi-2712
-> sudo apt install hailort=4.19.0 hailo-all=4.19.0 -y
-> sudo apt-mark hold hailort hailo-all
-> sudo reboot
-> ```
-
-#### Manual Hailo Build (if package unavailable)
-```bash
-sudo apt install -y git build-essential cmake python3-dev python3-pip
-
-git clone https://github.com/hailo-ai/hailort.git
-cd hailort && mkdir build && cd build
-cmake .. && make -j$(nproc) && sudo make install
-
-echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
-source ~/.bashrc
-pip install hailort
-```
-
----
+#### InceptionResnetV1
 
 ```bash
 from facenet_pytorch import InceptionResnetV1
@@ -435,7 +453,7 @@ model = InceptionResnetV1(num_classes=100).eval()
 model = InceptionResnetV1(classify=True, num_classes=1001).eval()
 ```
 
-
+#### Pre-processing
 ```bash
 # Basic debugging
 from opencv_transforms.debug import utils
@@ -447,6 +465,7 @@ summary = utils.create_contrast_test_summary(image)
 # Analyze PIL precision issues
 utils.analyze_pil_precision_issue(image)
 ```
+#### Detection Pipeline
 
 ```bash
 
@@ -476,12 +495,7 @@ source venv/bin/activate
 python scripts/main.py
 ```
 
-### Run LLM
-```bash
-ollama run deepseek-r1:1.5b
-# or
-ollama pull gemma3:4b-it-qat
-```
+
 
 /boot/firmware/config.txt
 
@@ -490,9 +504,9 @@ dtparam=pciex1_gen=3
 
 ---
 
-## Autostart on Boot
+### Autostart on Boot
 
-### Option A: systemd service (recommended)
+#### Option A: systemd service (recommended)
 
 ```bash
 sudo nano /etc/systemd/system/kida.service
@@ -520,7 +534,7 @@ sudo systemctl enable kida.service
 sudo systemctl start kida.service
 ```
 
-### Option B: Camera preview service
+#### Option B: Camera preview service
 
 ```bash
 sudo nano /etc/systemd/system/kida-camera.service
@@ -554,7 +568,7 @@ sudo systemctl status kida-camera.service
 journalctl -u kida-camera.service -f
 ```
 
-### Option C: crontab
+#### Option C: crontab
 
 ```bash
 crontab -e
@@ -562,7 +576,7 @@ crontab -e
 @reboot cd /home/kida-01/Desktop/Kida-Robot && python3 main.py &
 ```
 
-### Option D: Desktop autostart
+#### Option D: Desktop autostart
 
 ```bash
 mkdir -p ~/.config/autostart
@@ -579,7 +593,7 @@ X-GNOME-Autostart-enabled=true
 
 ---
 
-## RTC Setup
+### RTC Setup
 
 ```bash
 dtparam=rtc_bbat_vchg=3000000
@@ -591,7 +605,7 @@ sudo hwclock -v -r
 
 ---
 
-## Diagnostics
+### Diagnostics
 
 ```bash
 # Check Hailo kernel module
