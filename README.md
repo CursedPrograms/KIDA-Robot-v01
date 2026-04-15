@@ -43,35 +43,41 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
   <img src="/images/demo/KIDA001.jpg" alt="KIDA Robot" width="600"/>
 </div>
 
-### Prerequisite Software
+## Prerequisites
+
+### Software
 - [Arduino IDE](https://docs.arduino.cc/software/ide/)
 - [Raspberry Pi OS](https://www.raspberrypi.com/software/operating-systems/)
 ### Operating System
 - **Recommended:** Raspberry Pi OS (Bookworm)
 - **Kernel:** `6.12.62+rpt-rpi-2712`
 
-## Hardware Specifications
+## Hardware
 
-### Computing
-| Component | Details |
+### Compute
+| **Component** | **Details** |
 |-----------|---------|
-| Main Board | Raspberry Pi 5 |
+| Main Board | Raspberry Pi 5 (4GB) |
 | PCI-E Board | NVMe + AI Hat |
 | AI Accelerator | Hailo-8 (13 TOPS) via NVMe + AI Hat |
 | Storage | NVMe SSD |
-| Microcontroller 0 | RGBduino Jenny |
-| Microcontroller 1 | Arduino UNO |
 | I2C | Custom |
 
+### Microcontrollers
+| **Component** | **Details** |
+|-----------|---------|
+| Microcontroller 0 | RGBduino Jenny | Dev0 |
+| Microcontroller 1 | Arduino UNO | Dev1 |
+
 ### Chassis & Motion
-| Component | Details |
+| **Component** | **Details** |
 |-----------|---------|
 | Chassis | Robot Tank Chassis |
 | Motor Driver | L298N |
 | Motors | 2× 12v DC Motors |
 
 ### Power System
-| Component | Details |
+| **Component** | **Details** |
 |-----------|---------|
 | Motor Battery | 3s 21700 (12.6V in series) |
 | Compute Battery | 3s 18650 via Pi UPS |
@@ -79,11 +85,15 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 | Voltage Regulator | LM2596S (12V → 11.5V) |
 | Power Switches | 4× (Main + UPS), 2× MOSFET SWITCHES|
 
-### Sensors & Cameras
-| Component | Details |
+### Cameras
+| **Component** | **Details** |
 |-----------|---------|
 | Camera 0 | Raspberry Pi Night Vision Camera |
 | Camera 1 | Raspberry Pi AI Camera (IMX500) |
+
+### Sensors
+| **Component** | **Details** |
+|-----------|---------|
 | Ultrasonic Sensors | HC-SR04 × 2 (one mounted on servo for scanning) |
 | Line Follower | 3-Channel Line Tracking Sensor |
 | Switch Sensor | Ball Switch (Impact Detection) |
@@ -94,7 +104,7 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 | PIR Sensor | Passive Infrared Motion Sensor |
 
 ### Audio
-| Component | Details |
+| **Component** | **Details** |
 |-----------|---------|
 | Output | Pi Speakers |
 | Input | USB Microphone |
@@ -133,8 +143,28 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 
 ## Installation
 
-### 1. Clone & Set Up Python Environment
+### Cameras
+```bash
+sudo apt install imx500-models
+```
+#### AI Camera Inference
+```bash
+rpicam-hello --list-cameras
 
+# AI Camera inference (camera slot 1)
+rpicam-hello --camera 1 -t 0 \
+  --post-process-file /usr/share/rpi-camera-assets/imx500_mobilenet_ssd.json \
+  --viewfinder-width 1920 \
+  --viewfinder-height 1080 \
+  --framerate 30
+```
+
+```bash
+sudo snap install ollama
+ollama --version
+```
+
+### 2. Clone & Set Up Python Environment
 ```bash
 sudo apt update
 sudo apt install python3-venv python3-pip
@@ -146,17 +176,13 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-```bash
-sudo snap install ollama
-ollama --version
-```
+
 
 ### 2. Install OpenAI Whisper
 
 ```bash
 pip install git+https://github.com/openai/whisper.git
 ```
-
 ```bash
 python3 -c "import whisper; whisper.load_model('large')"
 python3 -c "import whisper; whisper.load_model('tiny')"
@@ -198,21 +224,7 @@ tar xzf piper_linux_x86_64.tar.gz
 sudo mv piper/piper /usr/local/bin/
 ```
 
-### Cameras
-```bash
-sudo apt install imx500-models
-```
-#### AI Camera Inference
-```bash
-rpicam-hello --list-cameras
 
-# AI Camera inference (camera slot 1)
-rpicam-hello --camera 1 -t 0 \
-  --post-process-file /usr/share/rpi-camera-assets/imx500_mobilenet_ssd.json \
-  --viewfinder-width 1920 \
-  --viewfinder-height 1080 \
-  --framerate 30
-```
 
 ```bash
 
