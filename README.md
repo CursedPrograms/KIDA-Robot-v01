@@ -29,13 +29,26 @@
 - [DREAM](https://github.com/CursedPrograms/DREAM)
 - [RIFT](https://github.com/CursedPrograms/RIFT)
 
+---
+
 <div align="center">
   <img src="/images/background.jpeg" alt="KIDA Robot" width="600"/>
 </div>
 
-## Overview
+## 📖 Overview
 
-KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring dual-camera vision (night vision + AI camera), a Hailo-8l AI accelerator (13 TOPS), and local LLM capabilities. The robot supports voice interaction, autonomous navigation, and real-time AI inference.
+<details>
+<summary><b>View Overview</b></summary>
+
+KIDA represents the pinnacle of the RIFT fleet. Built on the **Raspberry Pi 5**, it leverages the **Hailo-8L** AI accelerator to perform high-speed neural processing at the edge. With a dual-camera setup for multi-spectrum vision and local LLM integration, KIDA is designed for sophisticated human-robot interaction and autonomous decision-making without relying on the cloud.
+
+Core Features
+- [x] Neural Edge Processing: 13 TOPS of AI compute via Hailo-8L for real-time object detection and tracking.
+- [x] Hybrid Dual-Vision: Simultaneous processing of Night Vision and 4K AI camera feeds for 24/7 situational awareness.
+- [x] Local LLM Integration: Privacy-focused voice interaction and logic processing running entirely on-device.
+- [x] Autonomous Navigation: Advanced SLAM and obstacle avoidance powered by high-speed Raspberry Pi 5 architecture.
+
+</details>
 
 ---
 
@@ -44,6 +57,9 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 </div>
 
 ## Prerequisites
+
+<details>
+<summary><b>View Prerequisites</b></summary>
 
 ### Software
 - [Arduino IDE](https://docs.arduino.cc/software/ide/)
@@ -115,7 +131,13 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 | Output | Pi Speakers |
 | Input | USB Microphone |
 
----
+</details>
+
+# Schematics
+## ⚡ Technical Pinouts
+
+<details>
+<summary><b>View Power Distribution Wiring</b></summary>
 
 ### Power Schematic
 ```
@@ -141,6 +163,10 @@ UPS:
 ├── 5V ──────► SERVO POWER
 └── 5V ──────► BREADBOARD (5V rail)
 ```
+</details>
+
+<details>
+<summary><b>View Power Raspberry Pi Wiring</b></summary>
 
 ```
 RASPBERRY PI:
@@ -161,7 +187,13 @@ RASPBERRY PI:
             ├── SDA → Pin 3
             └── SCL → Pin 5
 ```
-**ARDUINO (DEV0):**
+</details>
+
+<details>
+<summary><b>View Power Arduino 0 Wiring</b></summary>
+
+### **ARDUINO (DEV0):**
+#### Libraries:
 ```
 Adafruit_VL53L0X.h
 Servo.h
@@ -211,14 +243,21 @@ VL53L0X:
 ├── SDA ─────► A4
 └── SCL ─────► A5
 ```
-**ARDUINO (DEV1):**
+
+</details>
+
+<details>
+<summary><b>View Power Arduino 1 Wiring</b></summary>
+
+### **ARDUINO (DEV1):**
+#### Libraries:
 ```
 IRremote.h
 ```
 ```
 POWER:
 ├── 5V ──────► From Raspberry Pi (USB)
-└── GND ─────► Common GND (all sensors, USB, moduless)
+└── GND ─────► Common GND (USB, modules)
 
 IR REMOTE:
 ├── D5 ──────► IR RECEIVER SIGNAL
@@ -241,6 +280,24 @@ SENSORS (DIGITAL):
 ├── D10 ─────► LINE FOLLOWER MID
 └── D9  ─────► LINE FOLLOWER RIGHT
 ```
+
+</details>
+
+> [!TIP]
+> **Pro-Tip:** Make sure all modules share a common ground (GND) for stable operation.
+
+---
+## 🌐 Connectivity & Controls
+
+### Network Configuration
+| Parameter | Value |
+| :--- | :--- |
+| **SSID** | `NORA` |
+| **Password** | `12345678` |
+
+### RIFT Integration
+To connect via [RIFT](https://github.com/CursedPrograms/RIFT), ensure KIDA01 is active on:
+* `localhost:5004`
 ---
 
 ## Installation
