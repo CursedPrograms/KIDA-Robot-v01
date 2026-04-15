@@ -81,7 +81,7 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 |-----------|---------|
 | Motor Battery | 3s 21700 (12.6V in series) |
 | Compute Battery | 3s 18650 via Pi UPS |
-| Realtime Battery | 3s 18650 via Pi UPS |
+| Realtime Battery | CR2032 |
 | Voltage Regulator | LM2596S (12V → 11.5V) |
 | Power Switches | 4× (Main + UPS), 2× MOSFET SWITCHES|
 
