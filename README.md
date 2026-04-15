@@ -58,23 +58,6 @@ Core Features
 
 ---
 
-🎵 On-Board Media Library
-<details>
-<summary><b>Expand System Audio (track0 - track19)</b></summary>
-🔊 Hardware Media Player
-textNORA_OS v2.6 | MEDIA_SERVICE | STATUS: ACTIVE
-[█████████████░░░░░] 70% | VOL: 85%
-NOW PLAYING: track_04_pulse.mp3
-📂 Track Directory: /audio/music/
-CategoryTrack IDFilenameActionSystem00 - 04track0.mp3 ... track4.mp3📂 Browse AssetsAmbient05 - 09track5.mp3 ... track9.mp3📂 Browse AssetsTactical10 - 14track10.mp3 ... track14.mp3📂 Browse AssetsSpecial15 - 19track15.mp3 ... track19.mp3📂 Browse Assets
-📑 Full Playlist Index
-IDResource PathDescriptionPreview00audio/music/track0.mp3System Initialization▶️ Play01audio/music/track1.mp3Boot Sequence Alpha▶️ Play02audio/music/track2.mp3Idle Humming▶️ Play03audio/music/track3.mp3Diagnostic Loop▶️ Play04audio/music/track4.mp3Kinetic Pulse▶️ Play05audio/music/track5.mp3Low-Light Recon▶️ Play06audio/music/track6.mp3High-Speed Vectoring▶️ Play07audio/music/track7.mp3Neural Link▶️ Play08audio/music/track8.mp3Data Syncing▶️ Play09audio/music/track9.mp3Reactive Logic▶️ Play10audio/music/track10.mp3Stealth Sweep▶️ Play11audio/music/track11.mp3Perimeter Alert▶️ Play12audio/music/track12.mp3Emergency Siren▶️ Play13audio/music/track13.mp3UV Disinfection Mode▶️ Play14audio/music/track14.mp3Battery Low Warn▶️ Play15audio/music/track15.mp3Interaction Response▶️ Play16audio/music/track16.mp3Voice Logic Hook▶️ Play17audio/music/track17.mp3External Comms▶️ Play18audio/music/track18.mp3Final Log▶️ Play19audio/music/track19.mp3Power Down▶️ Play
-
-[!TIP]
-RIFT Integration: These tracks are triggered via the serial bridge. Sending command M_PLAY_[ID] through the RIFT terminal will initiate playback on NORA's hardware speaker.
-
-</details>
-
 <div align="center">
   <img src="/images/demo/KIDA001.jpg" alt="KIDA Robot" width="600"/>
 </div>
