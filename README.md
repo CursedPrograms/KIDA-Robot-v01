@@ -111,34 +111,130 @@ KIDA is an advanced autonomous robot platform built on Raspberry Pi 5, featuring
 
 ---
 
-## GPIO / Wiring Reference
-
-### Motor A (Left)
-| L298N Pin | Function | Pi GPIO |
-|-----------|----------|---------|
-| IN1 | Direction | GPIO 17 |
-| IN2 | Direction | GPIO 27 |
-| ENA | Speed (PWM) | GPIO 18 (hardware PWM) |
-
-### Motor B (Right)
-| L298N Pin | Function | Pi GPIO |
-|-----------|----------|---------|
-| IN3 | Direction | GPIO 22 |
-| IN4 | Direction | GPIO 23 |
-
 ### Power Schematic
 ```
-[12V Battery Pack — 3S 21700 @ 3.7V each]
- ├── + ─────────► L298N VS        (motor power input)
- ├── + ─────────► LM2596S IN+     (step-down input for Pi)
- ├── – ─────────► L298N GND
- └── – ─────────► LM2596S IN–
-
-[LM2596S Output]
- ├── OUT+ ──────► Pi 5V  (GPIO pin 2 — or Pi UPS via USB-C [Recommended])
- └── OUT– ──────► Pi GND (GPIO pin 6 or 9)
+3S 21700 BATTERIES ──────► LM2596S INPUT 11.5V ──────► LM2596S Output 11.5V
+LM2596S Output 11.5V:
+├── + ──────► L298N +
+├── – ──────► L298N - ─────────► ARDUINO (DEV0) GND
+├── + ──────► MOSFET switch ─────────► (12V) FRONT LIGHTS +
+├── + ──────► MOSFET switch ─────────► (12V)BACK LIGHTS +
+├── – ──────► MOSFET switch ─────────► FRONT LIGHTS -
+└── – ──────► MOSFET switch ─────────► BACK LIGHTS -  
+```
+```
+3S 18650 BATTERY UPS ──────► USB-C OUTPUT ──────► RASPBERRY PI
+    ├──► POWER BUTTON
+    └──► CHARGING PORT
+```
 ```
 
+UPS:
+├── I2C ─────► Raspberry Pi I2C BUS
+├── 3.3V ────► BREADBOARD (3.3V rail)
+├── 5V ──────► SERVO POWER
+└── 5V ──────► BREADBOARD (5V rail)
+```
+
+```
+RASPBERRY PI:
+├──► NVMe + AI HAT (PCIe)
+│     └──► NVMe SSD + HAILO-8L
+│
+├──► ARDUINO (DEV0, DEV1) via USB
+├──► Camera 0 ─────► Night Vision Camera
+├──► Camera 1 ─────► AI Camera (IMX500)
+├──► SPEAKER HAT (USB)
+│
+├──► USB HUB:
+│     ├── MIC (USB)
+│     └── WIRELESS KEYBOARD (USB)
+│
+└──► GPIO:
+      └──► I2C BUS
+            ├── SDA → Pin 3
+            └── SCL → Pin 5
+```
+**ARDUINO (DEV0):**
+```
+Adafruit_VL53L0X.h
+Servo.h
+Adafruit_NeoPixel.h
+avr/power.h
+Wire.h
+```
+```
+POWER:
+├── 5V ──────► From Raspberry Pi (USB)
+└── GND ─────► Common GND (L298N, USB, modules)
+
+INPUT / OUTPUT:
+├── D2  ─────► BUTTON
+├── D8  ─────► BUZZER
+
+SERVO:
+├── D10 ─────► SERVO SIGNAL
+├── 5V  ─────► SERVO VCC (external 5V from UPS)
+└── GND ─────► SERVO GND
+
+ULTRASONIC SENSORS:
+├── US0 (FIXED)
+│   ├── A1 ─────► TRIG
+│   └── A0 ─────► ECHO
+│
+└── US1 (SERVO-MOUNTED)
+    ├── A2 ─────► TRIG
+    └── A3 ─────► ECHO
+
+MOTOR DRIVER (L298N):
+├── D6  ─────► RIGHT MOTOR PWM
+├── D7  ─────► RIGHT DIR1
+├── D9  ─────► RIGHT DIR2
+│
+├── D3  ─────► LEFT MOTOR PWM
+├── D4  ─────► LEFT DIR1
+└── D5  ─────► LEFT DIR2
+
+LED STRIPS (NEOPIXEL):
+├── D13 ─────► STRIP 1 DATA
+└── D12 ─────► STRIP 2 DATA
+
+VL53L0X:
+├── VCC ─────► 5V
+├── GND ─────► GND
+├── SDA ─────► A4
+└── SCL ─────► A5
+```
+**ARDUINO (DEV1):**
+```
+IRremote.h
+```
+```
+POWER:
+├── 5V ──────► From Raspberry Pi (USB)
+└── GND ─────► Common GND (all sensors, USB, moduless)
+
+IR REMOTE:
+├── D5 ──────► IR RECEIVER SIGNAL
+├── 5V ──────► IR RECEIVER VCC
+└── GND ─────► IR RECEIVER GND
+
+LIGHTS:
+├── D2 ──────► FRONT LIGHT (+ via MOSFET)
+└── D3 ──────► BACK LIGHT (+ via MOSFET)
+
+SENSORS (ANALOG):
+├── A0 ──────► METAL SENSOR
+├── A1 ──────► PHOTORESISTOR (LIGHT SENSOR)
+├── A2 ──────► UV SENSOR
+└── A3 ──────► BALL SWITCH (digital read but on analog pin)
+
+SENSORS (DIGITAL):
+├── D4  ─────► PIR MOTION SENSOR
+├── D8  ─────► LINE FOLLOWER LEFT
+├── D10 ─────► LINE FOLLOWER MID
+└── D9  ─────► LINE FOLLOWER RIGHT
+```
 ---
 
 ## Installation
