@@ -348,7 +348,7 @@ To connect via [RIFT](https://github.com/CursedPrograms/RIFT), ensure KIDA01 is 
 
 ---
 
-## Installation
+## Setup:
 
 ### MX500 AI Camera
 
