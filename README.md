@@ -180,6 +180,14 @@ Use the numeric keys to hot-swap between drive logics:
 
 </details>
 
+---
+
+
+<div align="center">
+  <img src="kida.gif" alt="KIDA Robot" width="400"/>
+</div>
+<br>
+
 # Schematics
 ## ⚡ Technical Pinouts
 
