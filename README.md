@@ -527,6 +527,8 @@ tar xzf piper_linux_x86_64.tar.gz
 sudo mv piper/piper /usr/local/bin/
 ```
 
+</details>
+
 ### Install & Set Up Hailo
 
 <details>
