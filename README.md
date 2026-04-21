@@ -24,7 +24,7 @@
 ---
 
 <div align="center">
-  <img src="/images/demo/kida.jpg" alt="KIDA Robot" width="600"/>
+  <img src="/images/demo/kida.jpg" alt="KIDA Robot" width="400"/>
 </div>
 
 # KIDA: Kinetic Interactive Drive Automaton
@@ -55,7 +55,7 @@ Core Features
 ---
 
 <div align="center">
-  <img src="/images/background.jpeg" alt="KIDA Robot" width="600"/>
+  <img src="/images/background.jpeg" alt="KIDA Robot" width="400"/>
 </div>
 
 <details>
@@ -96,7 +96,7 @@ Use the numeric keys to hot-swap between drive logics:
 ---
 
 <div align="center">
-  <img src="/images/demo/KIDA001.jpg" alt="KIDA Robot" width="600"/>
+  <img src="/images/demo/KIDA001.jpg" alt="KIDA Robot" width="400"/>
 </div>
 
 </details>
@@ -817,7 +817,7 @@ X-GNOME-Autostart-enabled=true
 ---
 
 <div align="center">
-  <img src="/images/demo/KIDA002.jpg" alt="KIDA Robot" width="600"/>
+  <img src="/images/demo/KIDA002.jpg" alt="KIDA Robot" width="400"/>
 </div>
 <br>
 <br>
