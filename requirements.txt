@@ -72,6 +72,27 @@ pybind11
 Jinja2
 ply
 PyYAML
+loguru
+tqdm
+opencv-python
+loguru
+opencv-python
+scipy
+lap
+cython_bbox
+loguru
+opencv-python
+scipy
+lap
+cython_bbox
+loguru
+opencv-python
+Pillow
+transformers==4.50.1
+sounddevice==0.5.1
+torch==2.6.0
+scipy==1.9.3
+
 
 
 
