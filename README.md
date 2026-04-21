@@ -37,10 +37,6 @@
 
 ---
 
-<div align="center">
-  <img src="/images/background.jpeg" alt="KIDA Robot" width="600"/>
-</div>
-
 ## 📖 Overview
 
 <details>
@@ -57,6 +53,10 @@ Core Features
 </details>
 
 ---
+
+<div align="center">
+  <img src="/images/background.jpeg" alt="KIDA Robot" width="600"/>
+</div>
 
 <details>
 <summary><b>Keybindings</b></summary>
@@ -803,6 +803,12 @@ X-GNOME-Autostart-enabled=true
 ```
 
 </details>
+
+---
+
+<div align="center">
+  <img src="hailo_logo.png" alt="Hailo" width="600"/>
+</div>
 
 ---
 
