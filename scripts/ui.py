@@ -21,8 +21,10 @@ import sys, os, json, time, threading, platform
 import pygame
 import config
 import leds
-import music
 import mode_manager
+
+# music.py deleted — MusicPlayer is the sole music interface
+from music_player import MusicPlayer
 
 from state import DriveMode
 from buttons import create_buttons
@@ -36,7 +38,6 @@ from queue import Empty
 import RPi.GPIO as GPIO
 
 # ── Refactored sub-modules ──
-import music_ctrl
 import ir_bridge
 import hud_draw
 import event_handler
@@ -98,11 +99,11 @@ _celebration_lock   = threading.Lock()
 _celebration_active = False
 
 
-def celebration_routine():
+def celebration_routine(music_ctrl: MusicPlayer):
     global _celebration_active
     print("🎉 Celebration!")
     threading.Thread(target=leds.run_chase_effect, daemon=True).start()
-    music_ctrl.safe_play_next()
+    music_ctrl.play_next()
     send_command("dev00", "HAPPY")
     time.sleep(15)
     with _celebration_lock:
@@ -174,7 +175,9 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
 
     leds.setup_leds()
     leds.startup_led_fade()
-    music.init_music()
+
+    # ── Music player (replaces music.init_music()) ──────────────────────────
+    music_ctrl = MusicPlayer()   # reads config.MUSIC_FOLDER + config.SUPPORTED_FORMATS
 
     # ── Assets ──
     char_imgs = []
@@ -322,8 +325,14 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
         # ════════════════════════════════
         #  EVENTS
         # ════════════════════════════════
+        raw_events = pygame.event.get()
+
+        # Let MusicPlayer handle its own SONG_END auto-advance event
+        for event in raw_events:
+            music_ctrl.handle_event(event)
+
         sigs = event_handler.handle_events(
-            pygame.event.get(),
+            raw_events,
             buttons, pressed_keys,
             motor_speed, inference_on,
             char_imgs, char_idx,
@@ -331,6 +340,25 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
 
         if sigs["quit"]:
             running = False
+
+        # ── Music control signals from event_handler ──────────────────────
+        if sigs.get("music_start"):
+            music_ctrl.start()
+        if sigs.get("music_stop"):
+            music_ctrl.stop()
+        if sigs.get("music_skip"):
+            music_ctrl.skip()
+        # Legacy "M = play or skip" toggle used in the old ui
+        if sigs.get("music_toggle"):
+            if music_ctrl.is_playing():
+                music_ctrl.skip()
+            else:
+                music_ctrl.start()
+
+        # SPACE = hard stop motors + music
+        if sigs.get("hard_stop"):
+            music_ctrl.stop()
+
         if sigs["inference_toggle"]:
             toggle_inference()
         if sigs["char_next"] and char_imgs:
@@ -343,6 +371,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
     #  CLEANUP
     # ════════════════════════════════
     print("🧹 Cleaning up…")
+    music_ctrl.stop()
     stop_cam0()
     for cam in (picam2, picam2_ai):
         if cam:
