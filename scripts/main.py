@@ -2,7 +2,11 @@ import threading
 import pygame
 import signal
 import sys
+import os
+import urllib.request
 import RPi.GPIO as GPIO
+
+import kida_chat as voice_ai
 
 from flask_server import run_flask_server
 from leds import setup_leds, startup_led_fade
@@ -10,14 +14,6 @@ from arduino import start_arduino_threads
 from camera import picam2
 from ui import run_ui
 from ultralytics import YOLO
-import os
-import urllib.request
-
-import kida_chat as voice_ai
-
-# NOTE: music.py has been deleted.
-# MusicPlayer is instantiated inside run_ui() and owns the full lifecycle.
-
 
 def signal_handler(sig, frame):
     print("👋 Exiting...")

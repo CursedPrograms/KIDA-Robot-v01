@@ -11,15 +11,7 @@ import tempfile
 import warnings
 import ollama
 warnings.filterwarnings("ignore")
-
-# ── Relative Paths ────────────────────────────────────────────────────────────
 from pathlib import Path
-
-BASE_DIR     = Path(__file__).resolve().parent.parent   # Kida-Robot/
-SCRIPTS_DIR  = BASE_DIR / "scripts"
-
-sys.path.insert(0, str(SCRIPTS_DIR))
-sys.path.insert(0, str(BASE_DIR))
 
 from hailo_whisper_pipeline import HailoWhisperPipeline
 from common.audio_utils import load_audio
@@ -35,6 +27,12 @@ from queue import Queue
 WHISPER_VARIANT  = "base"
 WHISPER_DURATION = 5       # seconds for full command recording
 WAKE_DURATION    = 2       # seconds for wake-word snippet
+
+BASE_DIR     = Path(__file__).resolve().parent.parent   # Kida-Robot/
+SCRIPTS_DIR  = BASE_DIR / "scripts"
+
+sys.path.insert(0, str(SCRIPTS_DIR))
+sys.path.insert(0, str(BASE_DIR))
 
 ENCODER_HEF = str(BASE_DIR / "resources/hefs/h8l/base/base-whisper-encoder-5s_h8l.hef")
 DECODER_HEF = str(BASE_DIR / "resources/hefs/h8l/base/base-whisper-decoder-fixed-sequence-matmul-split_h8l.hef")
