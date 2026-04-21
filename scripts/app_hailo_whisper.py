@@ -14,7 +14,6 @@ from whisper_hef_registry import HEF_REGISTRY
 
 DURATION = 5  # recording duration in seconds
 
-
 def get_args():
     """
     Initialize and run the argument parser.

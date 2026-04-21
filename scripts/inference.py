@@ -9,7 +9,6 @@ from utils.hparams import HParam
 from model.model import VoiceFilter
 from model.embedder import SpeechEmbedder
 
-
 def main(args, hp):
     with torch.no_grad():
         model = VoiceFilter(hp).cuda()

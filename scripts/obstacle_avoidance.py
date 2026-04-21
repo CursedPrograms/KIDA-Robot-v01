@@ -4,6 +4,7 @@ from arduino import send_command
 import time
 
 # Configuration
+# each sensor needs its own distance
 SAFE_LASER_DISTANCE = 40
 SAFE_ULTRASONIC_DISTANCE = 20
 LOOP_DELAY = 0.05

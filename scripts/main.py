@@ -8,7 +8,7 @@ import RPi.GPIO as GPIO
 
 import kida_chat as voice_ai
 
-from flask_server import run_flask_server
+from scripts.server import run_flask_server
 from leds import setup_leds, startup_led_fade
 from arduino import start_arduino_threads
 from camera import picam2

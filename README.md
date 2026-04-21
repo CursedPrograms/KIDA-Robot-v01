@@ -70,11 +70,19 @@ Use the numeric keys to hot-swap between drive logics:
 
 | Input | **Mode 1: Coordinated** | **Mode 2: Independent** |
 | :--- | :--- | :--- |
-| <kbd>Q</kbd> | — | **Left Bank Forward** |
-| <kbd>A</kbd> | Rotate Left | **Left Bank Backward** |
-| <kbd>W</kbd> | Move Forward | **Right Bank Forward** |
-| <kbd>S</kbd> | Move Backward | **Right Bank Backward** |
+| <kbd>Q</kbd> | — | Left Bank Forward |
+| <kbd>A</kbd> | Rotate Left | Left Bank Backward |
+| <kbd>W</kbd> | Move Forward | Right Bank Forward |
+| <kbd>S</kbd> | Move Backward | Right Bank Backward |
 | <kbd>D</kbd> | Rotate Right | — |
+| <kbd>X</kbd> | Speed Control | Speed Control |
+| <kbd>TAB</kbd> | Cycle Modes | Cycle Modes |
+| <kbd>U</kbd> | User Cotrol Mode | User Cotrol Mode |
+| <kbd>C</kbd> | Take Photo | Take Photo |
+| <kbd>V</kbd> | Take Video | Take Video |
+| <kbd>K</kbd> | Light Effects | Light Effects |
+| <kbd>L</kbd> | Turn On/Off Lights | Turn On/Off Lights |
+
 
 ### 🎵 Media & System
 * <kbd>M</kbd> **Play Music**
@@ -519,21 +527,6 @@ tar xzf piper_linux_x86_64.tar.gz
 sudo mv piper/piper /usr/local/bin/
 ```
 
-</details>
-
----
-### Install ElevenLabs (optional)
-
-<details>
-<summary><b>ElevenLabs Setup</b></summary>
-
-```bash
-pip install git+https://github.com/elevenlabs/elevenlabs-python@v3
-```
-
-</details>
-
----
 ### Install & Set Up Hailo
 
 <details>

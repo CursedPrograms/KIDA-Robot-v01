@@ -25,7 +25,7 @@ from queue import Queue
 # ─────────────────────────────────────────────
 
 WHISPER_VARIANT  = "base"
-WHISPER_DURATION = 5       # seconds for full command recording
+WHISPER_DURATION = 8       # seconds for full command recording
 WAKE_DURATION    = 2       # seconds for wake-word snippet
 
 BASE_DIR     = Path(__file__).resolve().parent.parent   # Kida-Robot/

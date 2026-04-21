@@ -22,7 +22,6 @@ _IR_MODE_MAP = {
     "IDLE":      DriveMode.IDLE,
 }
 
-
 def poll(motor_speed_box: list) -> None:
     """
     Call once per frame from the main loop.
