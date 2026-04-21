@@ -809,13 +809,12 @@ X-GNOME-Autostart-enabled=true
 ---
 
 <div align="center">
-  <img src="hailo_logo.png" alt="Hailo" width="600"/>
-</div>
-
----
-
-<div align="center">
   <img src="/images/demo/KIDA002.jpg" alt="KIDA Robot" width="600"/>
+</div>
+<br>
+<br>
+<div align="center">
+  <img src="hailo_logo.png" alt="Hailo" width="200"/>
 </div>
 <br>
 <div align="center">© Cursed Entertainment 2026</div>
