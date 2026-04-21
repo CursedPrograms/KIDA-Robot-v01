@@ -393,6 +393,10 @@ rpicam-hello --camera 1 -t 0s
 #### Picamera2
 
 ```bash
+sudo apt install python3-picamera2 --no-install-recommends
+```
+
+```bash
 sudo apt install python3-opencv python3-munkres
 ```
 ```bash

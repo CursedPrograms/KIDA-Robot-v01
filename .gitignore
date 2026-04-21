@@ -2,3 +2,5 @@ whisper-base/
 venv/
 keys/
 /resources/
+hailort.log
+*.log
