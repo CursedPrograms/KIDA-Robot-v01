@@ -1,0 +1,242 @@
+/* styles.css — KIDA web HUD, mirrors the PyGame ui.py dark theme */
+
+:root {
+  --bg:         #07090f;
+  --panel:      #0a0e1a;
+  --border:     #1e3458;
+  --accent:     #6496e6;
+  --text:       #a0b8e8;
+  --text-dim:   #4a5f80;
+  --text-val:   #d7e6ff;
+  --green:      #46d764;
+  --orange:     #ffbe50;
+  --red:        #c84040;
+  --radius:     6px;
+  --font:       'Courier New', Courier, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  min-height: 100vh;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── App shell ─────────────────────────────────────────────── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 8px;
+  gap: 6px;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+#header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+#app-name { font-size: 14px; font-weight: bold; color: var(--text); }
+#self-tag  { color: var(--text-dim); }
+
+/* ── Cameras ───────────────────────────────────────────────── */
+#cameras {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.cam-panel {
+  flex: 1;
+  position: relative;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: #080a12;
+  overflow: hidden;
+  aspect-ratio: 4/3;
+}
+
+.cam-label {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  font-size: 11px;
+  color: var(--accent);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.cam-feed {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.no-signal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+/* ── Status strip ──────────────────────────────────────────── */
+#status-strip {
+  background: rgba(7, 11, 20, 0.93);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.power-row { color: var(--green); font-size: 12px; }
+
+.status-row {
+  color: var(--text);
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.hint-row {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.mode-badge {
+  font-weight: bold;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(100, 150, 230, 0.15);
+}
+.mode-KEYBOARD   { color: #64dc8c; }
+.mode-IR_REMOTE  { color: #64b4ff; }
+.mode-AUTONOMOUS { color: var(--orange); }
+.mode-IDLE       { color: var(--red); }
+
+/* ── Bottom ────────────────────────────────────────────────── */
+#bottom {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Sensor grid ───────────────────────────────────────────── */
+#sensor-grid {
+  flex: 1;
+  background: rgba(7, 11, 20, 0.93);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  overflow-y: auto;
+}
+
+#sensor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#sensor-table td {
+  padding: 2px 4px;
+  white-space: nowrap;
+}
+
+.slbl {
+  color: #6482b9;
+  font-size: 12px;
+  width: 60px;
+}
+
+.sval {
+  color: var(--text-val);
+  font-size: 12px;
+  width: 140px;
+  padding-right: 20px;
+}
+
+/* ── Controls panel ────────────────────────────────────────── */
+#controls-panel {
+  width: 240px;
+  flex: 0 0 240px;
+  background: rgba(10, 14, 26, 0.93);
+  border: 1px solid #2a3e64;
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel-title {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: bold;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.ctrl-group { display: flex; flex-direction: column; gap: 3px; }
+
+.ctrl-label {
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 1px;
+}
+
+.ctrl-row {
+  color: var(--text);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+kbd {
+  display: inline-block;
+  background: #141c30;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0px 5px;
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--text-val);
+  min-width: 22px;
+  text-align: center;
+}
+
+/* ── Peer network ──────────────────────────────────────────── */
+.peer-row { gap: 6px; }
+.dot { font-size: 10px; }
+.dot-green { color: var(--green); }
+.dot-red   { color: var(--red); }
+.peer-status { color: var(--text-dim); font-size: 11px; margin-left: auto; }
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }

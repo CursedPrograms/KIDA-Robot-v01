@@ -14,7 +14,7 @@ frame_queue2    = Queue(maxsize=1)   # cam-1
 cam0_stop_event = threading.Event()
 
 
-def _drop_put(queue: Queue, item) -> None:
+def drop_put(queue: Queue, item) -> None:
     """Non-blocking put — drops the oldest frame if the queue is full."""
     if not queue.empty():
         try:
@@ -39,7 +39,7 @@ def _camera_loop(picam2, model, task: str, queue: Queue,
                 out = frame
             out = cv2.cvtColor(out, cv2.COLOR_BGR2RGB)
             out = cv2.flip(out, 1)
-            _drop_put(queue, out)
+            drop_put(queue, out)
         except Exception as e:
             print(f"[Cam0] {e}")
             time.sleep(0.05)
@@ -54,7 +54,7 @@ def _camera2_loop(picam2_ai, queue: Queue) -> None:
                 continue
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame = cv2.flip(frame, 1)
-            _drop_put(queue, frame)
+            drop_put(queue, frame)
         except Exception as e:
             print(f"[Cam1] {e}")
             time.sleep(0.05)

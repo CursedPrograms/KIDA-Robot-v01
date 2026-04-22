@@ -9,7 +9,7 @@
 # Other keys:
 #   W/A/S/D  — move          (KEYBOARD mode only)
 #   SPACE    — hard stop motors + music
-#   I        — toggle YOLO inference on cam-0
+#   I        — toggle YOLO inference on cam-0 (cam-1 always uses IMX500 on-chip)
 #   X        — cycle motor speed
 #   M        — play / skip music
 #   L        — toggle LEDs
@@ -31,6 +31,7 @@ from buttons import create_buttons
 from arduino import send_command, start_arduino_threads
 from mpu6050_module import start_mpu_thread
 from stats import get_cpu_temp, get_system_stats, get_local_ip
+import camera_actions
 from camera_actions import check_recording_timeout
 from ina219_module import INA219
 from picamera2 import Picamera2
@@ -42,7 +43,8 @@ import ir_bridge
 import hud_draw
 import event_handler
 from camera_threads import (frame_queue, frame_queue2,
-                             start_cam0, start_cam1, stop_cam0)
+                             start_cam0, stop_cam0)
+from imx500_cam1 import create_imx500_camera, start_imx500_cam1, stop_imx500_cam1
 from mode_control import init_mode_control
 
 # ─────────────────────────────────────────────
@@ -213,19 +215,16 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
             picam2.configure(picam2.create_preview_configuration(
                 main={"format": "RGB888", "size": (640, 480)}))
             picam2.start()
+            camera_actions.set_camera(picam2)
             print("✅ Cam-0 ready")
         except Exception as e:
             print(f"❌ Cam-0: {e}")
 
         try:
-            picam2_ai = Picamera2(camera_num=1)
-            picam2_ai.configure(picam2_ai.create_preview_configuration(
-                main={"format": "RGB888", "size": (640, 480)}))
-            picam2_ai.start()
-            start_cam1(picam2_ai)
-            print("✅ Cam-1 ready")
+            picam2_ai = create_imx500_camera()
+            start_imx500_cam1()
         except Exception as e:
-            print(f"❌ Cam-1: {e}")
+            print(f"❌ Cam-1 IMX500: {e}")
 
     def toggle_inference():
         nonlocal inference_on, last_frame0
@@ -302,11 +301,11 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
         hud_draw.draw_panel(screen, HUD_RECT, fill=(7, 11, 20), alpha=218,
                             border=(32, 52, 88), radius=0)
 
-        from stats import get_local_ip as _ip
         hud_draw.draw_status_strip(
             screen, fonts, hud_y, SEN_X1,
-            motor_speed, cpu_temp, cpu, ram, _ip(),
+            motor_speed, cpu_temp, cpu, ram, get_local_ip(),
             inference_on, bus_v, cur_ma, pwr_w, bat_pct,
+            music_ctrl.is_playing(),
         )
         hud_draw.draw_sensor_grid(
             screen, fonts, SENSOR_ROWS, lbl_surfaces,
@@ -314,6 +313,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
         )
         hud_draw.draw_button_panel(
             screen, fonts, buttons, hud_y, btn_panel_x, btn_panel_rect,
+            music_ctrl.is_playing(),
         )
 
         if mode_manager.is_idle():
@@ -332,32 +332,14 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
             music_ctrl.handle_event(event)
 
         sigs = event_handler.handle_events(
-            raw_events,
-            buttons, pressed_keys,
+            raw_events, buttons, pressed_keys,
             motor_speed, inference_on,
             char_imgs, char_idx,
+            music_ctrl,
         )
 
         if sigs["quit"]:
             running = False
-
-        # ── Music control signals from event_handler ──────────────────────
-        if sigs.get("music_start"):
-            music_ctrl.start()
-        if sigs.get("music_stop"):
-            music_ctrl.stop()
-        if sigs.get("music_skip"):
-            music_ctrl.skip()
-        # Legacy "M = play or skip" toggle used in the old ui
-        if sigs.get("music_toggle"):
-            if music_ctrl.is_playing():
-                music_ctrl.skip()
-            else:
-                music_ctrl.start()
-
-        # SPACE = hard stop motors + music
-        if sigs.get("hard_stop"):
-            music_ctrl.stop()
 
         if sigs["inference_toggle"]:
             toggle_inference()
@@ -373,6 +355,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
     print("🧹 Cleaning up…")
     music_ctrl.stop()
     stop_cam0()
+    stop_imx500_cam1()
     for cam in (picam2, picam2_ai):
         if cam:
             try:

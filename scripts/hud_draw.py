@@ -4,7 +4,6 @@
 # no state mutations.  Pass in what you need, get pixels out.
 
 import pygame
-import music
 import state
 import mode_manager
 from state import DriveMode
@@ -57,11 +56,11 @@ def draw_status_strip(surface: pygame.Surface, fonts: dict,
                       cpu: float, ram: float, local_ip: str,
                       inference_on: bool,
                       bus_v: float, cur_ma: float,
-                      pwr_w: float, bat_pct: float) -> None:
+                      pwr_w: float, bat_pct: float,
+                      music_on: bool = False) -> None:
     """Power row + status row + hint row."""
     cur_mode              = mode_manager.current_mode()
     mode_label, mode_color = _MODE_LABEL.get(cur_mode, ("???", (200, 200, 200)))
-    music_on              = music.is_music_playing()
     music_sym             = "▶" if music_on else "■"
 
     pw = fonts["sm"].render(
@@ -106,8 +105,8 @@ def draw_sensor_grid(surface: pygame.Surface, fonts: dict,
 
 def draw_button_panel(surface: pygame.Surface, fonts: dict,
                       buttons: list, hud_y: int,
-                      btn_panel_x: int, btn_panel_rect: pygame.Rect) -> None:
-    music_on = music.is_music_playing()
+                      btn_panel_x: int, btn_panel_rect: pygame.Rect,
+                      music_on: bool = False) -> None:
     draw_panel(surface, btn_panel_rect, fill=(10, 14, 26), alpha=230,
                border=(42, 62, 100), radius=6)
     surface.blit(

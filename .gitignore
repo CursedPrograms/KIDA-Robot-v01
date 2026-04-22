@@ -4,3 +4,5 @@ keys/
 /resources/
 hailort.log
 *.log
+.claude/worktrees/cool-kepler-76ab10/
+/.claude

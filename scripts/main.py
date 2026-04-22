@@ -8,18 +8,15 @@ import RPi.GPIO as GPIO
 
 import kida_chat as voice_ai
 
-from scripts.server import run_flask_server
+from server import run_flask_server
 from leds import setup_leds, startup_led_fade
 from arduino import start_arduino_threads
-from camera import picam2
 from ui import run_ui
 from ultralytics import YOLO
 
 def signal_handler(sig, frame):
     print("👋 Exiting...")
     try:
-        if picam2:
-            picam2.stop()
         pygame.mixer.music.stop()
         pygame.quit()
         GPIO.cleanup()

@@ -206,15 +206,12 @@ class CelebrationManager:
         def movement_routine():
             try:
                 if repeat:
-                    # Repeat movement pattern
                     while not self.stop_event.is_set():
-                        send_command(movement)
-                        time.sleep(2.0)  # Pause between movements
-                        if self.stop_event.wait(1.0):  # Check every second
+                        send_command("dev00", movement)
+                        if self.stop_event.wait(2.0):
                             break
                 else:
-                    # Single movement command
-                    send_command(movement)
+                    send_command("dev00", movement)
             except Exception as e:
                 logger.error(f"Error in movement routine: {e}")
         
@@ -225,17 +222,9 @@ class CelebrationManager:
     def _cleanup_celebration(self):
         """Clean up after celebration ends."""
         try:
-            # Stop any ongoing movements
-            send_command("STOP")
-            
-            # Stop music if it has a stop function
-            if hasattr(music, 'stop'):
-                music.stop()
-            
-            # Turn off LEDs if it has a stop function
-            if hasattr(leds, 'turn_off'):
-                leds.turn_off()
-                
+            send_command("dev00", "STOP")
+            music.stop_music()
+            leds.stop_effects()
         except Exception as e:
             logger.error(f"Error during celebration cleanup: {e}")
     

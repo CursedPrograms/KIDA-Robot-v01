@@ -1,31 +1,33 @@
 # event_handler.py — keyboard and mouse event dispatch for KIDA
 #
-# Returns a dict of signals so ui.py stays thin:
-#   {"quit": bool, "inference_toggle": bool, "char_cycle": bool}
+# Music is handled directly here via the music_ctrl MusicPlayer instance
+# passed in from ui.py, so this module has zero music-module imports.
+#
+# Returns a signals dict so ui.py stays thin:
+#   quit             bool
+#   inference_toggle bool
+#   char_next        bool
+#   motor_speed      int
 
 import pygame
 import config
 import leds
-import music
 import mode_manager
 
 from state import DriveMode
 from arduino import send_command
 from mode_control import switch_mode, switch_mode_direct
-import music_ctrl
+
 
 def handle_events(events, buttons: list,
                   pressed_keys: set,
                   motor_speed: int,
                   inference_on: bool,
-                  char_imgs: list, char_idx: int) -> dict:
+                  char_imgs: list, char_idx: int,
+                  music_ctrl=None) -> dict:
     """
     Process all pending pygame events.
-    Returns a signals dict:
-        quit            bool
-        inference_toggle bool
-        char_next        bool
-        motor_speed      int   (possibly updated)
+    music_ctrl is the MusicPlayer instance from ui.py (optional; safe to omit).
     """
     signals = {
         "quit":             False,
@@ -40,16 +42,11 @@ def handle_events(events, buttons: list,
             signals["quit"] = True
             continue
 
-        if music_ctrl.handle_track_end_event(event):
-            continue
-
-        music.handle_music_event(event)
-
-        # ── Keyboard ──
+        # ── Keyboard ─────────────────────────────────────────────────────────
         if event.type == pygame.KEYDOWN:
             k = event.key
 
-            # Mode select — always available
+            # Mode select — always available regardless of current mode
             if k == pygame.K_1:
                 switch_mode(1)
             elif k == pygame.K_2:
@@ -64,7 +61,7 @@ def handle_events(events, buttons: list,
                 switch_mode_direct(DriveMode.IDLE)
                 signals["quit"] = True
 
-            # Inference toggle
+            # Inference toggle (cam-0 YOLO)
             elif k == pygame.K_i:
                 signals["inference_toggle"] = True
 
@@ -76,17 +73,22 @@ def handle_events(events, buttons: list,
                 send_command("dev00", f"SPEED:{signals['motor_speed']}")
                 print(f"⚡ Speed: {signals['motor_speed']}")
 
-            # Hard stop
+            # Hard stop — motors + music
             elif k == pygame.K_SPACE:
-                music_ctrl.hard_stop()
                 send_command("dev00", "STOP")
                 send_command("dev01", "LIGHT_FRONT_OFF")
                 send_command("dev01", "LIGHT_BACK_ON")
+                if music_ctrl:
+                    music_ctrl.stop()
                 print("🛑 STOP")
 
-            # Music
+            # Music — play or skip if already playing
             elif k == pygame.K_m:
-                music_ctrl.toggle_or_skip()
+                if music_ctrl:
+                    if music_ctrl.is_playing():
+                        music_ctrl.skip()
+                    else:
+                        music_ctrl.start()
 
             # LEDs
             elif k == pygame.K_l:
@@ -94,7 +96,7 @@ def handle_events(events, buttons: list,
             elif k == pygame.K_k:
                 leds.toggle_effects()
 
-            # Character avatar
+            # Character avatar cycle
             elif k == pygame.K_c and char_imgs:
                 signals["char_next"] = True
 
@@ -120,6 +122,7 @@ def handle_events(events, buttons: list,
                 send_command("dev01", "LIGHT_BACK_ON")
                 pressed_keys.discard(event.key)
 
+        # ── Mouse ─────────────────────────────────────────────────────────────
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
             for button in buttons:
@@ -128,10 +131,9 @@ def handle_events(events, buttons: list,
                         hasattr(button, "label")
                         and button.label in ("Play", "▶", "Play Music")
                     )
-                    if is_play:
-                        if music.is_music_playing():
-                            continue
-                        music_ctrl.unblock()
+                    # Ignore Play button while music is already playing
+                    if is_play and music_ctrl and music_ctrl.is_playing():
+                        continue
                     button.action()
 
     return signals

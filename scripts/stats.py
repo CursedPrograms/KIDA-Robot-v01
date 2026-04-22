@@ -15,6 +15,11 @@ system_stats = {
     "uptime": "0:00:00"
 }
 
+def get_system_stats() -> tuple:
+    """Return (cpu_percent, ram_percent) — non-blocking instant read."""
+    return psutil.cpu_percent(interval=None), psutil.virtual_memory().percent
+
+
 def get_cpu_temp():
     """Reads the Raspberry Pi 5 SoC temperature."""
     try:

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ this_name }} — KIDA HUD</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── Header ───────────────────────────────────────────── -->
+    <div id="header">
+      <span id="app-name">KIDA: Kinetic Interactive Drive Automaton</span>
+      <span id="self-tag">{{ this_name }} &nbsp;·&nbsp; {{ this_ip }}:{{ this_port }}</span>
+    </div>
+
+    <!-- ── Cameras ──────────────────────────────────────────── -->
+    <div id="cameras">
+      <div class="cam-panel">
+        <div class="cam-label">SLOT 0 — MAIN</div>
+        <img class="cam-feed" src="/video_feed/0" alt=""
+             onerror="this.style.display='none';document.getElementById('nosig0').style.display='flex'">
+        <div class="no-signal" id="nosig0">[ SLOT 0 — MAIN — NO SIGNAL ]</div>
+      </div>
+      <div class="cam-panel">
+        <div class="cam-label">SLOT 1 — AI CAM</div>
+        <img class="cam-feed" src="/video_feed/1" alt=""
+             onerror="this.style.display='none';document.getElementById('nosig1').style.display='flex'">
+        <div class="no-signal" id="nosig1">[ SLOT 1 — AI CAM — NO SIGNAL ]</div>
+      </div>
+    </div>
+
+    <!-- ── Status strip ─────────────────────────────────────── -->
+    <div id="status-strip">
+      <div class="power-row" id="power-row">⚡ —V &nbsp; —A &nbsp; —W &nbsp; 🔋 —%</div>
+      <div class="status-row">
+        <span id="st-spd">Spd:—</span>
+        <span id="st-temp">T:—</span>
+        <span id="st-cpu">CPU:—%</span>
+        <span id="st-ram">RAM:—%</span>
+        <span id="st-ip">IP:—</span>
+        <span id="st-inf">Inf:—</span>
+        <span>Mode:</span><span id="st-mode" class="mode-badge">—</span>
+      </div>
+      <div class="hint-row">1=KEYBOARD &nbsp; 2=IR REMOTE &nbsp; 3=AUTONOMOUS &nbsp; 4=IDLE (stop all)</div>
+    </div>
+
+    <!-- ── Bottom: sensor grid + controls ───────────────────── -->
+    <div id="bottom">
+
+      <!-- Sensor grid — matches SENSOR_ROWS in ui.py, 2-column layout -->
+      <div id="sensor-grid">
+        <table id="sensor-table">
+          <tbody>
+            <tr>
+              <td class="slbl">Photo:</td>  <td class="sval" id="s-Photo">—</td>
+              <td class="slbl">US0:</td>    <td class="sval" id="s-US0">—</td>
+            </tr>
+            <tr>
+              <td class="slbl">UV:</td>     <td class="sval" id="s-UV">—</td>
+              <td class="slbl">US1:</td>    <td class="sval" id="s-US1">—</td>
+            </tr>
+            <tr>
+              <td class="slbl">Metal:</td>  <td class="sval" id="s-Metal">—</td>
+              <td class="slbl">AX:</td>     <td class="sval" id="s-AX">—</td>
+            </tr>
+            <tr>
+              <td class="slbl">Ball Sw:</td><td class="sval" id="s-Ball Sw">—</td>
+              <td class="slbl">AY:</td>     <td class="sval" id="s-AY">—</td>
+            </tr>
+            <tr>
+              <td class="slbl">Motion:</td> <td class="sval" id="s-Motion">—</td>
+              <td class="slbl">AZ:</td>     <td class="sval" id="s-AZ">—</td>
+            </tr>
+            <tr>
+              <td class="slbl">LF L:</td>   <td class="sval" id="s-LF L">—</td>
+              <td class="slbl">GX:</td>     <td class="sval" id="s-GX">—</td>
+            </tr>
+            <tr>
+              <td class="slbl">LF M:</td>   <td class="sval" id="s-LF M">—</td>
+              <td class="slbl">GY:</td>     <td class="sval" id="s-GY">—</td>
+            </tr>
+            <tr>
+              <td class="slbl">LF R:</td>   <td class="sval" id="s-LF R">—</td>
+              <td class="slbl">GZ:</td>     <td class="sval" id="s-GZ">—</td>
+            </tr>
+            <tr>
+              <td class="slbl">Laser:</td>  <td class="sval" id="s-Laser">—</td>
+              <td class="slbl">Status:</td> <td class="sval" id="s-Status">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Controls panel -->
+      <div id="controls-panel">
+        <div class="panel-title">CONTROLS</div>
+        <div class="ctrl-group">
+          <div class="ctrl-label">Mode</div>
+          <div class="ctrl-row"><kbd>1</kbd> Keyboard</div>
+          <div class="ctrl-row"><kbd>2</kbd> IR Remote</div>
+          <div class="ctrl-row"><kbd>3</kbd> Autonomous</div>
+          <div class="ctrl-row"><kbd>4</kbd> Idle</div>
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-label">Drive</div>
+          <div class="ctrl-row"><kbd>W</kbd> Forward</div>
+          <div class="ctrl-row"><kbd>S</kbd> Backward</div>
+          <div class="ctrl-row"><kbd>A</kbd> Rotate Left</div>
+          <div class="ctrl-row"><kbd>D</kbd> Rotate Right</div>
+          <div class="ctrl-row"><kbd>X</kbd> Cycle Speed</div>
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-label">System</div>
+          <div class="ctrl-row"><kbd>I</kbd> Toggle YOLO (cam-0)</div>
+          <div class="ctrl-row"><kbd>M</kbd> Play / Skip Music</div>
+          <div class="ctrl-row"><kbd>L</kbd> Toggle LEDs</div>
+          <div class="ctrl-row"><kbd>K</kbd> LED Effects</div>
+          <div class="ctrl-row"><kbd>C</kbd> Cycle Avatar</div>
+          <div class="ctrl-row"><kbd>SPC</kbd> Hard Stop</div>
+          <div class="ctrl-row"><kbd>Q</kbd> Quit</div>
+        </div>
+
+        <!-- Peer network status -->
+        {% if peers %}
+        <div class="ctrl-group">
+          <div class="ctrl-label">Network</div>
+          {% for name, peer in peers.items() %}
+          <div class="ctrl-row peer-row">
+            <span class="dot {{ 'dot-green' if peer.ok else 'dot-red' }}">●</span>
+            <a href="{{ peer.url }}" target="_blank">{{ name }}</a>
+            <span class="peer-status">{{ peer.status }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+    </div><!-- /bottom -->
+  </div><!-- /app -->
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
