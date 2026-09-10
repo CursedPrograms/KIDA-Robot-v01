@@ -169,6 +169,7 @@ void handleSerialCommands() {
   else if (cmd == "LIGHT_FRONT_OFF") TurnOffFrontLights();
   else if (cmd == "LIGHT_BACK_ON") TurnOnBackLights();
   else if (cmd == "LIGHT_BACK_OFF") TurnOffBackLights();
+  else if (cmd == "WHOAMI") Serial.println("I_AM_DEV01");
 }
 
 // ─────────────────────────────

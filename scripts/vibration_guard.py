@@ -1,7 +1,7 @@
 # vibration_guard.py — treat rapid ball-switch toggles as a vibration/shock
 # event and slow down until things settle.
 #
-# The ball switch (BALL_PIN on dev01, scripts/arduino/arduino01/ardiuno01.ino)
+# The ball switch (BALL_PIN on dev01, scripts/arduino/arduino01/ardiuno01/ardiuno01.ino)
 # is a tilt switch: a loose metal ball rolls to bridge or break contact. A
 # single steady reading only tells you the robot's tilt. Under vibration or
 # a shock, the ball bounces and the contact flickers rapidly between 0/1

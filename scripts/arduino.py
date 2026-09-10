@@ -1,3 +1,5 @@
+import glob
+import select
 import serial
 import time
 import threading
@@ -246,38 +248,118 @@ def dispatch(line, dev_name):
 arduinos = {}
 threads = {}
 
-PORTS = {
-    "dev00": "/dev/ttyUSB0",
-    "dev01": "/dev/ttyUSB1",
+# Guards candidate_ports()/identify() below — connect() runs independently
+# on each dev's own reconnect thread, and without this two threads racing
+# to reclaim ports at the same time can both open the *same* unclaimed
+# /dev/ttyACM0|ttyUSB0 simultaneously (claimed_ports only excludes ports
+# already stored in `arduinos`, which hasn't happened yet mid-identify).
+# Confirmed on hardware: this produces pyserial's "device reports readiness
+# to read but returned no data (device disconnected or multiple access on
+# port?)" and makes the contended board fail WHOAMI over and over.
+_connect_lock = threading.Lock()
+
+# Boards identify themselves over serial rather than being pinned to a
+# fixed port path — a replaced/reflashed board just needs to answer WHOAMI
+# with one of these to be recognized, no matter which /dev/ttyACM*|ttyUSB*
+# it enumerates as.
+WHOAMI_REPLIES = {
+    "I_AM_DEV00": "dev00",
+    "I_AM_DEV01": "dev01",
 }
 
+IDENTIFY_TIMEOUT = 10  # seconds to wait for a WHOAMI reply after opening a port.
+# dev00's VL53L0X init failure + servo/light startup sequence takes ~8s to
+# clear before it reaches DEV00_READY and starts answering WHOAMI — the old
+# 5s value abandoned the port about 1s before the board was ever ready.
 
-def connect(dev, port):
+
+def candidate_ports():
+    return sorted(glob.glob("/dev/ttyACM*") + glob.glob("/dev/ttyUSB*"))
+
+
+def identify(port):
+    """Open `port`, ask WHOAMI, and return (dev_name, serial.Serial) for
+    whichever board answers — or (None, None) if nothing claims it in time."""
+
+    try:
+        ser = serial.Serial(port, config.ARDUINO_BAUD, timeout=1)
+    except Exception as e:
+        print(f"❌ {port}: failed to open for identify: {e}")
+        return None, None
+
+    time.sleep(2)  # board resets on serial open — wait out its boot sequence
+
+    ser.reset_input_buffer()
+    ser.write(b"WHOAMI\n")
+
+    # pyserial's own read timeout isn't reliably honored on this Pi/kernel —
+    # a non-responding port can block ser.readline() forever, hanging the
+    # whole app at startup. select() on the fd enforces the deadline at the
+    # OS level regardless of what pyserial does internally.
+    deadline = time.time() + IDENTIFY_TIMEOUT
+    buf = b""
 
     try:
 
-        ser = serial.Serial(port, config.ARDUINO_BAUD, timeout=1)
+        while time.time() < deadline:
 
-        time.sleep(2)
+            remaining = deadline - time.time()
+            ready, _, _ = select.select([ser.fileno()], [], [], min(1, remaining))
 
-        arduinos[dev] = ser
+            if not ready:
+                continue
 
-        print(f"✅ Connected {dev} {port}")
+            buf += ser.read(ser.in_waiting or 1)
 
-        return ser
+            while b"\n" in buf:
+                raw_line, buf = buf.split(b"\n", 1)
+                dev = WHOAMI_REPLIES.get(raw_line.decode("utf-8", "ignore").strip())
 
-    except Exception as e:
+                if dev:
+                    return dev, ser
 
-        print(f"❌ {dev} connection failed: {e}")
+        print(f"⚠️ {port}: no WHOAMI reply, skipping")
 
-        return None
+    except (serial.SerialException, OSError) as e:
+        print(f"❌ {port}: error during identify: {e}")
+
+    ser.close()
+
+    return None, None
+
+
+def connect(dev):
+    """(Re)identify whichever connected port currently answers as `dev`."""
+
+    with _connect_lock:
+
+        claimed_ports = {s.port for s in arduinos.values() if s and s.is_open}
+
+        for port in candidate_ports():
+
+            if port in claimed_ports:
+                continue
+
+            found_dev, ser = identify(port)
+
+            if found_dev == dev:
+                arduinos[dev] = ser
+                print(f"✅ Connected {dev} on {port}")
+                return ser
+
+            if ser:
+                ser.close()
+
+    print(f"❌ {dev}: no board answered WHOAMI as {dev}")
+
+    return None
 
 
 # ─────────────────────────────────────────────
 # Serial reader thread
 # ─────────────────────────────────────────────
 
-def read_loop(dev, port):
+def read_loop(dev):
 
     while True:
 
@@ -287,7 +369,7 @@ def read_loop(dev, port):
 
             print(f"🔌 reconnecting {dev}")
 
-            ser = connect(dev,port)
+            ser = connect(dev)
 
             if not ser:
                 time.sleep(2)
@@ -329,18 +411,18 @@ def read_loop(dev, port):
 
 def start_arduino_threads():
 
-    for dev,port in PORTS.items():
+    for dev in WHOAMI_REPLIES.values():
 
         t = threads.get(dev)
 
         if t and t.is_alive():
             continue
 
-        connect(dev,port)
+        connect(dev)
 
         t = threading.Thread(
             target=read_loop,
-            args=(dev,port),
+            args=(dev,),
             daemon=True
         )
 

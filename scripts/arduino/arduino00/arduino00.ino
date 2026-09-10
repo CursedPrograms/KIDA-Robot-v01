@@ -244,6 +244,13 @@ long readUltrasonic(uint8_t trigPin, uint8_t echoPin) {
 }
 
 int readLaserDistance() {
+  // laserSensor.begin() failed in initLaser() — don't call rangingTest()
+  // on an uninitialized sensor object every loop. Without this guard a
+  // failed sensor keeps returning whatever garbage happens to sit in this
+  // (never-actually-written) local struct, which reads as a frozen,
+  // physically-impossible distance instead of an honest "unavailable".
+  if (!robotState.systemReady) return -1;
+
   VL53L0X_RangingMeasurementData_t measurement;
   laserSensor.rangingTest(&measurement, false);
   return (measurement.RangeStatus != 4) ? measurement.RangeMilliMeter : -1;
@@ -467,6 +474,9 @@ void processSerialCommand(char *cmd) {
     autonomousMode = false;
     executeMotorCommand(MotorDirection::STOP);
     Serial.println("AUTO_MODE_OFF");
+  }
+  else if (strcmp(cmd, "WHOAMI") == 0) {
+    Serial.println("I_AM_DEV00");
   }
 }
 

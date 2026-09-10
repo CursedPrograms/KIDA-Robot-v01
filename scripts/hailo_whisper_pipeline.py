@@ -182,4 +182,10 @@ class HailoWhisperPipeline:
 
     def stop(self):
         self.running = False
-        self.thread.join()
+        # Bounded: if the inference thread is stuck inside a native
+        # enc_model.run()/dec_model.run() call on a Hailo device that just
+        # went HAILO_NOT_FOUND (observed on hardware), an unbounded join()
+        # here hangs the whole quit sequence forever with no way out.
+        self.thread.join(timeout=5)
+        if self.thread.is_alive():
+            print("⚠️  HailoWhisperPipeline: inference thread didn't stop in time, abandoning it")
