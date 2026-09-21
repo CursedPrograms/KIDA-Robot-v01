@@ -27,7 +27,17 @@
   <img src="/images/demo/kida.jpg" alt="KIDA Robot" width="400"/>
 </div>
 
-# KIDA: Kinetic Interactive Drive Automaton
+# KIDA 
+## Kinetic Interactive Drive Automaton
+
+- Robot Type: Tank
+
+---
+
+### Software
+- [Arduino IDE](https://docs.arduino.cc/software/ide/)
+
+---
 
 - [KIDA-Robot-v00](https://github.com/CursedPrograms/KIDA-Robot-v00)
 - [WHIP-Robot-v00](https://github.com/CursedPrograms/WHIP-Robot-v00)
