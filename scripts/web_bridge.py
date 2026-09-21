@@ -97,6 +97,8 @@ def action(command: str, password: str | None = None) -> bool:
         switch_mode(5)
     elif command == 'mode_6':
         switch_mode(6)
+    elif command == 'mode_7':
+        switch_mode(7)
     elif command == 'voice_mode_wakeword':
         import state
         state.voice_mode = state.VoiceMode.WAKEWORD
@@ -180,6 +182,15 @@ def action(command: str, password: str | None = None) -> bool:
         from arduino import set_motor_speed
         current = state.motorSpeedValue if isinstance(state.motorSpeedValue, int) else config.DEFAULT_SPEED
         set_motor_speed(max(current - config.SPEED_STEP, config.MIN_SPEED))
+    elif command == 'trim_up':
+        import wheel_calibration
+        wheel_calibration.nudge_trim(1)
+    elif command == 'trim_down':
+        import wheel_calibration
+        wheel_calibration.nudge_trim(-1)
+    elif command == 'calibrate_wheels':
+        import wheel_calibration
+        return wheel_calibration.run_calibration()
     elif command == 'leds_toggle':
         import leds
         leds.toggle_leds()

@@ -86,6 +86,24 @@ struct RobotState {
 int tankLeftSpeed  = 0;
 int tankRightSpeed = 0;
 
+// Straight-line correction for FORWARD/BACKWARD only — LEFT/RIGHT already
+// drive the two sides differentially on purpose, so trim doesn't apply
+// there. Set via TRIM:<-50..50> (Python side persists it in kida_db.py and
+// resends it every time dev00 (re)connects, since this firmware has no
+// persistent storage of its own). Positive slows the right motor
+// (corrects a rightward drift); negative slows the left motor.
+int8_t wheelTrimPercent = 0;
+
+int applyLeftTrim(int s) {
+  if (wheelTrimPercent >= 0) return s;
+  return (int)((long)s * (100 + wheelTrimPercent) / 100);
+}
+
+int applyRightTrim(int s) {
+  if (wheelTrimPercent <= 0) return s;
+  return (int)((long)s * (100 - wheelTrimPercent) / 100);
+}
+
 struct SensorReadings {
   int  laser      = -1;
   long us0        = -1;  // fixed low
@@ -303,8 +321,8 @@ void executeMotorCommand(MotorDirection dir) {
   int s = robotState.motorSpeed;
   tankLeftSpeed = tankRightSpeed = 0;   // preset commands always supersede tank mode
   switch (dir) {
-    case MotorDirection::FORWARD:  setMotorSpeeds( s,  s); break;
-    case MotorDirection::BACKWARD: setMotorSpeeds(-s, -s); break;
+    case MotorDirection::FORWARD:  setMotorSpeeds( applyLeftTrim(s),  applyRightTrim(s)); break;
+    case MotorDirection::BACKWARD: setMotorSpeeds(applyLeftTrim(-s), applyRightTrim(-s)); break;
     case MotorDirection::LEFT:     setMotorSpeeds(-s,  s); break;
     case MotorDirection::RIGHT:    setMotorSpeeds( s, -s); break;
     case MotorDirection::STOP:     setMotorSpeeds( 0,  0); break;
@@ -452,6 +470,9 @@ void processSerialCommand(char *cmd) {
   else if (strcmp(cmd, "STOP") == 0)     executeMotorCommand(MotorDirection::STOP);
   else if (strncmp(cmd, "SPEED:", 6) == 0) {
     robotState.motorSpeed = constrain(atoi(cmd + 6), 0, 255);
+  }
+  else if (strncmp(cmd, "TRIM:", 5) == 0) {
+    wheelTrimPercent = constrain(atoi(cmd + 5), -50, 50);
   }
   // Independent per-motor drive (tank-style: Q/A = left, W/S = right).
   // Signed speed, positive = forward. Doesn't touch the other side.

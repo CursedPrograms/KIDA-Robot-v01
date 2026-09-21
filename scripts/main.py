@@ -18,6 +18,9 @@ from ultralytics import YOLO
 import ambient_narration
 import vibration_guard
 import face_emotion_mode
+import kida_db
+import mode_manager
+import state
 
 def signal_handler(sig, frame):
     print("👋 Exiting...")
@@ -53,6 +56,22 @@ if __name__ == "__main__":
     # through os._exit() below — makes sure a self-driving mode never keeps
     # the Arduino moving after this process is gone.
     atexit.register(emergency_stop_all)
+
+    # Persistence: settings survive a restart, mode changes and periodic
+    # sensor snapshots get logged. Drive mode itself deliberately does NOT
+    # get restored here — state.drive_mode stays hardcoded to KEYBOARD
+    # (see state.py) so an unattended reboot never silently resumes an
+    # autonomous/self-driving mode. Only non-driving preferences restore.
+    kida_db.init_db()
+    state.drive_scheme = kida_db.get_setting("drive_scheme", state.drive_scheme)
+    voice_mode_name = kida_db.get_setting("voice_mode", state.voice_mode.name)
+    try:
+        state.voice_mode = state.VoiceMode[voice_mode_name]
+    except KeyError:
+        pass
+    mode_manager.register_on_mode_change(kida_db.log_mode_change)
+    kida_db.start_periodic_logging()
+
     setup_leds()
     startup_led_fade()
     start_arduino_threads()

@@ -15,6 +15,7 @@ from mode_hooks import universal_mode_change
 from mode_manager import register_on_mode_change
 import line_follow_mode
 import watchdog_mode
+import lane_detect_mode
 import voice_engine
 
 # ── Track the last mode so we can send AUTO_OFF when leaving ──
@@ -33,6 +34,8 @@ def _on_mode_changed(new_mode: DriveMode) -> None:
     is_lf   = (new_mode   == DriveMode.LINE_FOLLOWER)
     was_wd  = (_prev_mode == DriveMode.WATCHDOG)
     is_wd   = (new_mode   == DriveMode.WATCHDOG)
+    was_ld  = (_prev_mode == DriveMode.LANE_DETECT)
+    is_ld   = (new_mode   == DriveMode.LANE_DETECT)
 
     # ── Leaving autonomous ──
     if _prev_mode == DriveMode.AUTONOMOUS and new_mode != DriveMode.AUTONOMOUS:
@@ -57,6 +60,14 @@ def _on_mode_changed(new_mode: DriveMode) -> None:
             print("🚨 Watchdog OFF")
         except Exception as e:
             print(f"⚠️  WATCHDOG stop: {e}")
+
+    # ── Leaving lane detect ──
+    if was_ld and not is_ld:
+        try:
+            lane_detect_mode.stop()
+            print("🛣️  Lane detect OFF")
+        except Exception as e:
+            print(f"⚠️  LANE_DETECT stop: {e}")
 
     # ── Entering autonomous ──
     if new_mode == DriveMode.AUTONOMOUS and _prev_mode != DriveMode.AUTONOMOUS:
@@ -89,6 +100,14 @@ def _on_mode_changed(new_mode: DriveMode) -> None:
             print("🚨 Watchdog ON")
         except Exception as e:
             print(f"⚠️  WATCHDOG start: {e}")
+
+    # ── Entering lane detect ──
+    if is_ld and not was_ld:
+        try:
+            lane_detect_mode.start()
+            print("🛣️  Lane detect ON")
+        except Exception as e:
+            print(f"⚠️  LANE_DETECT start: {e}")
 
     # ── Voice acknowledgment ──
     try:

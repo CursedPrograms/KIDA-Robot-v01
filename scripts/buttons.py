@@ -10,6 +10,7 @@ from camera_actions import (take_photo, start_video, stop_video,
                             cycle_camera, save_inference_photo)
 from arduino import send_command
 from mode_control import switch_mode
+import wheel_calibration
 import sfx
 
 
@@ -62,10 +63,15 @@ def create_buttons(music_ctrl=None) -> list:
         Button((0, 0, 160, 36), purple, "Line Follow",   lambda: switch_mode(5)),
         Button((0, 0, 160, 36), blue,   "Idle / Stop",   lambda: switch_mode(4)),
         Button((0, 0, 160, 36), red,    "Watchdog",      lambda: switch_mode(6)),
+        Button((0, 0, 160, 36), purple, "Lane Detect",   lambda: switch_mode(7)),
         # Music
         Button((0, 0, 160, 36), pink,   "Play Music",    music_play),
         Button((0, 0, 160, 36), pink,   "Next Track",    music_skip),
         Button((0, 0, 160, 36), pink,   "Stop Music",    music_stop),
         # LEDs
         Button((0, 0, 160, 36), pink,   "Toggle LEDs",   toggle_leds),
+        # Wheel calibration
+        Button((0, 0, 160, 36), purple, "Calibrate Wheels", wheel_calibration.run_calibration),
+        Button((0, 0, 160, 36), blue,   "Trim -",        lambda: wheel_calibration.nudge_trim(-1)),
+        Button((0, 0, 160, 36), blue,   "Trim +",        lambda: wheel_calibration.nudge_trim(1)),
     ]

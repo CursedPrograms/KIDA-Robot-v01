@@ -328,6 +328,22 @@ def identify(port):
     return None, None
 
 
+def _resend_persisted_dev00_settings():
+    """dev00's firmware has no persistent storage — every fresh connect
+    (including a reconnect after a power-cycle) starts back at firmware
+    defaults, so the speed/trim kida_db.py persisted need resending here."""
+    try:
+        import kida_db
+        trim = kida_db.get_setting("wheel_trim")
+        if trim is not None:
+            set_wheel_trim(trim)
+        speed = kida_db.get_setting("motor_speed")
+        if speed is not None:
+            set_motor_speed(speed)
+    except Exception as e:
+        print(f"⚠️ dev00 settings resend failed: {e}")
+
+
 def connect(dev):
     """(Re)identify whichever connected port currently answers as `dev`."""
 
@@ -345,6 +361,8 @@ def connect(dev):
             if found_dev == dev:
                 arduinos[dev] = ser
                 print(f"✅ Connected {dev} on {port}")
+                if dev == "dev00":
+                    _resend_persisted_dev00_settings()
                 return ser
 
             if ser:
@@ -500,6 +518,18 @@ def set_motor_speed(speed: int, dev: str = "dev00") -> None:
     speed = max(0, min(255, int(speed)))
     state.motorSpeedValue = speed
     send_command(dev, f"SPEED:{speed}")
+
+
+# ─────────────────────────────────────────────
+# Wheel trim — straight-line correction (see arduino00.ino's
+# wheelTrimPercent). Firmware has no persistent storage, so the persisted
+# value (kida_db.py) is resent every time dev00 (re)connects — see connect().
+# ─────────────────────────────────────────────
+
+def set_wheel_trim(trim: int, dev: str = "dev00") -> None:
+    trim = max(-50, min(50, int(trim)))
+    state.wheel_trim = trim
+    send_command(dev, f"TRIM:{trim}")
 
 
 # ─────────────────────────────────────────────

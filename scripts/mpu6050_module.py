@@ -58,8 +58,10 @@ def start_mpu_thread(addr=0x68, interval=0.05):
 
     try:
         _mpu = MPU6050(addr=addr)
+        state.mpu_available = True
         print("✅ MPU6050 ready")
     except Exception as e:
+        state.mpu_available = False
         print(f"❌ MPU6050 init failed: {e}")
         return
 
@@ -93,6 +95,7 @@ def start_mpu_thread(addr=0x68, interval=0.05):
                 if error_count >= 20:
                     print("[MPU6050] too many errors, stopping thread")
                     state.systemStatus = "MPU DEAD"
+                    state.mpu_available = False
                     break
             time.sleep(interval)
 

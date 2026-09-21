@@ -25,7 +25,7 @@ def universal_mode_change(new_mode: DriveMode) -> None:
     # (AUTONOMOUS stop is handled by the Arduino's own obstacleAvoidance loop;
     #  sending STOP here would fight the AUTO_ON command sent by mode_control.)
     if new_mode not in (DriveMode.AUTONOMOUS, DriveMode.LINE_FOLLOWER,
-                        DriveMode.WATCHDOG):
+                        DriveMode.WATCHDOG, DriveMode.LANE_DETECT):
         try:
             send_command("dev00", "STOP")
             set_stopped_lights()
@@ -38,6 +38,9 @@ def universal_mode_change(new_mode: DriveMode) -> None:
 
     elif new_mode == DriveMode.LINE_FOLLOWER:
         print("〰 Line follower mode active")
+
+    elif new_mode == DriveMode.LANE_DETECT:
+        print("🛣️  Lane detect mode active")
 
     elif new_mode == DriveMode.KEYBOARD:
         print("🔑 Keyboard mode active")

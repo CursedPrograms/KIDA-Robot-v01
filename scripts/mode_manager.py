@@ -1,10 +1,12 @@
 # mode_manager.py — KIDA drive-mode manager
 #
-# Three active modes + one idle/blackout:
-#   1 → KEYBOARD    (WASD keys drive the robot)
-#   2 → IR_REMOTE   (IR handset drives the robot)
-#   3 → AUTONOMOUS  (state-machine / AI drives the robot)
-#   4 → IDLE        (all motors stop, black input — always available)
+#   1 → KEYBOARD     (WASD keys drive the robot)
+#   2 → IR_REMOTE    (IR handset drives the robot)
+#   3 → AUTONOMOUS   (state-machine / AI drives the robot)
+#   4 → IDLE         (all motors stop, black input — always available)
+#   5 → LINE_FOLLOWER
+#   6 → WATCHDOG
+#   7 → LANE_DETECT  (Hailo UFLD_v2 lane-following)
 #
 # Any input source (keyboard, IR, button) calls set_mode().
 # All other modules read state.drive_mode.
@@ -31,7 +33,7 @@ def register_on_mode_change(fn):
 # here would race against their own start-up command (e.g. AUTO_ON sent by
 # mode_control right after this) and kill the first move — see mode_hooks.py.
 _SELF_MANAGED_MODES = (DriveMode.AUTONOMOUS, DriveMode.LINE_FOLLOWER,
-                       DriveMode.WATCHDOG)
+                       DriveMode.WATCHDOG, DriveMode.LANE_DETECT)
 
 
 # ── public API ─────────────────────────────────────────────
@@ -66,6 +68,7 @@ def set_mode_by_number(n: int) -> None:
         4: DriveMode.IDLE,
         5: DriveMode.LINE_FOLLOWER,
         6: DriveMode.WATCHDOG,
+        7: DriveMode.LANE_DETECT,
     }
     if n not in mapping:
         print(f"⚠️ Invalid mode number: {n}")
@@ -92,6 +95,9 @@ def is_line_follower() -> bool:
 
 def is_watchdog() -> bool:
     return state.drive_mode == DriveMode.WATCHDOG
+
+def is_lane_detect() -> bool:
+    return state.drive_mode == DriveMode.LANE_DETECT
 
 
 

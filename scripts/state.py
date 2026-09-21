@@ -12,6 +12,7 @@ class DriveMode(Enum):
     LINE_FOLLOWER = "LINE_FOLLOWER"
     IDLE          = "IDLE"        # mode 4 / blackout state
     WATCHDOG      = "WATCHDOG"    # mode 6 / person-detection alarm
+    LANE_DETECT   = "LANE_DETECT" # mode 7 / Hailo UFLD_v2 lane-following
 
 # ─────────────────────────────────────────────
 #  Active mode (single source of truth)
@@ -101,4 +102,10 @@ irMode:    str        = "-"
 # ─────────────────────────────────────────────
 mpu_ax = mpu_ay = mpu_az = 0
 mpu_gx = mpu_gy = mpu_gz = 0
+mpu_available: bool = False   # True only once the MPU6050 has actually initialized
+
+# --- Wheel trim (written by arduino.set_wheel_trim, persisted via kida_db) ---
+# -50..50, percent speed reduction applied to whichever motor over-drives a
+# straight FORWARD/BACKWARD — see arduino00.ino's wheelTrimPercent.
+wheel_trim: int = 0
 

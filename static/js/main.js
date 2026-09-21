@@ -8,6 +8,7 @@ const MODE_COLORS = {
   AUTONOMOUS:    'mode-AUTONOMOUS',
   LINE_FOLLOWER: 'mode-LINE_FOLLOWER',
   WATCHDOG:      'mode-WATCHDOG',
+  LANE_DETECT:   'mode-LANE_DETECT',
   IDLE:          'mode-IDLE',
 };
 
@@ -113,6 +114,7 @@ const MODE_SELECT_MAP = {
   IDLE:          'mode_4',
   LINE_FOLLOWER: 'mode_5',
   WATCHDOG:      'mode_6',
+  LANE_DETECT:   'mode_7',
 };
 
 async function sendAction(cmd, password) {
