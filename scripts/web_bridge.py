@@ -191,6 +191,9 @@ def action(command: str, password: str | None = None) -> bool:
     elif command == 'calibrate_wheels':
         import wheel_calibration
         return wheel_calibration.run_calibration()
+    elif command == 'lidar_sweep':
+        import lidar_sweep
+        return lidar_sweep.run_sweep()
     elif command == 'leds_toggle':
         import leds
         leds.toggle_leds()

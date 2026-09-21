@@ -50,6 +50,20 @@ def init_db() -> None:
             )
         """)
         conn.execute("""
+            CREATE TABLE IF NOT EXISTS sweep_log (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts       TEXT NOT NULL,
+                sweep_id TEXT NOT NULL,
+                angle_deg     INTEGER NOT NULL,
+                us1_cm        INTEGER,
+                laser_mm      INTEGER,
+                pos_x_cm      REAL,
+                pos_y_cm      REAL,
+                heading_deg   REAL,
+                frame_path    TEXT
+            )
+        """)
+        conn.execute("""
             CREATE TABLE IF NOT EXISTS sensor_log (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 ts         TEXT NOT NULL,
@@ -103,6 +117,46 @@ def log_mode_change(new_mode) -> None:
             "INSERT INTO mode_history (ts, mode) VALUES (?, ?)",
             (time.strftime("%Y-%m-%d %H:%M:%S"), name),
         )
+
+
+# ── lidar-style sweep points — see lidar_sweep.py ──
+
+def log_sweep_point(sweep_id: str, angle_deg: int, us1_cm, laser_mm,
+                     pos_x_cm: float = 0.0, pos_y_cm: float = 0.0,
+                     heading_deg: float = 0.0, frame_path: str | None = None) -> None:
+    with _lock, _connect() as conn:
+        conn.execute(
+            """INSERT INTO sweep_log
+               (ts, sweep_id, angle_deg, us1_cm, laser_mm,
+                pos_x_cm, pos_y_cm, heading_deg, frame_path)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (time.strftime("%Y-%m-%d %H:%M:%S"), sweep_id, angle_deg, us1_cm, laser_mm,
+             pos_x_cm, pos_y_cm, heading_deg, frame_path),
+        )
+
+
+def export_sweep_log_csv(out_path: str, sweep_id: str | None = None) -> int:
+    """Dump sweep_log (optionally filtered to one sweep_id) to a flat CSV —
+    the hand-off point for cobol/ (no sqlite driver there) and for the
+    offline mapper's point-cloud math. Returns the row count written."""
+    with _lock, _connect() as conn:
+        if sweep_id:
+            rows = conn.execute(
+                "SELECT ts, sweep_id, angle_deg, us1_cm, laser_mm, pos_x_cm, pos_y_cm, "
+                "heading_deg, frame_path FROM sweep_log WHERE sweep_id = ? ORDER BY id",
+                (sweep_id,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT ts, sweep_id, angle_deg, us1_cm, laser_mm, pos_x_cm, pos_y_cm, "
+                "heading_deg, frame_path FROM sweep_log ORDER BY id"
+            ).fetchall()
+
+    with open(out_path, "w") as f:
+        f.write("ts,sweep_id,angle_deg,us1_cm,laser_mm,pos_x_cm,pos_y_cm,heading_deg,frame_path\n")
+        for row in rows:
+            f.write(",".join("" if v is None else str(v) for v in row) + "\n")
+    return len(rows)
 
 
 # ── periodic sensor snapshot + settings sync ──

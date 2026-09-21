@@ -46,6 +46,7 @@ lfRightValue     = "LF_RIGHT: N/A"
 
 # --- Distance Sensors ---
 laserValue       = "LASER: N/A" #For Obstacle Avoidance
+lastSweepReading = ""   # "<angle>,<us1_cm>,<laser_mm>" — written by arduino.py, read by lidar_sweep.py
 ultrasonic0Value  = "ULTRASONIC 0: N/A" #Uses the servo For Obstacle Avoidance
 ultrasonic1Value  = "ULTRASONIC 1: N/A" #For Obstacle Avoidance
 

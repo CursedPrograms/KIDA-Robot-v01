@@ -11,6 +11,7 @@ from camera_actions import (take_photo, start_video, stop_video,
 from arduino import send_command
 from mode_control import switch_mode
 import wheel_calibration
+import lidar_sweep
 import sfx
 
 
@@ -74,4 +75,6 @@ def create_buttons(music_ctrl=None) -> list:
         Button((0, 0, 160, 36), purple, "Calibrate Wheels", wheel_calibration.run_calibration),
         Button((0, 0, 160, 36), blue,   "Trim -",        lambda: wheel_calibration.nudge_trim(-1)),
         Button((0, 0, 160, 36), blue,   "Trim +",        lambda: wheel_calibration.nudge_trim(1)),
+        # Lidar-style sweep
+        Button((0, 0, 160, 36), purple, "Lidar Sweep",   lidar_sweep.run_sweep),
     ]

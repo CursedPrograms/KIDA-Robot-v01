@@ -486,6 +486,21 @@ void processSerialCommand(char *cmd) {
   }
   else if (strcmp(cmd, "SCANLEFT") == 0)  { long d = scanLeft();  Serial.print("SCANLEFT:");  Serial.println(d); }
   else if (strcmp(cmd, "SCANRIGHT") == 0) { long d = scanRight(); Serial.print("SCANRIGHT:"); Serial.println(d); }
+  // Arbitrary-angle servo sweep for lidar_sweep.py — moves US1 (the
+  // servo-mounted ultrasonic) to `angle` and reports its reading, without
+  // the fixed-3-position SCANLEFT/SCANRIGHT/obstacleAvoidance() recenter
+  // behavior, so a caller can step through many angles for a fine-grained
+  // sweep. Caller is responsible for recentering when done (SERVO:90).
+  else if (strncmp(cmd, "SERVO:", 6) == 0) {
+    int angle = constrain(atoi(cmd + 6), 0, 180);
+    robotServo.write(angle);
+    delay(150);  // let the servo settle before the ultrasonic reads a stable distance
+    long d = readUltrasonicChecked(Config::US1_TRIG, Config::US1_ECHO);
+    int laser = readLaserDistance();
+    Serial.print("SWEEP:"); Serial.print(angle);
+    Serial.print(","); Serial.print(d);
+    Serial.print(","); Serial.println(laser);
+  }
   else if (strcmp(cmd, "PING") == 0) { /* heartbeat only — resets the watchdog via handleSerialInput() */ }
   else if (strcmp(cmd, "AUTO_ON") == 0) {
     autonomousMode = true;

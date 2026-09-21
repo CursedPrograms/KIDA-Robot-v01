@@ -69,6 +69,9 @@ KEY_MAP = {
     "SPEED": "motorSpeedValue",
 
     "STATUS": "systemStatus",
+
+    # lidar_sweep.py's SERVO:<angle> reply — "SWEEP:<angle>,<us1_cm>,<laser_mm>"
+    "SWEEP": "lastSweepReading",
 }
 
 

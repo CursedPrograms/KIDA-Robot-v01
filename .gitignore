@@ -212,9 +212,17 @@ resources/models/yolov8n_relu6_coco--640x640_quant_hailort_hailo8l_1/
 # Compiled binaries (rebuild with `go build` / `cobc -x`, not committed)
 go/fleet-heartbeat/fleet-heartbeat
 cobol/kida-report
+cobol/map-summary
+fortran/*.so
+fortran/*.o
+fortran/*.mod
 
 # Runtime state DB (settings, mode history, sensor snapshots) — local, not source
 data/kida.db
 data/kida.db-wal
 data/kida.db-shm
+
+# Generated 3D maps + lidar sweep captures — local output, not source
+mapper/output/
+captures/sweeps/
 
