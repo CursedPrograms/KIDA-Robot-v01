@@ -29,10 +29,13 @@
 
 # KIDA-01 
 ## Kinetic Interactive Drive Automaton
+### A DREAM Robotics Agent
 
 - Robot Type: Tank
 
 ---
+
+## Related Projects (DREAM Robotics Ecosystem)
 
 - [KIDA-Robot-v00](https://github.com/CursedPrograms/KIDA-Robot-v00)
 - [WHIP-Robot-v00](https://github.com/CursedPrograms/WHIP-Robot-v00)
