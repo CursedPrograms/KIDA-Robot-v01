@@ -5,9 +5,56 @@
 # instead of a direct hardware call — nothing here touches GPIO, serial,
 # or Picamera2.
 
+import threading
+import time
+
 import pygame
+import drive_mix        # scripts/drive_mix.py — same WASD/curve rule as the robot's own keyboard
 import mode_manager
 import state
+
+HEARTBEAT_S = 0.3       # the robot auto-stops a held drive it hasn't heard about for ~0.8 s
+_last_beat = 0.0
+
+_WASD = (pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d)
+_QAWS_CMD = {pygame.K_q: "left_forward", pygame.K_a: "left_backward",
+             pygame.K_w: "right_forward", pygame.K_s: "right_backward"}
+
+
+def _send(remote, command, **fields):
+    """Fire-and-forget, so a slow robot never stalls the HUD."""
+    threading.Thread(target=remote.send_action, args=(command,), kwargs=fields, daemon=True).start()
+
+
+def _drive_commands(pressed_keys) -> list:
+    """What the held drive keys mean right now, as [(command, fields)]."""
+    if state.drive_scheme == "QAWS":
+        out = []
+        for side, keys in (("left", (pygame.K_q, pygame.K_a)), ("right", (pygame.K_w, pygame.K_s))):
+            held = [k for k in keys if k in pressed_keys]
+            out.append((_QAWS_CMD[held[-1]], {}) if held else (f"{side}_stop", {}))
+        return out
+    intent = drive_mix.wasd_intent(*(k in pressed_keys for k in _WASD))
+    if intent[0] == "curve":
+        return [("move_curve", {"throttle": intent[1], "turn": intent[2]})]
+    if intent[0] == "dir":
+        return [({"FORWARD": "move_forward", "BACKWARD": "move_backward",
+                  "LEFT": "move_left", "RIGHT": "move_right"}[intent[1]], {})]
+    return [("move_stop", {})]
+
+
+def _drive_now(pressed_keys, remote) -> None:
+    global _last_beat
+    _last_beat = time.monotonic()
+    for command, fields in _drive_commands(pressed_keys):
+        _send(remote, command, **fields)
+
+
+def drive_heartbeat(pressed_keys, remote) -> None:
+    """Call every frame: while drive keys are held, resend them, or the
+    robot's dead-man timeout stops her mid-hold."""
+    if pressed_keys and time.monotonic() - _last_beat >= HEARTBEAT_S:
+        _drive_now(pressed_keys, remote)
 
 
 def handle_events(events, buttons: list, pressed_keys: set, remote,
@@ -39,6 +86,10 @@ def handle_events(events, buttons: list, pressed_keys: set, remote,
                 remote.send_action("mode_5")
             elif k == pygame.K_6:
                 remote.send_action("mode_6")
+            elif k == pygame.K_7:
+                remote.send_action("mode_7")
+            elif k == pygame.K_8:
+                remote.send_action("mode_8")
 
             # Quit — Q and ESC both just close this window. There's no
             # run.sh restart loop on this side to distinguish them; that
@@ -91,36 +142,18 @@ def handle_events(events, buttons: list, pressed_keys: set, remote,
             # Movement — KEYBOARD mode only, mirroring the robot's own guard.
             # Which keys do what depends on state.drive_scheme (synced from
             # /status by remote_client.py).
-            elif state.drive_scheme == "QAWS" and k in (pygame.K_q, pygame.K_a, pygame.K_w, pygame.K_s):
-                if mode_manager.is_keyboard():
-                    command = {
-                        pygame.K_q: "left_forward",
-                        pygame.K_a: "left_backward",
-                        pygame.K_w: "right_forward",
-                        pygame.K_s: "right_backward",
-                    }[k]
-                    remote.send_action(command)
+            # KEYBOARD mode only (a stray move_stop would cut a self-driving
+            # mode short) — plus IDLE, where a drive key is what wakes her.
+            elif ((state.drive_scheme == "QAWS" and k in _QAWS_CMD)
+                  or (state.drive_scheme == "WASD" and k in _WASD)):
+                if mode_manager.is_keyboard() or mode_manager.is_idle():
                     pressed_keys.add(k)
-            elif state.drive_scheme == "WASD" and k in (pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d):
-                if mode_manager.is_keyboard():
-                    command = {
-                        pygame.K_w: "move_forward",
-                        pygame.K_s: "move_backward",
-                        pygame.K_a: "move_left",
-                        pygame.K_d: "move_right",
-                    }[k]
-                    remote.send_action(command)
-                    pressed_keys.add(k)
+                    _drive_now(pressed_keys, remote)   # W+A curves (see drive_mix.py)
 
         elif event.type == pygame.KEYUP:
             if event.key in pressed_keys:
-                if state.drive_scheme == "QAWS" and event.key in (pygame.K_q, pygame.K_a):
-                    remote.send_action("left_stop")
-                elif state.drive_scheme == "QAWS" and event.key in (pygame.K_w, pygame.K_s):
-                    remote.send_action("right_stop")
-                else:
-                    remote.send_action("move_stop")
                 pressed_keys.discard(event.key)
+                _drive_now(pressed_keys, remote)   # release W from W+A: keeps turning
 
         # ── Mouse ────────────────────────────────────────────────────────
         elif event.type == pygame.MOUSEBUTTONDOWN:

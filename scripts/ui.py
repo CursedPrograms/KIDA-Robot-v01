@@ -22,7 +22,8 @@
 #
 # Gamepad plugged into the Pi (USB / Logitech wireless dongle) — KEYBOARD mode:
 #   left stick — drive (analog)   right stick — aim servo   A/trigger — photo
-#   B — stop    X/Y — speed −/+   LB/RB — prev/next mode    RT — video
+#   B — stop    X/Y — speed −/+   D-pad ←/→ — prev/next mode   D-pad ↑ / RT — video
+#   Tank scheme (< / >): LT / RT drive the left / right track; hold LB / RB to reverse
 #   Start — lock / unlock prompt  Back — LIDAR sweep
 #   Rumbles on tipping, vibration, or an obstacle while driving (haptics.py)
 #   (see joystick_drive.py; a pad plugged into the PC is read by the

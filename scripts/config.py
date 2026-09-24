@@ -32,6 +32,10 @@ MAX_SPEED = 255
 DEFAULT_SPEED = MAX_SPEED   # always start at full speed
 SPEED_STEP = 50
 MIN_SPEED = 100
+# WASD diagonals (W+A, W+D, S+A, S+D): the inside track runs at this fraction
+# of the outside one, so KIDA curves while still moving instead of spinning
+# on the spot. 0 = pivot on the inside track, 1 = straight. See drive_mix.py.
+CURVE_INNER_RATIO = 0.35
 
 # Motor lock — password required to unlock (see motor_lock.py)
 MOTOR_LOCK_PASSWORD = "1234"

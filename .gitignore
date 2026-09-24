@@ -226,3 +226,12 @@ data/kida.db-shm
 mapper/output/
 captures/sweeps/
 
+
+# KIDA's inner life (scripts/kida_mind) — personal: memories, facts, what she noticed
+/memories/
+# Voice lines cached at runtime by scripts/voice_engine.py (repeat-line cache)
+/audio/voiceovers/cache/
+
+# C++ controller build output + its saved robot address
+/controller/cpp/build/
+kida_controller.ini

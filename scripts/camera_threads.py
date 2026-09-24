@@ -52,6 +52,26 @@ def drop_put(queue: Queue, item) -> None:
     queue.put(item)
 
 
+_MIND_FRAME_EVERY_S = 0.5
+_last_mind_frame = 0.0
+
+
+def publish_to_mind(frame_bgr) -> None:
+    """Hand cam-1's view to KIDA's inner life (kida_mind/frames.py) twice a
+    second — her glances and (if you ask her to) expression reading use it,
+    without ever opening a second camera handle."""
+    global _last_mind_frame
+    now = time.monotonic()
+    if now - _last_mind_frame < _MIND_FRAME_EVERY_S:
+        return
+    _last_mind_frame = now
+    try:
+        from kida_mind import frames
+        frames.publish(frame_bgr)
+    except Exception:
+        pass
+
+
 def publish(frame, *queues: Queue) -> None:
     """Non-blocking publish of the same frame to one or more single-slot queues."""
     for q in queues:
@@ -94,6 +114,7 @@ def _camera_loop(picam2, model, task: str, queue: Queue,
                 else:
                     state.detection_labels = []
                     state.detection_boxes = []
+                state.detection_boxes_ts = time.monotonic()
                 out = r.plot()
             else:
                 out = frame
@@ -119,6 +140,7 @@ def _camera2_loop(picam2_ai, queue: Queue) -> None:
             frame = picam2_ai.capture_array()
             if frame is None:
                 continue
+            publish_to_mind(frame)
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame = cv2.flip(frame, 1)
             last_cam1_frame = frame

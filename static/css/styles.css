@@ -281,6 +281,15 @@ a:hover { text-decoration: underline; }
   gap: 6px;
 }
 
+/* ── Mind panel (kida_mind) ───────────────────────────────── */
+.mind-val { color: var(--text-val); }
+.mind-bar-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim); }
+.mind-bar-row span { width: 52px; }
+.mind-bar { flex: 1; height: 6px; background: #141c30; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.mind-bar div { height: 100%; width: 0%; background: #78a0ff; transition: width 0.6s; }
+.mind-note { font-size: 11px; color: var(--text); font-style: italic; line-height: 1.35; }
+.mind-note:empty { display: none; }
+
 kbd {
   display: inline-block;
   background: #141c30;

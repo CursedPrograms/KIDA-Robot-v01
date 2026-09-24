@@ -317,13 +317,37 @@ const _driveChannels = {
   right: { stack: [], timer: null, stopCmd: 'right_stop' },
 };
 
+// The 'main' (WASD) channel combines everything held, like scripts/drive_mix.py:
+// one direction = the usual preset, a diagonal (W+A, S+D...) = 'move_curve',
+// where both tracks keep turning and the inside one runs slower — so she
+// turns while moving instead of one motor stopping. W+S / A+D cancel out.
+function mainDriveBody(stack) {
+  const throttle = (stack.includes('move_forward') ? 1 : 0) - (stack.includes('move_backward') ? 1 : 0);
+  const turn     = (stack.includes('move_right') ? 1 : 0) - (stack.includes('move_left') ? 1 : 0);
+  if (throttle && turn) return { command: 'move_curve', throttle, turn };
+  if (throttle) return { command: throttle > 0 ? 'move_forward' : 'move_backward' };
+  if (turn) return { command: turn > 0 ? 'move_right' : 'move_left' };
+  return null;
+}
+
+function sendChannel(channelName) {
+  const ch = _driveChannels[channelName];
+  if (channelName === 'main') {
+    const body = mainDriveBody(ch.stack);
+    if (body) postJoy(body).catch(() => {});
+    else sendAction(ch.stopCmd);
+    return;
+  }
+  sendAction(ch.stack[ch.stack.length - 1]);
+}
+
 function pressDrive(channelName, cmd) {
   const ch = _driveChannels[channelName];
   if (!ch.stack.includes(cmd)) ch.stack.push(cmd);
-  sendAction(cmd);
+  sendChannel(channelName);
   if (!ch.timer) {
     ch.timer = setInterval(() => {
-      if (ch.stack.length) sendAction(ch.stack[ch.stack.length - 1]);
+      if (ch.stack.length) sendChannel(channelName);
     }, DRIVE_HEARTBEAT_MS);
   }
 }
@@ -337,7 +361,7 @@ function releaseDrive(channelName, cmd) {
     if (ch.timer) { clearInterval(ch.timer); ch.timer = null; }
     sendAction(ch.stopCmd);
   } else {
-    sendAction(ch.stack[ch.stack.length - 1]);
+    sendChannel(channelName);
   }
 }
 
@@ -466,6 +490,40 @@ if (schemeBtn) {
   });
 }
 
+// ── Mind panel (kida_mind via /mind) ─────────────────────────────
+// Hidden until the robot answers — if the inner life isn't running
+// (/mind → 503) the panel simply never appears.
+const MIND_INTERVAL = 5000;
+
+function setMindBar(id, v) {
+  const el = $(id);
+  if (el) el.style.width = `${Math.round(Math.max(0, Math.min(1, v || 0)) * 100)}%`;
+}
+
+async function fetchMind() {
+  let s;
+  try {
+    const res = await fetch('/mind');
+    if (!res.ok) return;
+    s = await res.json();
+  } catch (_) {
+    return;
+  }
+  $('mind-panel').style.display = '';
+  $('mind-mood').textContent = s.sleeping ? `${s.mood.label} — asleep 💤` : s.mood.label;
+  setMindBar('mb-social', s.drives.social);
+  setMindBar('mb-curiosity', s.drives.curiosity);
+  setMindBar('mb-security', s.drives.security);
+  setMindBar('mb-sleepy', s.drives.sleepiness);
+  $('mind-memories').textContent = `${s.memories} memories · ${s.conversations} conversations`;
+  $('mind-thought').textContent = s.thought ? `💭 ${s.thought}` : '';
+  $('mind-body').textContent = s.body ? `⌁ body feels ${s.body.feels}` + (s.clock ? ` · ${s.clock.time}, ${s.clock.weekday}` : '') : '';
+  $('mind-philosophy').textContent = s.philosophy && s.philosophy.lean ? `◈ leans ${s.philosophy.lean}` : '';
+}
+
+fetchMind();
+setInterval(fetchMind, MIND_INTERVAL);
+
 // ── Joystick (Gamepad API) ───────────────────────────────────────
 // Same pad layout as the Pi/PC HUDs (scripts/joystick_drive.py): the pad
 // is plugged into this computer, never the robot.
@@ -485,7 +543,9 @@ if (schemeBtn) {
 const JOY_DEADZONE       = 0.08;
 // 'standard' mapping button indices → action
 const JOY_STD_ACTIONS = { 0: 'photo', 1: 'hard_stop', 2: 'speed_down', 3: 'speed_up', 8: 'lidar_sweep' };
-const JOY_STD_LB = 4, JOY_STD_RB = 5, JOY_STD_RT = 7, JOY_STD_START = 9;
+const JOY_STD_LB = 4, JOY_STD_RB = 5, JOY_STD_LT = 6, JOY_STD_RT = 7, JOY_STD_START = 9;
+const JOY_STD_DUP = 12, JOY_STD_DLEFT = 14, JOY_STD_DRIGHT = 15;
+const JOY_TRIGGER_DZ = 0.05;
 // Non-standard pads: generic stick trigger/B1/B2/B3…
 const JOY_RAW_ACTIONS    = { 0: 'photo', 1: 'hard_stop', 2: 'speed_down', 3: 'speed_up' };
 // …or a Logitech in D mode ("Cordless RumblePad 2"): face buttons X, A, B, Y.
@@ -587,23 +647,30 @@ function joyTick(now) {
   const gp = _joyIndex !== null ? navigator.getGamepads()[_joyIndex] : null;
   if (gp && document.hasFocus()) {
     const std = gp.mapping === 'standard';
+    // Tank scheme (the same Scheme toggle the keyboard uses): LT/RT drive the
+    // left/right track, analog; hold LB/RB to reverse that side.
+    const tank = std && driveScheme === 'QAWS';
     const actions = std ? JOY_STD_ACTIONS
                   : /rumblepad/i.test(gp.id) ? JOY_D_MODE_ACTIONS : JOY_RAW_ACTIONS;
     gp.buttons.forEach((b, i) => {
       if (b.pressed && !_joyPrevButtons[i]) {
         if (actions[i]) sendAction(actions[i]);
-        else if (std && i === JOY_STD_LB) joyStepMode(-1);
-        else if (std && i === JOY_STD_RB) joyStepMode(1);
+        else if (std && i === JOY_STD_DLEFT) joyStepMode(-1);
+        else if (std && i === JOY_STD_DRIGHT) joyStepMode(1);
+        else if (std && !tank && i === JOY_STD_LB) joyStepMode(-1);
+        else if (std && !tank && i === JOY_STD_RB) joyStepMode(1);
+        else if (std && i === JOY_STD_DUP) sendAction('video_toggle');
         else if (std && i === JOY_STD_START) toggleLock();
       }
       _joyPrevButtons[i] = b.pressed;
     });
 
-    if (std) {
+    if (std && !tank) {   // in tank mode RT is the right track
       const rt = gp.buttons[JOY_STD_RT]?.value ?? 0;
       if (!_joyRtDown && rt > 0.6) { _joyRtDown = true; sendAction('video_toggle'); }
       else if (_joyRtDown && rt < 0.3) _joyRtDown = false;
-
+    }
+    if (std) {
       const angle = Math.round((90 + joyDz(gp.axes[2] ?? 0) * JOY_SERVO_RANGE) / JOY_SERVO_STEP) * JOY_SERVO_STEP;
       if (angle !== _joyServoSent && now - _joyServoAt >= JOY_SERVO_MS) {
         _joyServoSent = angle;
@@ -620,7 +687,16 @@ function joyTick(now) {
 
     if (now - _joyRumbleAt >= JOY_RUMBLE_MS) pollHaptics(gp);
 
-    [l, r] = joyMix(gp.axes[0] ?? 0, gp.axes[1] ?? 0);
+    if (tank) {
+      const side = (trig, bumper) => {
+        const v = (gp.buttons[trig]?.value ?? 0) < JOY_TRIGGER_DZ ? 0 : Math.min(1, gp.buttons[trig].value);
+        return Math.round((gp.buttons[bumper]?.pressed ? -v : v) * 100) / 100;
+      };
+      l = side(JOY_STD_LT, JOY_STD_LB);
+      r = side(JOY_STD_RT, JOY_STD_RB);
+    } else {
+      [l, r] = joyMix(gp.axes[0] ?? 0, gp.axes[1] ?? 0);
+    }
     let text = `🕹️ ${gp.id.slice(0, 32)} — L ${l.toFixed(2)}  R ${r.toFixed(2)}`;
     if (_joyPendingIdx !== null) text += `  → ${MODE_CYCLE[_joyPendingIdx].replace('_', ' ')}…`;
     if (_joyRumble.reason) text += `  📳 ${_joyRumble.reason}`;

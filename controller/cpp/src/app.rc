@@ -1,0 +1,25 @@
+// app.rc — version info for KIDA-Controller.exe (shows in the file's Properties)
+#include <winver.h>
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "FileDescription", "KIDA Remote Controller"
+      VALUE "ProductName",     "KIDA Remote Controller"
+      VALUE "FileVersion",     "1.0.0"
+      VALUE "ProductVersion",  "1.0.0"
+      VALUE "OriginalFilename", "KIDA-Controller.exe"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END

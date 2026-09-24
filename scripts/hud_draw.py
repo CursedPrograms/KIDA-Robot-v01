@@ -117,6 +117,12 @@ def draw_status_strip(surface: pygame.Surface, fonts: dict,
     )
     surface.blit(pad_surf, (sen_x1 + hint.get_width() + 12, hud_y + 42))
 
+    # Her inner life (kida_mind_host.py keeps this current); absent = no mind running
+    mind = getattr(state, "mind_label", None)
+    if mind:
+        mind_surf = fonts["xs"].render(f"  ♡ {mind}", True, (200, 160, 235))
+        surface.blit(mind_surf, (sen_x1 + hint.get_width() + 12 + pad_surf.get_width() + 8, hud_y + 42))
+
 
 def draw_sensor_grid(surface: pygame.Surface, fonts: dict,
                      sensor_rows: list, lbl_surfaces: list,

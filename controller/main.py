@@ -149,7 +149,7 @@ def run_controller() -> None:
     running               = True
 
     print("🎮 Keys: 1=KB 2=IR 3=AUTO 4=IDLE | I=infer | M=music | U=lock/unlock | SPC=stop | Q/ESC=close")
-    print("🕹️  Joystick (KEYBOARD mode): L-stick=drive R-stick=servo | A=photo B=stop X/Y=speed -/+ | LB/RB=mode RT=video Start=lock Back=sweep")
+    print("🕹️  Joystick (KEYBOARD mode): L-stick=drive (tank scheme: LT/RT tracks, LB/RB reverse) R-stick=servo | A=photo B=stop X/Y=speed -/+ | D-pad L/R=mode Up=video Start=lock Back=sweep")
 
     while running:
         # ── Character face — fetched once, on first successful connection ──
@@ -235,6 +235,7 @@ def run_controller() -> None:
 
         sigs = event_handler.handle_events(raw_events, buttons, pressed_keys, remote,
                                            lock_prompt=lock_prompt)
+        event_handler.drive_heartbeat(pressed_keys, remote)
         if sigs["quit"]:
             running = False
 

@@ -52,6 +52,25 @@ def check_web_drive_timeout() -> None:
         print("⏱️  Web drive heartbeat lost — auto-stopped")
 
 
+_MOVING_COMMANDS = {'left_forward', 'left_backward', 'right_forward', 'right_backward', 'move_curve'}
+
+
+def _mind_activity(command: str, left=None, right=None) -> None:
+    """Tell KIDA's inner life someone's using her (resets her doze-off timer);
+    a drive command also means she's being driven, which wakes her."""
+    if command in ('joy_drive', 'servo_aim', 'move_stop', 'left_stop', 'right_stop'):
+        moving = command == 'joy_drive' and bool(_unit(left) or _unit(right))
+        if not moving:
+            return   # heartbeats/zeros and aiming aren't "someone's here" on their own
+    else:
+        moving = command in _DRIVE_DIRECTIONS or command in _MOVING_COMMANDS
+    try:
+        import kida_mind_host
+        kida_mind_host.note_activity("drive" if moving else "web")
+    except Exception:
+        pass
+
+
 def is_driving() -> bool:
     """True while the web/remote/gamepad drive is holding the motors on."""
     return _web_driving
@@ -69,6 +88,17 @@ def register_inference_toggle(fn) -> None:
     _inference_toggle_fn = fn
 
 
+def set_inference(on: bool) -> bool:
+    """Turn cam-0 YOLO on/off (no-op if already there). Returns False if no
+    HUD has registered a toggle (e.g. running headless)."""
+    import state
+    if not _inference_toggle_fn:
+        return False
+    if bool(getattr(state, "inference_on", False)) != on:
+        _inference_toggle_fn()
+    return True
+
+
 def music_playing() -> bool:
     return bool(_music_ctrl and _music_ctrl.is_playing())
 
@@ -82,12 +112,15 @@ def _unit(value) -> float:
 
 
 def action(command: str, password: str | None = None,
-           left=None, right=None, angle=None) -> bool:
+           left=None, right=None, angle=None, throttle=None, turn=None) -> bool:
     """Dispatch a web action command. Returns True if recognised and it
     succeeded (motor_lock_off returns False on a wrong password).
     left/right are only used by 'joy_drive' (per-side throttle, -1..1),
-    angle only by 'servo_aim' (degrees, 90 = straight ahead)."""
+    angle only by 'servo_aim' (degrees, 90 = straight ahead), throttle/turn
+    only by 'move_curve' (each -1 or +1: a WASD diagonal, see drive_mix.py)."""
     from mode_control import switch_mode
+
+    _mind_activity(command, left, right)
 
     if command == 'music_play':
         if _music_ctrl:
@@ -192,6 +225,23 @@ def action(command: str, password: str | None = None,
             elif command == 'right_forward': set_right_motor(speed)
             elif command == 'right_backward': set_right_motor(-speed)
             set_driving_lights()
+            _last_web_drive_ts = time.time()
+            _web_driving = True
+    elif command == 'move_curve':
+        # WASD diagonal (W+A etc.): both tracks keep going, the inside one
+        # slower, so she turns while moving. Same heartbeat/dead-man rules as
+        # the other drive keys.
+        import mode_manager, state, drive_mix
+        from arduino import set_left_motor, set_right_motor, set_driving_lights
+        if mode_manager.is_keyboard():
+            speed = state.motorSpeedValue if isinstance(state.motorSpeedValue, int) else 0
+            t = 1 if _unit(throttle) >= 0 else -1
+            u = 1 if _unit(turn) >= 0 else -1
+            l, r = drive_mix.curve_speeds(t, u, speed)
+            set_left_motor(l)
+            set_right_motor(r)
+            if not _web_driving:
+                set_driving_lights()
             _last_web_drive_ts = time.time()
             _web_driving = True
     elif command == 'joy_drive':

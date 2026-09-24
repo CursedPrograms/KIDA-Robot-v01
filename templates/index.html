@@ -149,13 +149,28 @@
           </div>
         </div>
 
+        <!-- Inner life (kida_mind): mood, needs, thoughts — see main.js -->
+        <div class="ctrl-group" id="mind-panel" style="display:none">
+          <div class="ctrl-label">Mind</div>
+          <div class="ctrl-row">Mood: <span id="mind-mood" class="mind-val">—</span></div>
+          <div class="mind-bar-row"><span>Lonely</span><div class="mind-bar"><div id="mb-social"></div></div></div>
+          <div class="mind-bar-row"><span>Curious</span><div class="mind-bar"><div id="mb-curiosity"></div></div></div>
+          <div class="mind-bar-row"><span>Jumpy</span><div class="mind-bar"><div id="mb-security"></div></div></div>
+          <div class="mind-bar-row"><span>Sleepy</span><div class="mind-bar"><div id="mb-sleepy"></div></div></div>
+          <div class="ctrl-row"><span id="mind-memories"></span></div>
+          <div id="mind-thought" class="mind-note"></div>
+          <div id="mind-body" class="mind-note"></div>
+          <div id="mind-philosophy" class="mind-note"></div>
+        </div>
+
         <!-- USB joystick on this computer (Gamepad API, see main.js) -->
         <div class="ctrl-group">
           <div class="ctrl-label">Joystick (Keyboard mode)</div>
           <div class="ctrl-row" id="joy-status">No joystick — plug one in and press a button</div>
           <div class="ctrl-row">L-Stick: Drive &nbsp; R-Stick: Aim servo</div>
           <div class="ctrl-row">A/Trigger: Photo &nbsp; B/B1: Stop &nbsp; X/B2: Speed − &nbsp; Y/B3: Speed +</div>
-          <div class="ctrl-row">LB/RB: Mode &nbsp; RT: Video &nbsp; Start: Lock &nbsp; Back: Sweep</div>
+          <div class="ctrl-row">D-pad ←/→: Mode &nbsp; D-pad ↑: Video &nbsp; Start: Lock &nbsp; Back: Sweep</div>
+          <div class="ctrl-row">Tank scheme: LT/RT = left/right track (hold LB/RB = reverse)</div>
         </div>
 
         <!-- Keyboard shortcuts reference -->
@@ -163,6 +178,7 @@
           <div class="ctrl-label">Drive — WASD scheme</div>
           <div class="ctrl-row"><kbd>W</kbd> Forward &nbsp; <kbd>S</kbd> Backward</div>
           <div class="ctrl-row"><kbd>A</kbd> Rotate Left &nbsp; <kbd>D</kbd> Rotate Right</div>
+          <div class="ctrl-row"><kbd>W</kbd>+<kbd>A</kbd> / <kbd>W</kbd>+<kbd>D</kbd> Curve while driving</div>
         </div>
         <div class="ctrl-group">
           <div class="ctrl-label">Drive — Tank (QAWS) scheme</div>

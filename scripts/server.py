@@ -154,6 +154,17 @@ def _rumble_json() -> dict:
     return {'low': low, 'high': high, 'reason': reason}
 
 
+@app.route('/mind')
+def mind_status():
+    # KIDA's inner life (kida_mind): mood, needs, thoughts, dreams, goals.
+    import kida_mind_host
+    if kida_mind_host.MIND is None:
+        return jsonify({'error': 'inner life unavailable'}), 503
+    status = kida_mind_host.MIND.status()
+    status['sleeping'] = kida_mind_host.is_sleeping()
+    return jsonify(status)
+
+
 @app.route('/haptics')
 def haptics_route():
     # Tiny sibling of /status for the website's gamepad, which polls it
@@ -224,7 +235,8 @@ def action():
         password = data.get('password')
         ok       = web_bridge.action(cmd, password=password,
                                      left=data.get('left'), right=data.get('right'),
-                                     angle=data.get('angle'))
+                                     angle=data.get('angle'),
+                                     throttle=data.get('throttle'), turn=data.get('turn'))
         return jsonify({'ok': ok, 'command': cmd})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500

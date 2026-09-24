@@ -10,15 +10,20 @@
 #    static/js/main.js, same mapping)
 #
 # Layout (KEYBOARD mode for driving/servo; buttons work in any mode):
-#   left stick   drive (arcade mix → 'joy_drive' per-side throttle)
+#   left stick   drive (arcade mix → 'joy_drive' per-side throttle)  [WASD scheme]
+#   LT / RT      left / right track, analog — squeeze harder, go faster;
+#                hold LB / RB to run that track backwards             [tank (QAWS) scheme]
 #   right stick  aim the servo-mounted ultrasonic/laser left/right
 #   A  photo           B  stop            X  speed −     Y  speed +
-#   LB / RB      previous / next drive mode — applied once you stop
+#   D-pad ← / →  previous / next drive mode — applied once you stop
 #                pressing for MODE_COMMIT_S, so flicking past AUTONOMOUS
 #                on the way to another mode never sets it driving
-#   RT           start / stop video
+#                (LB / RB do this too in the WASD scheme)
+#   D-pad ↑      start / stop video (RT too, in the WASD scheme)
 #   Start        lock motors / open the unlock password prompt
 #   Back         LIDAR sweep
+# The scheme is the same flag the keyboard uses (state.drive_scheme — the
+# Scheme button, or < / > keys).
 #
 # Pads SDL knows the layout of (Logitech F710 in either X or D mode, Xbox,
 # PlayStation, …) are read through SDL's GameController API, so the names
@@ -67,6 +72,7 @@ RAW_BUTTONS = {0: "a", 1: "b", 2: "x", 3: "y"}          # trigger, B1, B2, B3
 D_MODE_NAMES = ("rumblepad",)
 D_MODE_BUTTONS = {1: "a", 2: "b", 0: "x", 3: "y"}
 
+TRIGGER_DEADZONE = 0.05
 MODE_CYCLE    = [1, 2, 3, 4, 5, 6, 7, 8]   # mode_manager.set_mode_by_number order
 MODE_COMMIT_S = 0.8
 TRIGGER_ON, TRIGGER_OFF = 0.6, 0.3         # RT hysteresis
@@ -92,6 +98,15 @@ def arcade_mix(turn: float, throttle: float) -> tuple[float, float]:
     left, right = fwd + turn, fwd - turn
     scale = max(1.0, abs(left), abs(right))
     return round(left / scale, 2), round(right / scale, 2)
+
+
+def tank_triggers(lt: float, rt: float, left_back: bool, right_back: bool) -> tuple[float, float]:
+    """Tank scheme: each trigger is its own track's throttle (0..1), and
+    holding the bumper on that side runs it backwards."""
+    def side(v, back):
+        v = 0.0 if v < TRIGGER_DEADZONE else min(1.0, v)
+        return round(-v if back else v, 2)
+    return side(lt, left_back), side(rt, right_back)
 
 
 def servo_angle(stick_x: float) -> int:
@@ -155,6 +170,7 @@ class _Pad:
                 "lx": ax(pygame.CONTROLLER_AXIS_LEFTX),
                 "ly": ax(pygame.CONTROLLER_AXIS_LEFTY),
                 "rx": ax(pygame.CONTROLLER_AXIS_RIGHTX),
+                "lt": max(0.0, ax(pygame.CONTROLLER_AXIS_TRIGGERLEFT)),
                 "rt": max(0.0, ax(pygame.CONTROLLER_AXIS_TRIGGERRIGHT)),
             }
             names = {
@@ -166,11 +182,14 @@ class _Pad:
                 "rb": pygame.CONTROLLER_BUTTON_RIGHTSHOULDER,
                 "start": pygame.CONTROLLER_BUTTON_START,
                 "back": pygame.CONTROLLER_BUTTON_BACK,
+                "dleft": pygame.CONTROLLER_BUTTON_DPAD_LEFT,
+                "dright": pygame.CONTROLLER_BUTTON_DPAD_RIGHT,
+                "dup": pygame.CONTROLLER_BUTTON_DPAD_UP,
             }
             return axes, {n for n, b in names.items() if c.get_button(b)}
 
         js = self.js
-        axes = {"lx": 0.0, "ly": 0.0, "rx": None, "rt": None}
+        axes = {"lx": 0.0, "ly": 0.0, "rx": None, "lt": None, "rt": None}
         if js.get_numaxes() > 1:
             axes["lx"], axes["ly"] = js.get_axis(0), js.get_axis(1)
         pressed = {n for i, n in self.raw_buttons.items()
@@ -249,11 +268,12 @@ class JoystickDrive:
             return
 
         axes, pressed = self.pad.read()
+        tank = state.drive_scheme == "QAWS" and axes["lt"] is not None
         for name in pressed - self._prev_pressed:
-            self._on_press(name)
+            self._on_press(name, tank)
         self._prev_pressed = pressed
 
-        if axes["rt"] is not None:
+        if axes["rt"] is not None and not tank:   # in tank mode RT is the right track
             if not self._rt_down and axes["rt"] > TRIGGER_ON:
                 self._rt_down = True
                 self._fire("video_toggle")
@@ -267,18 +287,25 @@ class JoystickDrive:
             state.joystick_pending_mode = None
 
         with self._lock:
-            self._target = arcade_mix(axes["lx"], axes["ly"])
+            if tank:
+                self._target = tank_triggers(axes["lt"], axes["rt"], "lb" in pressed, "rb" in pressed)
+            else:
+                self._target = arcade_mix(axes["lx"], axes["ly"])
             if axes["rx"] is not None:
                 self._servo = servo_angle(axes["rx"])
             if self._rumble != self._played_rumble:
                 self.pad.rumble(*self._rumble)
                 self._played_rumble = self._rumble
 
-    def _on_press(self, name: str) -> None:
+    def _on_press(self, name: str, tank: bool = False) -> None:
         if name in ACTIONS:
             self._fire(ACTIONS[name])
-        elif name in ("lb", "rb"):
+        elif name in ("dleft", "dright"):
+            self._step_mode(-1 if name == "dleft" else 1)
+        elif name in ("lb", "rb") and not tank:   # in tank mode they reverse a track instead
             self._step_mode(-1 if name == "lb" else 1)
+        elif name == "dup":
+            self._fire("video_toggle")
         elif name == "start":
             if state.motor_lock:
                 if self.on_unlock_request:

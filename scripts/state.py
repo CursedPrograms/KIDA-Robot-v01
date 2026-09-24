@@ -67,6 +67,12 @@ detection_boxes: list = []    # list of dicts: {"label": str, "conf": float, "bo
 cam1_detection_labels: list = []   # list of (class_name: str, confidence: float)
 cam1_detection_boxes: list = []    # same dict shape as detection_boxes — normalized 0-1, cam-1 frame, post-mirror (as displayed)
 
+# time.monotonic() of each camera's last detection pass — the two cameras
+# aren't synced, and cam-0's boxes just stop updating when YOLO is toggled
+# off, so person_follow_mode's stereo pairing checks both are fresh.
+detection_boxes_ts: float = 0.0
+cam1_detection_boxes_ts: float = 0.0
+
 # --- Vibration guard (written by vibration_guard.py, read by haptics.py) ---
 vibration_active: bool = False
 
@@ -75,6 +81,9 @@ vibration_active: bool = False
 # the Pi's pad and the controller HUD shows the PC's pad.
 joystick_name: str | None = None
 joystick_pending_mode: int | None = None   # LB/RB picked a mode, not applied yet
+
+# --- Inner life (written by kida_mind_host.py, read by hud_draw.py) ---
+mind_label: str | None = None   # e.g. "content", "lonely", "sleepy (asleep)"; None = no mind running
 
 # --- Ambient face emotion (written by face_emotion_mode, read by HUD + LLM) ---
 detected_emotion: tuple | None = None   # (label: str, confidence: float) of the largest face in view, or None

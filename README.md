@@ -111,6 +111,24 @@ Use the numeric keys to hot-swap between drive logics:
 
 ---
 
+## 🧠 Inner Life (`scripts/kida_mind`)
+
+KIDA has the same inner life as DREAM (ported from DREAM's `dream_mind`, minus the libido drive and dreaming — dreams would cost the Pi too much), adapted to a robot body. It's optional — if it can't load, KIDA runs exactly as before.
+
+* **Mood & needs** — mood (valence/arousal plus a wandering good-day/bad-day temperament) and needs: loneliness, curiosity, feeling on edge, and sleep pressure with a body clock.
+* **Memory** — every conversation becomes an episode in a memory graph; recall is associative and mood-coloured, memories fade unless they matter, and sleep strengthens the important ones. Facts (your name, pet, home, job, birthday) are remembered too.
+* **Her body** — bumps, nearly tipping over, rough rides and being driven around all reach her mood; so do her battery (INA219) and her Pi's load and temperature. She'll say "ow" when she hits something.
+* **Eyes** — about once a minute she glances through cam-1 (who's there comes from the IMX500); after a drive the first glance is "somewhere new". No pictures are saved — just what she noticed.
+* **Sleep** — after a quiet spell (sooner when she's tired) she dozes off in IDLE mode and tidies her memories once (important ones strengthen, trivial ones fade). No dreaming, so sleep costs the Pi nothing. Her name, typed text, driving her or a mode change wakes her.
+* **Initiative** — she sometimes speaks first (a reminder, a question, missing you, a bump), with impulse control: never at 3 am, not into an empty room, less if you ignore her.
+* **Boundaries & care** — she won't pretend to be human, says when something stings, and drops everything for anyone who sounds like they're in danger. Stop/lock/quit/forget commands are always honoured.
+* **Your control** — "forget that", "forget about X", "forget everything" (confirmed), "stop talking on your own", "watch my face" (off by default). Everything lives in `memories/` on the Pi and is gitignored.
+
+The web dashboard shows a **Mind** panel (`/mind`); the Pi HUD shows her mood next to the gamepad indicator.
+Self-test (fake LLM, scratch folder — never touches her real memories): `cd scripts && python -m kida_mind.selftest`
+
+---
+
 ## Prerequisites
 
 <details>

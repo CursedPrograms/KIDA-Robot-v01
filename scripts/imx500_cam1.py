@@ -10,7 +10,7 @@ from picamera2 import Picamera2
 from picamera2.devices import IMX500
 from picamera2.devices.imx500 import NetworkIntrinsics, postprocess_nanodet_detection
 
-from camera_threads import frame_queue2, frame_queue2_web, publish
+from camera_threads import frame_queue2, frame_queue2_web, publish, publish_to_mind
 import state
 
 MODEL_PATH  = "/usr/share/imx500-models/imx500_network_ssd_mobilenetv2_fpnlite_320x320_pp.rpk"
@@ -84,6 +84,7 @@ def _imx500_loop() -> None:
                 frame = request.make_array("main").copy()
             finally:
                 request.release()
+            publish_to_mind(frame)
             detections = _parse_detections(metadata)
             # Published for anything that needs "does cam-1 currently see a
             # person" (e.g. face_emotion_mode.py's capture gate) — reflects
@@ -106,6 +107,7 @@ def _imx500_loop() -> None:
                 }
                 for ((x, y, w, h), cat, score) in detections
             ]
+            state.cam1_detection_boxes_ts = time.monotonic()
             if detections:
                 last_detections = detections
             frame = _draw_detections(frame, last_detections)

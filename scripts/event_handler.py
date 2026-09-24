@@ -15,12 +15,40 @@ import mode_manager
 import motor_lock
 import sfx
 import state
+import drive_mix
 
 from state import DriveMode
 from arduino import (send_command, set_motor_speed, set_driving_lights,
                      set_stopped_lights, set_left_motor, set_right_motor)
 from mode_control import switch_mode, switch_mode_direct
 from camera_actions import take_photo, start_video
+
+
+def _apply_wasd(pressed_keys: set, motor_speed: int) -> None:
+    """Drive from whichever WASD keys are held now (see drive_mix.py): one key
+    is the usual preset direction, a diagonal curves, nothing held stops."""
+    intent = drive_mix.wasd_intent(pygame.K_w in pressed_keys, pygame.K_s in pressed_keys,
+                                   pygame.K_a in pressed_keys, pygame.K_d in pressed_keys)
+    if intent[0] == "curve":
+        l, r = drive_mix.curve_speeds(intent[1], intent[2], motor_speed)
+        set_left_motor(l)
+        set_right_motor(r)
+        set_driving_lights()
+    elif intent[0] == "dir":
+        send_command("dev00", intent[1])
+        set_driving_lights()
+    else:
+        send_command("dev00", "STOP")
+        set_stopped_lights()
+
+
+def _mind_drive() -> None:
+    """KIDA's inner life: she's being driven (resets her doze-off timer, wakes her)."""
+    try:
+        import kida_mind_host
+        kida_mind_host.note_activity("drive")
+    except Exception:
+        pass
 
 
 def handle_events(events, buttons: list,
@@ -146,6 +174,7 @@ def handle_events(events, buttons: list,
             # Movement — KEYBOARD mode only. Which keys do what depends on
             # state.drive_scheme (see toggle above).
             elif state.drive_scheme == "QAWS" and k in (pygame.K_q, pygame.K_a, pygame.K_w, pygame.K_s):
+                _mind_drive()   # wakes her first if she was asleep, so the key still drives
                 if mode_manager.is_keyboard():
                     if k == pygame.K_q:   set_left_motor(motor_speed)
                     elif k == pygame.K_a: set_left_motor(-motor_speed)
@@ -154,27 +183,23 @@ def handle_events(events, buttons: list,
                     set_driving_lights()
                     pressed_keys.add(k)
             elif state.drive_scheme == "WASD" and k in (pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d):
+                _mind_drive()
                 if mode_manager.is_keyboard():
-                    direction = {
-                        pygame.K_w: "FORWARD",
-                        pygame.K_s: "BACKWARD",
-                        pygame.K_a: "LEFT",
-                        pygame.K_d: "RIGHT",
-                    }[k]
-                    send_command("dev00", direction)
-                    set_driving_lights()
                     pressed_keys.add(k)
+                    _apply_wasd(pressed_keys, motor_speed)   # W+A etc. curve instead of spinning
 
         elif event.type == pygame.KEYUP:
             if mode_manager.is_keyboard() and event.key in pressed_keys:
+                pressed_keys.discard(event.key)
                 if state.drive_scheme == "QAWS" and event.key in (pygame.K_q, pygame.K_a):
                     set_left_motor(0)
+                    set_stopped_lights()
                 elif state.drive_scheme == "QAWS" and event.key in (pygame.K_w, pygame.K_s):
                     set_right_motor(0)
+                    set_stopped_lights()
                 else:
-                    send_command("dev00", "STOP")
-                set_stopped_lights()
-                pressed_keys.discard(event.key)
+                    # WASD: release W from W+A and she keeps turning left, etc.
+                    _apply_wasd(pressed_keys, motor_speed)
 
         # ── Mouse ─────────────────────────────────────────────────────────────
         elif event.type == pygame.MOUSEBUTTONDOWN:
