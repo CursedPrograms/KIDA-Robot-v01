@@ -118,6 +118,13 @@ class RemoteClient:
         except Exception:
             return None
 
+    def rumble_level(self) -> tuple[float, float]:
+        """Gamepad rumble the robot wants (haptics.py), from the last /status."""
+        if not self.connected:
+            return 0.0, 0.0   # stale status — don't keep buzzing
+        r = self.status.get("rumble") or {}
+        return float(r.get("low", 0.0)), float(r.get("high", 0.0))
+
     # ── outbound commands ──
     def send_action(self, command: str, password: str | None = None, **fields) -> bool:
         """fields: extra JSON keys, e.g. left/right for 'joy_drive'."""

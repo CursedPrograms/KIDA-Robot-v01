@@ -196,6 +196,7 @@ a:hover { text-decoration: underline; }
 .mode-LINE_FOLLOWER { color: #c864ff; }
 .mode-WATCHDOG      { color: #ff5050; }
 .mode-LANE_DETECT   { color: #50d0ff; }
+.mode-PERSON_FOLLOW { color: #78ffc8; }
 .mode-IDLE          { color: var(--red); }
 
 /* ── Bottom ────────────────────────────────────────────────── */

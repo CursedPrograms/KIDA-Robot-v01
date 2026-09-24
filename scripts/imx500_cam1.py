@@ -93,6 +93,19 @@ def _imx500_loop() -> None:
                 (_labels[cat] if cat < len(_labels) else str(cat), score)
                 for (_, cat, score) in detections
             ]
+            # Boxes for person_follow_mode.py — normalized and mirrored the
+            # same way as the frame gets flipped below, so "right of center"
+            # means the same thing here as on screen (and as lane_detect_mode,
+            # which steers off the displayed cam-1 frame).
+            fh, fw = frame.shape[:2]
+            state.cam1_detection_boxes = [
+                {
+                    "label": _labels[cat] if cat < len(_labels) else str(cat),
+                    "conf":  score,
+                    "box":   (1 - (x + w) / fw, y / fh, 1 - x / fw, (y + h) / fh),
+                }
+                for ((x, y, w, h), cat, score) in detections
+            ]
             if detections:
                 last_detections = detections
             frame = _draw_detections(frame, last_detections)

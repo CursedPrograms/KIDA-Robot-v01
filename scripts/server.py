@@ -145,6 +145,22 @@ def character_face():
     return send_file(face_path)
 
 
+def _rumble_json() -> dict:
+    try:
+        import haptics
+        low, high, reason = haptics.level()
+    except Exception:
+        low, high, reason = 0.0, 0.0, ''
+    return {'low': low, 'high': high, 'reason': reason}
+
+
+@app.route('/haptics')
+def haptics_route():
+    # Tiny sibling of /status for the website's gamepad, which polls it
+    # every few hundred ms — /status is far too heavy for that rate.
+    return jsonify(_rumble_json())
+
+
 @app.route('/status')
 def status():
     import state
@@ -175,6 +191,7 @@ def status():
         'cur_ma':       round(getattr(state, 'cur_ma',  0.0), 1),
         'pwr_w':        round(getattr(state, 'pwr_w',   0.0), 2),
         'bat_pct':      round(getattr(state, 'bat_pct', 0.0), 0),
+        'rumble':       _rumble_json(),
         'sensors': {
             'Photo':    getattr(state, 'photoValue',       '—'),
             'UV':       getattr(state, 'uvValue',          '—'),
@@ -206,7 +223,8 @@ def action():
         cmd      = data.get('command', '')
         password = data.get('password')
         ok       = web_bridge.action(cmd, password=password,
-                                     left=data.get('left'), right=data.get('right'))
+                                     left=data.get('left'), right=data.get('right'),
+                                     angle=data.get('angle'))
         return jsonify({'ok': ok, 'command': cmd})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500

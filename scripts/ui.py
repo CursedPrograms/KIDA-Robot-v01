@@ -21,8 +21,10 @@
 #   ESC      — close the UI (run.sh restarts it after a few seconds)
 #
 # Gamepad plugged into the Pi (USB / Logitech wireless dongle) — KEYBOARD mode:
-#   left stick — drive (analog)   A/trigger — photo   B — stop
-#   X — speed −                   Y — speed +
+#   left stick — drive (analog)   right stick — aim servo   A/trigger — photo
+#   B — stop    X/Y — speed −/+   LB/RB — prev/next mode    RT — video
+#   Start — lock / unlock prompt  Back — LIDAR sweep
+#   Rumbles on tipping, vibration, or an obstacle while driving (haptics.py)
 #   (see joystick_drive.py; a pad plugged into the PC is read by the
 #    controller / website instead)
 
@@ -322,7 +324,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
     last_photo_path_seen  = None
 
     mode_manager.set_mode(DriveMode.KEYBOARD, stop_motors=False)
-    joystick = JoystickDrive(LocalActions())
+    joystick = JoystickDrive(LocalActions(), on_unlock_request=_motor_lock_click)
     print("🎮 Keys: 1=KB 2=IR 3=AUTO 4=IDLE | I=infer | M=music | U=lock/unlock | SPC=stop | ESC=close Q=quit for good")
 
     # ═══════════════════════════════════════════

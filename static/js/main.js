@@ -9,6 +9,7 @@ const MODE_COLORS = {
   LINE_FOLLOWER: 'mode-LINE_FOLLOWER',
   WATCHDOG:      'mode-WATCHDOG',
   LANE_DETECT:   'mode-LANE_DETECT',
+  PERSON_FOLLOW: 'mode-PERSON_FOLLOW',
   IDLE:          'mode-IDLE',
 };
 
@@ -115,6 +116,7 @@ const MODE_SELECT_MAP = {
   LINE_FOLLOWER: 'mode_5',
   WATCHDOG:      'mode_6',
   LANE_DETECT:   'mode_7',
+  PERSON_FOLLOW: 'mode_8',
 };
 
 async function sendAction(cmd, password) {
@@ -438,7 +440,7 @@ document.querySelectorAll('.dpad-btn[data-drive]').forEach((btn) => {
 });
 
 // ── [/] mode cycling ─────────────────────────────────────────────
-const MODE_CYCLE = ['mode_1', 'mode_2', 'mode_3', 'mode_5', 'mode_6', 'mode_4'];
+const MODE_CYCLE = ['mode_1', 'mode_2', 'mode_3', 'mode_5', 'mode_6', 'mode_7', 'mode_8', 'mode_4'];
 let _modeCycleIdx = 0;
 
 function cycleMode(delta) {
@@ -465,22 +467,36 @@ if (schemeBtn) {
 }
 
 // ── Joystick (Gamepad API) ───────────────────────────────────────
-// Same stick and mapping as the PC remote controller
-// (scripts/joystick_drive.py): plugged into this computer,
-// never the robot. Stick X/Y is arcade-mixed into left/right track
-// throttle (-1..1) and sent as 'joy_drive'; the robot scales it by the
-// current speed setting and only obeys it in KEYBOARD mode. Resent every
-// JOY_HEARTBEAT_MS while deflected, for the same dead-man timeout the drive
-// keys rely on. Browsers only expose a gamepad after a button is pressed.
-const JOY_AXIS_TURN      = 0;
-const JOY_AXIS_THROTTLE  = 1;
+// Same pad layout as the Pi/PC HUDs (scripts/joystick_drive.py): the pad
+// is plugged into this computer, never the robot.
+//   left stick  drive — arcade-mixed into left/right track throttle
+//               (-1..1) and sent as 'joy_drive'; the robot scales it by
+//               the current speed and only obeys it in KEYBOARD mode.
+//               Resent every JOY_HEARTBEAT_MS while deflected, for the
+//               same dead-man timeout the drive keys rely on.
+//   right stick aim the servo ('servo_aim')
+//   A photo  B stop  X/Y speed −/+  LB/RB mode (applied after a pause)
+//   RT video  Start lock/unlock  Back LIDAR sweep
+// Pads the browser reports with the 'standard' mapping (Logitech in X
+// mode, Xbox, PlayStation…) get the full layout; anything else (e.g. the
+// Generic USB Joystick) gets the stick + the first four buttons.
+// Rumble comes from the robot's /haptics while a pad is connected.
+// Browsers only expose a gamepad after a button is pressed.
 const JOY_DEADZONE       = 0.08;
-// Generic stick trigger/B1/B2/B3, or Logitech (X mode) / Xbox A/B/X/Y.
-const JOY_BUTTON_ACTIONS = { 0: 'photo', 1: 'hard_stop', 2: 'speed_down', 3: 'speed_up' };
-// Logitech in D mode ("Cordless RumblePad 2") orders the face buttons X, A, B, Y.
+// 'standard' mapping button indices → action
+const JOY_STD_ACTIONS = { 0: 'photo', 1: 'hard_stop', 2: 'speed_down', 3: 'speed_up', 8: 'lidar_sweep' };
+const JOY_STD_LB = 4, JOY_STD_RB = 5, JOY_STD_RT = 7, JOY_STD_START = 9;
+// Non-standard pads: generic stick trigger/B1/B2/B3…
+const JOY_RAW_ACTIONS    = { 0: 'photo', 1: 'hard_stop', 2: 'speed_down', 3: 'speed_up' };
+// …or a Logitech in D mode ("Cordless RumblePad 2"): face buttons X, A, B, Y.
 const JOY_D_MODE_ACTIONS = { 1: 'photo', 2: 'hard_stop', 0: 'speed_down', 3: 'speed_up' };
 const JOY_SEND_MS        = 50;
 const JOY_HEARTBEAT_MS   = 250;
+const JOY_MODE_COMMIT_MS = 800;
+const JOY_SERVO_RANGE    = 70;
+const JOY_SERVO_STEP     = 5;
+const JOY_SERVO_MS       = 200;
+const JOY_RUMBLE_MS      = 250;
 
 const joyStatus = $('joy-status');
 let _joyIndex       = null;
@@ -489,6 +505,13 @@ let _joyLastSend    = 0;
 let _joyInFlight    = false;
 let _joyPrevButtons = [];
 let _joyStatusText  = '';
+let _joyRtDown      = false;
+let _joyPendingIdx  = null;
+let _joyPendingAt   = 0;
+let _joyServoSent   = 90;
+let _joyServoAt     = 0;
+let _joyRumble      = { low: 0, high: 0, reason: '' };
+let _joyRumbleAt    = 0;
 
 function joyDz(v) { return Math.abs(v) < JOY_DEADZONE ? 0 : v; }
 
@@ -508,21 +531,49 @@ function setJoyStatus(text) {
 
 // Separate from sendAction(): that refetches /status after every call,
 // which at joystick send rates would hammer the robot for nothing.
+async function postJoy(body) {
+  const res = await fetch('/action', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
+  });
+  return res.ok;
+}
+
 async function postJoyDrive(l, r) {
   if (_joyInFlight) return;
   _joyInFlight = true;
   _joyLastSend = performance.now();
   try {
-    const res = await fetch('/action', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ command: 'joy_drive', left: l, right: r }),
-    });
-    if (res.ok) _joySent = [l, r];
+    if (await postJoy({ command: 'joy_drive', left: l, right: r })) _joySent = [l, r];
   } catch (_) {
     // unsent — the next tick sees the mismatch and retries
   } finally {
     _joyInFlight = false;
+  }
+}
+
+function joyStepMode(delta) {
+  const base = _joyPendingIdx ?? _modeCycleIdx;
+  _joyPendingIdx = (base + delta + MODE_CYCLE.length) % MODE_CYCLE.length;
+  _joyPendingAt  = performance.now();
+}
+
+async function pollHaptics(gp) {
+  _joyRumbleAt = performance.now();
+  try {
+    const res = await fetch('/haptics');
+    _joyRumble = await res.json();
+  } catch (_) {
+    _joyRumble = { low: 0, high: 0, reason: '' };
+  }
+  const act = gp.vibrationActuator;
+  if (act && (_joyRumble.low || _joyRumble.high)) {
+    act.playEffect('dual-rumble', {
+      duration: JOY_RUMBLE_MS + 150,
+      strongMagnitude: _joyRumble.low,
+      weakMagnitude:   _joyRumble.high,
+    }).catch(() => {});
   }
 }
 
@@ -535,16 +586,45 @@ function joyTick(now) {
   let l = 0, r = 0;
   const gp = _joyIndex !== null ? navigator.getGamepads()[_joyIndex] : null;
   if (gp && document.hasFocus()) {
-    // Only remap if the browser hasn't already normalised it to the
-    // 'standard' layout (where A/B/X/Y are always 0/1/2/3).
-    const dMode   = gp.mapping !== 'standard' && /rumblepad/i.test(gp.id);
-    const actions = dMode ? JOY_D_MODE_ACTIONS : JOY_BUTTON_ACTIONS;
+    const std = gp.mapping === 'standard';
+    const actions = std ? JOY_STD_ACTIONS
+                  : /rumblepad/i.test(gp.id) ? JOY_D_MODE_ACTIONS : JOY_RAW_ACTIONS;
     gp.buttons.forEach((b, i) => {
-      if (b.pressed && !_joyPrevButtons[i] && actions[i]) sendAction(actions[i]);
+      if (b.pressed && !_joyPrevButtons[i]) {
+        if (actions[i]) sendAction(actions[i]);
+        else if (std && i === JOY_STD_LB) joyStepMode(-1);
+        else if (std && i === JOY_STD_RB) joyStepMode(1);
+        else if (std && i === JOY_STD_START) toggleLock();
+      }
       _joyPrevButtons[i] = b.pressed;
     });
-    [l, r] = joyMix(gp.axes[JOY_AXIS_TURN] ?? 0, gp.axes[JOY_AXIS_THROTTLE] ?? 0);
-    setJoyStatus(`🕹️ ${gp.id.slice(0, 32)} — L ${l.toFixed(2)}  R ${r.toFixed(2)}`);
+
+    if (std) {
+      const rt = gp.buttons[JOY_STD_RT]?.value ?? 0;
+      if (!_joyRtDown && rt > 0.6) { _joyRtDown = true; sendAction('video_toggle'); }
+      else if (_joyRtDown && rt < 0.3) _joyRtDown = false;
+
+      const angle = Math.round((90 + joyDz(gp.axes[2] ?? 0) * JOY_SERVO_RANGE) / JOY_SERVO_STEP) * JOY_SERVO_STEP;
+      if (angle !== _joyServoSent && now - _joyServoAt >= JOY_SERVO_MS) {
+        _joyServoSent = angle;
+        _joyServoAt   = now;
+        postJoy({ command: 'servo_aim', angle }).catch(() => {});
+      }
+    }
+
+    if (_joyPendingIdx !== null && now - _joyPendingAt >= JOY_MODE_COMMIT_MS) {
+      _modeCycleIdx  = _joyPendingIdx;
+      _joyPendingIdx = null;
+      sendAction(MODE_CYCLE[_modeCycleIdx]);
+    }
+
+    if (now - _joyRumbleAt >= JOY_RUMBLE_MS) pollHaptics(gp);
+
+    [l, r] = joyMix(gp.axes[0] ?? 0, gp.axes[1] ?? 0);
+    let text = `🕹️ ${gp.id.slice(0, 32)} — L ${l.toFixed(2)}  R ${r.toFixed(2)}`;
+    if (_joyPendingIdx !== null) text += `  → ${MODE_CYCLE[_joyPendingIdx].replace('_', ' ')}…`;
+    if (_joyRumble.reason) text += `  📳 ${_joyRumble.reason}`;
+    setJoyStatus(text);
   } else if (gp) {
     setJoyStatus(`🕹️ ${gp.id.slice(0, 32)} — paused (window not focused)`);
   }
@@ -565,6 +645,7 @@ window.addEventListener('gamepadconnected', (e) => {
 window.addEventListener('gamepaddisconnected', (e) => {
   if (e.gamepad.index !== _joyIndex) return;
   _joyIndex = null;
+  _joyPendingIdx = null;
   setJoyStatus('No joystick — plug one in and press a button');
 });
 

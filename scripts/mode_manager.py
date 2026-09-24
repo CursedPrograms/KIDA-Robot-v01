@@ -7,6 +7,7 @@
 #   5 → LINE_FOLLOWER
 #   6 → WATCHDOG
 #   7 → LANE_DETECT  (Hailo UFLD_v2 lane-following)
+#   8 → PERSON_FOLLOW (follow a person seen by cam-1's IMX500)
 #
 # Any input source (keyboard, IR, button) calls set_mode().
 # All other modules read state.drive_mode.
@@ -33,7 +34,8 @@ def register_on_mode_change(fn):
 # here would race against their own start-up command (e.g. AUTO_ON sent by
 # mode_control right after this) and kill the first move — see mode_hooks.py.
 _SELF_MANAGED_MODES = (DriveMode.AUTONOMOUS, DriveMode.LINE_FOLLOWER,
-                       DriveMode.WATCHDOG, DriveMode.LANE_DETECT)
+                       DriveMode.WATCHDOG, DriveMode.LANE_DETECT,
+                       DriveMode.PERSON_FOLLOW)
 
 
 # ── public API ─────────────────────────────────────────────
@@ -69,6 +71,7 @@ def set_mode_by_number(n: int) -> None:
         5: DriveMode.LINE_FOLLOWER,
         6: DriveMode.WATCHDOG,
         7: DriveMode.LANE_DETECT,
+        8: DriveMode.PERSON_FOLLOW,
     }
     if n not in mapping:
         print(f"⚠️ Invalid mode number: {n}")
@@ -98,6 +101,9 @@ def is_watchdog() -> bool:
 
 def is_lane_detect() -> bool:
     return state.drive_mode == DriveMode.LANE_DETECT
+
+def is_person_follow() -> bool:
+    return state.drive_mode == DriveMode.PERSON_FOLLOW
 
 
 

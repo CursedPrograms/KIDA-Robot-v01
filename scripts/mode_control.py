@@ -16,6 +16,7 @@ from mode_manager import register_on_mode_change
 import line_follow_mode
 import watchdog_mode
 import lane_detect_mode
+import person_follow_mode
 import voice_engine
 
 # ── Track the last mode so we can send AUTO_OFF when leaving ──
@@ -36,6 +37,8 @@ def _on_mode_changed(new_mode: DriveMode) -> None:
     is_wd   = (new_mode   == DriveMode.WATCHDOG)
     was_ld  = (_prev_mode == DriveMode.LANE_DETECT)
     is_ld   = (new_mode   == DriveMode.LANE_DETECT)
+    was_pf  = (_prev_mode == DriveMode.PERSON_FOLLOW)
+    is_pf   = (new_mode   == DriveMode.PERSON_FOLLOW)
 
     # ── Leaving autonomous ──
     if _prev_mode == DriveMode.AUTONOMOUS and new_mode != DriveMode.AUTONOMOUS:
@@ -68,6 +71,13 @@ def _on_mode_changed(new_mode: DriveMode) -> None:
             print("🛣️  Lane detect OFF")
         except Exception as e:
             print(f"⚠️  LANE_DETECT stop: {e}")
+
+    # ── Leaving person follow ──
+    if was_pf and not is_pf:
+        try:
+            person_follow_mode.stop()
+        except Exception as e:
+            print(f"⚠️  PERSON_FOLLOW stop: {e}")
 
     # ── Entering autonomous ──
     if new_mode == DriveMode.AUTONOMOUS and _prev_mode != DriveMode.AUTONOMOUS:
@@ -109,6 +119,13 @@ def _on_mode_changed(new_mode: DriveMode) -> None:
         except Exception as e:
             print(f"⚠️  LANE_DETECT start: {e}")
 
+    # ── Entering person follow ──
+    if is_pf and not was_pf:
+        try:
+            person_follow_mode.start()
+        except Exception as e:
+            print(f"⚠️  PERSON_FOLLOW start: {e}")
+
     # ── Voice acknowledgment ──
     try:
         voice_engine.announce_mode(new_mode)
@@ -126,7 +143,7 @@ def init_mode_control() -> None:
 
 def switch_mode(number: int) -> None:
     """
-    Switch to mode by number (1-7).
+    Switch to mode by number (1-8).
     The registered hook handles all side-effects.
     """
     mode_manager.set_mode_by_number(number)

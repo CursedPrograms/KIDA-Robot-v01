@@ -65,6 +65,7 @@ def create_buttons(music_ctrl=None) -> list:
         Button((0, 0, 160, 36), blue,   "Idle / Stop",   lambda: switch_mode(4)),
         Button((0, 0, 160, 36), red,    "Watchdog",      lambda: switch_mode(6)),
         Button((0, 0, 160, 36), purple, "Lane Detect",   lambda: switch_mode(7)),
+        Button((0, 0, 160, 36), purple, "Follow Person", lambda: switch_mode(8)),
         # Music
         Button((0, 0, 160, 36), pink,   "Play Music",    music_play),
         Button((0, 0, 160, 36), pink,   "Next Track",    music_skip),

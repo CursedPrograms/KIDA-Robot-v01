@@ -13,6 +13,7 @@ class DriveMode(Enum):
     IDLE          = "IDLE"        # mode 4 / blackout state
     WATCHDOG      = "WATCHDOG"    # mode 6 / person-detection alarm
     LANE_DETECT   = "LANE_DETECT" # mode 7 / Hailo UFLD_v2 lane-following
+    PERSON_FOLLOW = "PERSON_FOLLOW" # mode 8 / follow a person seen by cam-1's IMX500
 
 # ─────────────────────────────────────────────
 #  Active mode (single source of truth)
@@ -64,6 +65,16 @@ detection_boxes: list = []    # list of dicts: {"label": str, "conf": float, "bo
 
 # --- IMX500 on-chip inference results (written by imx500_cam1.py) ---
 cam1_detection_labels: list = []   # list of (class_name: str, confidence: float)
+cam1_detection_boxes: list = []    # same dict shape as detection_boxes — normalized 0-1, cam-1 frame, post-mirror (as displayed)
+
+# --- Vibration guard (written by vibration_guard.py, read by haptics.py) ---
+vibration_active: bool = False
+
+# --- Gamepad (written by joystick_drive.py, read by hud_draw.py) ---
+# Name of the pad plugged into *this* machine, or None — so the Pi HUD shows
+# the Pi's pad and the controller HUD shows the PC's pad.
+joystick_name: str | None = None
+joystick_pending_mode: int | None = None   # LB/RB picked a mode, not applied yet
 
 # --- Ambient face emotion (written by face_emotion_mode, read by HUD + LLM) ---
 detected_emotion: tuple | None = None   # (label: str, confidence: float) of the largest face in view, or None

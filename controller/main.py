@@ -82,7 +82,6 @@ def run_controller() -> None:
     screen = pygame.display.set_mode((SW, SH), pygame.RESIZABLE)
     pygame.display.set_caption(APP_NAME)
     pygame.mouse.set_visible(True)
-    joystick = JoystickDrive(remote)
 
     fonts = {
         "sm":    pygame.font.SysFont("monospace", 16),
@@ -130,6 +129,9 @@ def run_controller() -> None:
 
     lock_btn = Button((0, 0, 160, 36), (140, 200, 140), "Lock Motors", _motor_lock_click)
 
+    # Gamepad on this PC — Start mirrors the Lock Motors button.
+    joystick = JoystickDrive(remote, on_unlock_request=_motor_lock_click)
+
     # Drive scheme toggle — WASD (differential) vs QAWS (tank, Q/A=left
     # motor, W/S=right motor). state.drive_scheme is kept in sync with
     # the robot by remote_client.py's /status poll.
@@ -147,7 +149,7 @@ def run_controller() -> None:
     running               = True
 
     print("🎮 Keys: 1=KB 2=IR 3=AUTO 4=IDLE | I=infer | M=music | U=lock/unlock | SPC=stop | Q/ESC=close")
-    print("🕹️  Joystick (KEYBOARD mode): stick=drive | A/trigger=photo | B=stop | X/Y=speed -/+")
+    print("🕹️  Joystick (KEYBOARD mode): L-stick=drive R-stick=servo | A=photo B=stop X/Y=speed -/+ | LB/RB=mode RT=video Start=lock Back=sweep")
 
     while running:
         # ── Character face — fetched once, on first successful connection ──

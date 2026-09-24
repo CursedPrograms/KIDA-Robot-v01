@@ -16,6 +16,8 @@ _MODE_LABEL = {
     DriveMode.AUTONOMOUS:    ("AUTO", (255, 190,  80)),
     DriveMode.LINE_FOLLOWER: ("LF",   (200, 100, 255)),
     DriveMode.WATCHDOG:      ("WATCH",(255,  80,  80)),
+    DriveMode.LANE_DETECT:   ("LANE", ( 80, 208, 255)),
+    DriveMode.PERSON_FOLLOW: ("FOLLOW",(120, 255, 200)),
     DriveMode.IDLE:          ("IDLE", (180,  80,  80)),
 }
 
@@ -99,10 +101,21 @@ def draw_status_strip(surface: pygame.Surface, fonts: dict,
     surface.blit(mode_surf, (sen_x1 + st_base.get_width(), hud_y + 24))
 
     hint = fonts["xs"].render(
-        "  1=KB  2=IR  3=AUTO  4=IDLE  5=LINE  6=WATCH  7=LANE",
+        "  1=KB  2=IR  3=AUTO  4=IDLE  5=LINE  6=WATCH  7=LANE  8=FOLLOW",
         True, (80, 100, 140),
     )
     surface.blit(hint, (sen_x1, hud_y + 42))
+
+    # Gamepad plugged into *this* machine (joystick_drive.py sets the name)
+    pad = getattr(state, "joystick_name", None)
+    pending = getattr(state, "joystick_pending_mode", None)
+    pad_text = f"  🎮 {pad[:28]}" if pad else "  🎮 no pad"
+    if pad and pending:
+        pad_text += f"  → mode {pending}…"
+    pad_surf = fonts["xs"].render(
+        pad_text, True, (100, 220, 140) if pad else (90, 90, 110),
+    )
+    surface.blit(pad_surf, (sen_x1 + hint.get_width() + 12, hud_y + 42))
 
 
 def draw_sensor_grid(surface: pygame.Surface, fonts: dict,

@@ -52,6 +52,11 @@ def check_web_drive_timeout() -> None:
         print("⏱️  Web drive heartbeat lost — auto-stopped")
 
 
+def is_driving() -> bool:
+    """True while the web/remote/gamepad drive is holding the motors on."""
+    return _web_driving
+
+
 def register_music(mc) -> None:
     global _music_ctrl
     _music_ctrl = mc
@@ -77,10 +82,11 @@ def _unit(value) -> float:
 
 
 def action(command: str, password: str | None = None,
-           left=None, right=None) -> bool:
+           left=None, right=None, angle=None) -> bool:
     """Dispatch a web action command. Returns True if recognised and it
     succeeded (motor_lock_off returns False on a wrong password).
-    left/right are only used by 'joy_drive' (per-side throttle, -1..1)."""
+    left/right are only used by 'joy_drive' (per-side throttle, -1..1),
+    angle only by 'servo_aim' (degrees, 90 = straight ahead)."""
     from mode_control import switch_mode
 
     if command == 'music_play':
@@ -109,6 +115,8 @@ def action(command: str, password: str | None = None,
         switch_mode(6)
     elif command == 'mode_7':
         switch_mode(7)
+    elif command == 'mode_8':
+        switch_mode(8)
     elif command == 'voice_mode_wakeword':
         import state
         state.voice_mode = state.VoiceMode.WAKEWORD
@@ -126,7 +134,31 @@ def action(command: str, password: str | None = None,
     elif command == 'video_stop':
         import camera_actions
         camera_actions.stop_video()
-    elif command == 'camera_switch':
+    elif command == 'video_toggle':
+        # Gamepad right trigger — a single button, so it needs the robot's
+        # own idea of whether it's recording (the PC/browser can't know).
+        import camera_actions, sfx
+        if camera_actions.recording:
+            camera_actions.stop_video()
+        else:
+            camera_actions.start_video()
+            sfx.play("video_reel.mp3")
+    elif command == 'servo_aim':
+        # Gamepad right stick — point the servo-mounted US1/laser (and
+        # anything else on that mount) left/right. Same mode restriction as
+        # lidar_sweep: AUTONOMOUS's obstacleAvoidance() scans with this servo
+        # too, and a sweep in progress owns it.
+        import mode_manager, lidar_sweep
+        from state import DriveMode
+        from arduino import send_command
+        if (mode_manager.current_mode() not in (DriveMode.KEYBOARD, DriveMode.IDLE)
+                or lidar_sweep._running.is_set()):
+            return False
+        try:
+            deg = max(0, min(180, int(float(angle))))
+        except (TypeError, ValueError):
+            return False
+        send_command("dev00", f"SERVO:{deg}")
         import camera_actions
         camera_actions.cycle_camera()
     elif command == 'save_inference':

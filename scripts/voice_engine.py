@@ -147,6 +147,7 @@ _MODE_LINES = {
     "LINE_FOLLOWER": "Line follower mode. Watch me stay on track.",
     "IDLE":          "Idle mode. Taking a break.",
     "WATCHDOG":      "Watchdog mode. I'm watching.",
+    "PERSON_FOLLOW": "Follow mode. Lead the way.",
 }
 
 

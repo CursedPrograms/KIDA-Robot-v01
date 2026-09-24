@@ -52,6 +52,7 @@ def _loop():
 
         if not triggered and len(history) >= TOGGLE_THRESHOLD:
             triggered = True
+            state.vibration_active = True
             baseline_speed = int(getattr(state, "motorSpeedValue", None) or config.DEFAULT_SPEED)
             reduced = max(config.MIN_SPEED, int(baseline_speed * SLOWDOWN_FACTOR))
             arduino.set_motor_speed(reduced)
@@ -60,6 +61,7 @@ def _loop():
 
         elif triggered and (now - last_toggle_t) > COOLDOWN_S:
             triggered = False
+            state.vibration_active = False
             if baseline_speed:
                 arduino.set_motor_speed(baseline_speed)
                 print(f"📳 Vibration settled — restoring speed to {baseline_speed}")
