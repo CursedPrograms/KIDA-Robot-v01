@@ -43,10 +43,22 @@ def _apply_wasd(pressed_keys: set, motor_speed: int) -> None:
 
 
 def _mind_drive() -> None:
-    """KIDA's inner life: she's being driven (resets her doze-off timer, wakes her)."""
+    """You're driving: ends any route/go-home she's doing by herself, and tells
+    her inner life she's being driven (resets her doze-off timer, wakes her)."""
+    _stop_navigating()
     try:
         import kida_mind_host
         kida_mind_host.note_activity("drive")
+    except Exception:
+        pass
+
+
+def _stop_navigating() -> None:
+    try:
+        import navigator
+        if navigator.active():
+            import routes
+            routes.stop()
     except Exception:
         pass
 
@@ -123,6 +135,7 @@ def handle_events(events, buttons: list,
 
             # Hard stop — motors + music
             elif k == pygame.K_SPACE:
+                _stop_navigating()
                 send_command("dev00", "STOP")
                 set_stopped_lights()
                 if music_ctrl:

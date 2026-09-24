@@ -415,6 +415,7 @@ def _handle(text: str, cues) -> None:
     # ── Her own boundaries, care and self-knowledge come before the LLM ──
     pre = mind.pre_reply(text, cues) if mind else None
     if pre is not None and pre.reply:
+        state.last_exchange = {"you": text, "kida": pre.reply, "ts": time.time()}
         speak(pre.reply)
         mind.post_reply(pre.reply)
         return
@@ -429,6 +430,7 @@ def _handle(text: str, cues) -> None:
                     num_predict=mind.token_budget(LLM_MAX_TOKENS) if mind else LLM_MAX_TOKENS)
     if pre is not None and pre.preface:
         reply = f"{pre.preface} {reply}"
+    state.last_exchange = {"you": text, "kida": reply, "ts": time.time()}
     speak(reply)
     if mind:
         mind.post_reply(reply)

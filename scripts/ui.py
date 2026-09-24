@@ -117,6 +117,22 @@ def celebration_routine(music_ctrl: MusicPlayer):
 # ─────────────────────────────────────────────
 #  Main UI entry point
 # ─────────────────────────────────────────────
+def _mind_view():
+    """What the HUD's mind panel shows: Mind.status() plus who's here and the
+    last exchange (the same fields the robot's /mind gives the controllers)."""
+    try:
+        import kida_mind_host
+        if kida_mind_host.MIND is None:
+            return None
+        v = kida_mind_host.MIND.status()
+        v["sleeping"] = kida_mind_host.is_sleeping()
+        v["person"] = state.person_name if time.time() - state.person_seen_ts < 90 else None
+        v["last_exchange"] = state.last_exchange
+        return v
+    except Exception:
+        return None
+
+
 def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
     motor_speed  = config.DEFAULT_SPEED
     pressed_keys = set()
@@ -164,6 +180,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
     SEN_TOP        = layout["sen_top"]
     btn_panel_x    = layout["btn_panel_x"]
     btn_panel_rect = layout["btn_panel_rect"]
+    MIND_RECT      = hud_draw.mind_panel_rect(SW, SH, hud_y, SEN_X2, btn_panel_x)
 
     # ── Hardware ──
     ina219_module = None
@@ -323,6 +340,8 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
     motor_speed_box       = [motor_speed]   # mutable ref for ir_bridge
     last_photo_surf       = None
     last_photo_path_seen  = None
+    mind_view             = None
+    last_mind_view        = 0.0
 
     mode_manager.set_mode(DriveMode.KEYBOARD, stop_motors=False)
     joystick = JoystickDrive(LocalActions(), on_unlock_request=_motor_lock_click)
@@ -420,6 +439,10 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
             screen, fonts, buttons, hud_y, btn_panel_x, btn_panel_rect,
             music_ctrl.is_playing(),
         )
+        if now - last_mind_view > 2.0:
+            last_mind_view = now
+            mind_view = _mind_view()
+        hud_draw.draw_mind_panel(screen, fonts, MIND_RECT, mind_view)
 
         if mode_manager.is_idle():
             hud_draw.draw_idle_overlay(screen, fonts)

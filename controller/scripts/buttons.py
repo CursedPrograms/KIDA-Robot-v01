@@ -33,4 +33,6 @@ def create_buttons(remote) -> list:
         Button((0, 0, 160, 36), pink,   "Stop Music",     lambda: remote.send_action("music_stop")),
         # LEDs
         Button((0, 0, 160, 36), pink,   "Toggle LEDs",    lambda: remote.send_action("leds_toggle")),
+        # Getting around by herself (odometry / navigator)
+        Button((0, 0, 160, 36), blue,   "Go Home",        lambda: remote.send_action("go_home")),
     ]

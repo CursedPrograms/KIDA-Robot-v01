@@ -78,6 +78,11 @@ def take_photo():
         cam.capture_file(filename)
         camera_memory.record_photo(filename)
         print(f"📸 Image saved: {filename}")
+        try:
+            import daylog
+            daylog.note("photo")
+        except Exception:
+            pass
     except Exception as e:
         print(f"❌ Failed to take photo: {e}")
 

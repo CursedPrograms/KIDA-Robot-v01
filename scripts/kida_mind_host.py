@@ -101,6 +101,11 @@ def enter_sleep() -> None:
         _sleeping = True
         _mode_before_sleep = mode
     print("💤 KIDA is falling asleep…")
+    try:                                   # after 9 pm, today goes into her journal
+        import daylog
+        daylog.maybe_journal()
+    except Exception:
+        pass
     if mode != DriveMode.IDLE:
         mode_manager.set_mode(DriveMode.IDLE)
 
@@ -169,7 +174,15 @@ def _count_people() -> int:
     return n
 
 
-def _watch_body(now: float) -> None:
+def _daylog(kind: str) -> None:
+    try:
+        import daylog
+        daylog.note(kind)
+    except Exception:
+        pass
+
+
+def _watch_body(now: float) -> bool:
     global _prev_ball, _prev_vibe, _prev_tip, _last_bump, _last_tip
     from sensor_assist import _parse_int
     import web_bridge
@@ -179,6 +192,7 @@ def _watch_body(now: float) -> None:
     if ball and not _prev_ball and driving and now - _last_bump > BUMP_EVERY_S:
         _last_bump = now
         MIND.on_body_event("bump")
+        _daylog("bump")
     _prev_ball = ball
 
     try:
@@ -190,11 +204,13 @@ def _watch_body(now: float) -> None:
     if tipping and not _prev_tip and now - _last_tip > TIP_EVERY_S:
         _last_tip = now
         MIND.on_body_event("tip")
+        _daylog("tip")
     _prev_tip = tipping
 
     vibe = bool(getattr(state, "vibration_active", False))
     if vibe and not _prev_vibe:
         MIND.on_body_event("shake")
+        _daylog("shake")
     _prev_vibe = vibe
     return driving
 

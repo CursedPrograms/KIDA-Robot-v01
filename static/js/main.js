@@ -519,7 +519,144 @@ async function fetchMind() {
   $('mind-thought').textContent = s.thought ? `💭 ${s.thought}` : '';
   $('mind-body').textContent = s.body ? `⌁ body feels ${s.body.feels}` + (s.clock ? ` · ${s.clock.time}, ${s.clock.weekday}` : '') : '';
   $('mind-philosophy').textContent = s.philosophy && s.philosophy.lean ? `◈ leans ${s.philosophy.lean}` : '';
+  $('mind-person').textContent = s.person ? `🙂 with ${s.person}` : '';
+  const ex = s.last_exchange;
+  $('mind-exchange').textContent = ex ? `You: ${ex.you}
+KIDA: ${ex.kida}` : '';
 }
+
+// Typing to her — same queue as her voice conversations (web_bridge 'chat');
+// her answer appears above as "KIDA: …" on the next /mind poll.
+const chatForm = $('chat-form');
+if (chatForm) {
+  chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = $('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    try { await postJoy({ command: 'chat', text }); } catch (_) {}
+    setTimeout(fetchMind, 4000);
+  });
+}
+
+// ── Getting around (odometry / navigator) ────────────────────────
+async function fetchNav() {
+  let o;
+  try {
+    const res = await fetch('/odometry');
+    if (!res.ok) return;
+    o = await res.json();
+  } catch (_) { return; }
+  $('nav-pose').textContent =
+    `x ${(o.x / 100).toFixed(2)} m  y ${(o.y / 100).toFixed(2)} m  ${o.heading.toFixed(0)}°  ·  ` +
+    `${(o.home_cm / 100).toFixed(1)} m from home` + (o.uncertain ? '  (uncertain)' : '') + (o.gyro ? '' : '  · no gyro');
+  // trail, auto-scaled; map x = her start's forward (up), y = her left (left)
+  const pts = (o.trail || []).concat([[o.x, o.y]]);
+  const ext = Math.max(50, ...pts.map(([x, y]) => Math.max(Math.abs(x), Math.abs(y)))) * 1.15;
+  const k = 90 / ext;
+  const sx = (x, y) => (-y * k).toFixed(1), sy = (x, y) => (-x * k).toFixed(1);
+  const path = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${sx(x, y)},${sy(x, y)}`).join(' ');
+  const h = (o.heading * Math.PI) / 180, rx = sx(o.x, o.y), ry = sy(o.x, o.y);
+  $('nav-map').innerHTML =
+    `<circle cx="0" cy="0" r="4" class="nav-home"/>` +
+    `<path d="${path}" class="nav-trail"/>` +
+    `<line x1="${rx}" y1="${ry}" x2="${(+rx - Math.sin(h) * 10).toFixed(1)}" y2="${(+ry - Math.cos(h) * 10).toFixed(1)}" class="nav-heading"/>` +
+    `<circle cx="${rx}" cy="${ry}" r="4" class="nav-kida"/>`;
+}
+
+// ── Routes ───────────────────────────────────────────────────────
+let _routeRecording = null;
+async function fetchRoutes() {
+  let r;
+  try {
+    const res = await fetch('/routes');
+    if (!res.ok) return;
+    r = await res.json();
+  } catch (_) { return; }
+  _routeRecording = r.status.recording;
+  $('route-rec-btn').textContent = _routeRecording ? `⏹ Save "${_routeRecording}"` : '⏺ Record';
+  const nav = r.status.nav;
+  $('nav-status').textContent = nav.active ? `🧭 ${nav.task} — stop ${nav.index}/${nav.count} ${nav.result || ''}`
+                                           : (nav.result ? `🧭 last: ${nav.task} — ${nav.result}` : '');
+  const list = $('route-list');
+  list.innerHTML = '';
+  for (const rt of r.routes) {
+    const row = document.createElement('div');
+    row.className = 'btn-row route-row';
+    row.innerHTML = `<span class="route-name">${rt.name} <small>${(rt.length_cm / 100).toFixed(1)} m</small></span>`;
+    for (const [label, cmd] of [['▶', 'route_play'], ['🔁', 'route_patrol'], ['✕', 'route_delete']]) {
+      const b = document.createElement('button');
+      b.className = 'act-btn act-sys';
+      b.textContent = label;
+      b.title = { route_play: 'Replay', route_patrol: 'Patrol', route_delete: 'Delete' }[cmd];
+      b.addEventListener('click', async () => {
+        if (cmd === 'route_delete' && !window.confirm(`Delete route "${rt.name}"?`)) return;
+        await postJoy({ command: cmd, name: rt.name }).catch(() => {});
+        fetchRoutes();
+      });
+      row.appendChild(b);
+    }
+    list.appendChild(row);
+  }
+}
+const routeForm = $('route-form');
+if (routeForm) {
+  routeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (_routeRecording) await postJoy({ command: 'route_record_stop' }).catch(() => {});
+    else await postJoy({ command: 'route_record_start', name: $('route-name').value.trim() || 'my route' }).catch(() => {});
+    fetchRoutes();
+  });
+}
+
+// ── Faces ────────────────────────────────────────────────────────
+const faceForm = $('face-form');
+if (faceForm) {
+  faceForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = $('face-name').value.trim();
+    if (!name) return;
+    $('face-hint').textContent = `Learning ${name}'s face — look at cam-1…`;
+    await postJoy({ command: 'face_enroll', name }).catch(() => {});
+    setTimeout(() => { $('face-hint').textContent = 'Look at cam-1 for ~10 s after pressing Learn.'; fetchMind(); }, 13000);
+  });
+  $('face-forget').addEventListener('click', async () => {
+    const name = $('face-name').value.trim();
+    if (name && window.confirm(`Forget ${name}'s face?`)) await postJoy({ command: 'face_forget', name }).catch(() => {});
+  });
+}
+
+// ── Today (daylog) ───────────────────────────────────────────────
+let _daySelected = '';
+async function fetchDay() {
+  let d;
+  try {
+    const res = await fetch('/daylog' + (_daySelected ? `?date=${_daySelected}` : ''));
+    if (!res.ok) return;
+    d = await res.json();
+  } catch (_) { return; }
+  const sel = $('day-select');
+  if (sel && sel.options.length !== d.days.length) {
+    sel.innerHTML = d.days.map((x, i) => `<option value="${i ? x : ''}">${i ? x : 'today'}</option>`).join('');
+  }
+  $('day-summary').textContent = d.summary || '';
+  const moods = d.mood || [];
+  if (moods.length > 1) {
+    const w = 240 / (moods.length - 1);
+    const line = moods.map((m, i) => `${i ? 'L' : 'M'}${(i * w).toFixed(1)},${(20 - m.v * 18).toFixed(1)}`).join(' ');
+    $('day-mood').innerHTML = `<line x1="0" y1="20" x2="240" y2="20" class="mood-zero"/><path d="${line}" class="mood-line"/>` +
+      moods.map((m, i) => `<title>${m.t} ${m.label}</title>`).join('');
+  } else {
+    $('day-mood').innerHTML = '';
+  }
+}
+const daySel = $('day-select');
+if (daySel) daySel.addEventListener('change', () => { _daySelected = daySel.value; fetchDay(); });
+
+fetchNav(); setInterval(fetchNav, 2000);
+fetchRoutes(); setInterval(fetchRoutes, 3000);
+fetchDay(); setInterval(fetchDay, 60000);
 
 fetchMind();
 setInterval(fetchMind, MIND_INTERVAL);

@@ -40,6 +40,7 @@ import hud_layout
 import mode_manager
 from button_widget import Button
 from password_prompt import PasswordPrompt
+from text_prompt import TextPrompt
 from buttons import create_buttons
 from remote_client import RemoteClient
 from joystick_drive import JoystickDrive
@@ -104,6 +105,7 @@ def run_controller() -> None:
     SEN_TOP        = layout["sen_top"]
     btn_panel_x    = layout["btn_panel_x"]
     btn_panel_rect = layout["btn_panel_rect"]
+    MIND_RECT      = hud_draw.mind_panel_rect(SW, SH, hud_y, SEN_X2, btn_panel_x)
 
     buttons      = create_buttons(remote)
     lbl_surfaces = [
@@ -139,7 +141,16 @@ def run_controller() -> None:
         remote.send_action("scheme_qaws" if state.drive_scheme == "WASD" else "scheme_wasd")
 
     scheme_btn = Button((0, 0, 160, 36), (160, 160, 220), "Scheme: WASD", _drive_scheme_click)
-    buttons.extend([lock_btn, scheme_btn])
+
+    # Typing to her from this PC — goes into the same queue as her voice
+    # conversations; her answer shows in the mind panel (you may not hear her).
+    chat_prompt = TextPrompt("TYPE A MESSAGE TO KIDA")
+
+    def _chat_click():
+        chat_prompt.open(lambda text: remote.send_action("chat", text=text))
+
+    chat_btn = Button((0, 0, 160, 36), (160, 200, 220), "Type to KIDA", _chat_click)
+    buttons.extend([lock_btn, scheme_btn, chat_btn])
 
     char_image          = None
     last_photo_surf     = None
@@ -202,6 +213,7 @@ def run_controller() -> None:
             screen, fonts, buttons, hud_y, btn_panel_x, btn_panel_rect,
             status.get("music_on", False),
         )
+        hud_draw.draw_mind_panel(screen, fonts, MIND_RECT, remote.mind)
 
         if mode_manager.is_idle():
             hud_draw.draw_idle_overlay(screen, fonts)
@@ -210,6 +222,7 @@ def run_controller() -> None:
             _draw_disconnected_banner(screen, fonts, SW)
 
         lock_prompt.draw(screen, fonts)
+        chat_prompt.draw(screen, fonts)
 
         pygame.display.flip()
         clock.tick(30)
@@ -225,16 +238,17 @@ def run_controller() -> None:
 
         # While the unlock prompt is open, every key goes to it — nothing
         # else (mode switches, drive keys, buttons) should fire mid-entry.
-        if lock_prompt.active:
+        if lock_prompt.active or chat_prompt.active:
+            prompt = lock_prompt if lock_prompt.active else chat_prompt
             for event in raw_events:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
-                    lock_prompt.handle_key(event)
+                    prompt.handle_key(event)
             continue
 
         sigs = event_handler.handle_events(raw_events, buttons, pressed_keys, remote,
-                                           lock_prompt=lock_prompt)
+                                           lock_prompt=lock_prompt, chat_prompt=chat_prompt)
         event_handler.drive_heartbeat(pressed_keys, remote)
         if sigs["quit"]:
             running = False

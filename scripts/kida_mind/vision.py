@@ -145,6 +145,15 @@ class Vision:
             self._save()
         return observations
 
+    def record(self, text, kind="patrol", significance=0.7, now=None):
+        """Something she noticed some other way (a route replay, say)."""
+        now = now or time.time()
+        obs = {"ts": now, "path": None, "kind": kind, "brightness": None, "delta": 0.0, "anomaly": 0.0,
+               "faces": 0, "smiling": False, "significance": significance, "text": text,
+               "core": significance >= CORE_SIGNIFICANCE, "spoken": False}
+        store.append_jsonl(OBSERVATIONS, obs)
+        return obs
+
     def record_motion(self, now=None):
         """The PIR sensor fired and nobody's in view."""
         now = now or time.time()

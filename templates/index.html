@@ -161,6 +161,53 @@
           <div id="mind-thought" class="mind-note"></div>
           <div id="mind-body" class="mind-note"></div>
           <div id="mind-philosophy" class="mind-note"></div>
+          <div id="mind-person" class="mind-note"></div>
+          <div id="mind-exchange" class="mind-note"></div>
+          <form id="chat-form" class="inline-form" autocomplete="off">
+            <input id="chat-input" type="text" maxlength="500" placeholder="Type to KIDA…">
+            <button class="act-btn act-sys" type="submit">Say</button>
+          </form>
+        </div>
+
+        <!-- Getting around by herself: odometry.py / navigator.py -->
+        <div class="ctrl-group">
+          <div class="ctrl-label">Getting Around</div>
+          <div class="ctrl-row" id="nav-pose">—</div>
+          <svg id="nav-map" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="btn-row">
+            <button class="act-btn act-sys" data-cmd="go_home">🏠 Go Home</button>
+            <button class="act-btn act-sys" data-cmd="set_home">📍 Set Home</button>
+            <button class="act-btn act-stop" data-cmd="nav_stop">⏹ Stop</button>
+          </div>
+          <div class="ctrl-row" id="nav-status"></div>
+        </div>
+
+        <!-- Routes: routes.py -->
+        <div class="ctrl-group">
+          <div class="ctrl-label">Routes</div>
+          <form id="route-form" class="inline-form" autocomplete="off">
+            <input id="route-name" type="text" maxlength="40" placeholder="route name">
+            <button class="act-btn act-sys" type="submit" id="route-rec-btn">⏺ Record</button>
+          </form>
+          <div id="route-list"></div>
+        </div>
+
+        <!-- Faces: face_id.py -->
+        <div class="ctrl-group">
+          <div class="ctrl-label">Faces</div>
+          <form id="face-form" class="inline-form" autocomplete="off">
+            <input id="face-name" type="text" maxlength="30" placeholder="name">
+            <button class="act-btn act-sys" type="submit">🙂 Learn face</button>
+            <button class="act-btn act-sys" type="button" id="face-forget">Forget</button>
+          </form>
+          <div class="ctrl-row mind-note" id="face-hint">Look at cam-1 for ~10 s after pressing Learn.</div>
+        </div>
+
+        <!-- The day: daylog.py -->
+        <div class="ctrl-group">
+          <div class="ctrl-label">Today <select id="day-select"></select></div>
+          <div id="day-summary" class="mind-note"></div>
+          <svg id="day-mood" viewBox="0 0 240 40" preserveAspectRatio="none"></svg>
         </div>
 
         <!-- USB joystick on this computer (Gamepad API, see main.js) -->

@@ -31,11 +31,13 @@ class RemoteClient:
         self.frame0           = None   # last decoded cam-0 frame (numpy RGB)
         self.frame1           = None   # last decoded cam-1 frame (numpy RGB)
         self.status           = {}
+        self.mind             = None   # /mind (her inner life), None if the robot has none
         self.last_photo_ts    = None
         self.connected        = False
         self._running         = True
 
         threading.Thread(target=self._poll_status, daemon=True).start()
+        threading.Thread(target=self._poll_mind, daemon=True).start()
         threading.Thread(target=self._stream_cam, args=(0,), daemon=True).start()
         threading.Thread(target=self._stream_cam, args=(1,), daemon=True).start()
 
@@ -117,6 +119,15 @@ class RemoteClient:
             return pygame.image.load(io.BytesIO(r.content))
         except Exception:
             return None
+
+    def _poll_mind(self) -> None:
+        while self._running:
+            try:
+                r = requests.get(f"{self.base_url}/mind", timeout=2)
+                self.mind = r.json() if r.status_code == 200 else None
+            except Exception:
+                self.mind = None
+            time.sleep(3.0)
 
     def rumble_level(self) -> tuple[float, float]:
         """Gamepad rumble the robot wants (haptics.py), from the last /status."""

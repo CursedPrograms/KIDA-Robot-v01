@@ -145,6 +145,40 @@ def character_face():
     return send_file(face_path)
 
 
+def _pose_json() -> dict:
+    try:
+        import odometry
+        return odometry.summary()
+    except Exception:
+        return {}
+
+
+def _person_now():
+    import state
+    name = getattr(state, 'person_name', None)
+    return name if name and time.time() - getattr(state, 'person_seen_ts', 0) < 90 else None
+
+
+@app.route('/odometry')
+def odometry_route():
+    # where she thinks she is, and the path she's driven (for the web map)
+    import odometry
+    return jsonify({**odometry.summary(), 'trail': odometry.trail()[-800:]})
+
+
+@app.route('/routes')
+def routes_route():
+    import routes
+    return jsonify({'routes': routes.list_routes(), 'status': routes.status()})
+
+
+@app.route('/daylog')
+def daylog_route():
+    # ?date=YYYY-MM-DD (default today): the day's record, its summary, and the days on file
+    import daylog
+    return jsonify({**daylog.day(request.args.get('date') or None), 'days': daylog.days()})
+
+
 def _rumble_json() -> dict:
     try:
         import haptics
@@ -160,8 +194,11 @@ def mind_status():
     import kida_mind_host
     if kida_mind_host.MIND is None:
         return jsonify({'error': 'inner life unavailable'}), 503
+    import state
     status = kida_mind_host.MIND.status()
     status['sleeping'] = kida_mind_host.is_sleeping()
+    status['person'] = _person_now()
+    status['last_exchange'] = getattr(state, 'last_exchange', None)
     return jsonify(status)
 
 
@@ -203,6 +240,8 @@ def status():
         'pwr_w':        round(getattr(state, 'pwr_w',   0.0), 2),
         'bat_pct':      round(getattr(state, 'bat_pct', 0.0), 0),
         'rumble':       _rumble_json(),
+        'pose':         _pose_json(),
+        'person':       _person_now(),
         'sensors': {
             'Photo':    getattr(state, 'photoValue',       '—'),
             'UV':       getattr(state, 'uvValue',          '—'),
@@ -236,7 +275,8 @@ def action():
         ok       = web_bridge.action(cmd, password=password,
                                      left=data.get('left'), right=data.get('right'),
                                      angle=data.get('angle'),
-                                     throttle=data.get('throttle'), turn=data.get('turn'))
+                                     throttle=data.get('throttle'), turn=data.get('turn'),
+                                     name=data.get('name'), text=data.get('text'))
         return jsonify({'ok': ok, 'command': cmd})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500

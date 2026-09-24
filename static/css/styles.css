@@ -289,6 +289,30 @@ a:hover { text-decoration: underline; }
 .mind-bar div { height: 100%; width: 0%; background: #78a0ff; transition: width 0.6s; }
 .mind-note { font-size: 11px; color: var(--text); font-style: italic; line-height: 1.35; }
 .mind-note:empty { display: none; }
+#mind-exchange { white-space: pre-line; }
+
+/* ── Chat / routes / faces forms ─────────────────────────────── */
+.inline-form { display: flex; gap: 4px; }
+.inline-form input { flex: 1; min-width: 0; background: #0c1120; color: var(--text); border: 1px solid var(--border);
+                     border-radius: 3px; padding: 2px 6px; font-family: var(--font); font-size: 12px; }
+.route-row { align-items: center; }
+.route-name { flex: 1; font-size: 12px; color: var(--text); }
+.route-name small { color: var(--text-dim); }
+.act-btn.act-stop { color: #ff7070; border-color: #5a1a1a; }
+.act-btn.act-stop:hover { border-color: #ff7070; }
+#day-select { background: #0c1120; color: var(--text-dim); border: 1px solid var(--border); font-size: 10px; margin-left: 6px; }
+
+/* ── Map of where she's been (odometry trail) ─────────────────── */
+#nav-map { width: 100%; max-width: 240px; height: 160px; background: #080c18; border: 1px solid var(--border); border-radius: 4px; }
+#nav-map .nav-trail { fill: none; stroke: #4a78d0; stroke-width: 1.5; }
+#nav-map .nav-home { fill: #ffcf40; }
+#nav-map .nav-kida { fill: #78ffc8; }
+#nav-map .nav-heading { stroke: #78ffc8; stroke-width: 2; }
+
+/* ── Today's mood strip (daylog) ─────────────────────────────── */
+#day-mood { width: 100%; max-width: 240px; height: 40px; }
+#day-mood .mood-zero { stroke: #2a3450; stroke-width: 1; }
+#day-mood .mood-line { fill: none; stroke: #b090f0; stroke-width: 1.5; }
 
 kbd {
   display: inline-block;

@@ -452,6 +452,29 @@ def main():
     seen = m._look(at(80, 19), people=0, moved=False)
     check(any(o["kind"] == "look" for o in seen), "the mind's own look takes the newest cam-1 frame")
 
+    print("\n   people she knows by face (face_id.py -> on_person)")
+    import state as robot_state
+    for g in m.executive.goals.due_reminders(at(80, 19)):
+        m.executive.goals.complete(g["id"])
+    m.identity.cooldown_until = 0
+    m.last_user_ts = at(80, 19) - 3600
+    m.on_person("Sam", at(80, 19))
+    c = m.executive.decide(m.percept(at(80, 19) + 3, dict(state)))
+    check(c is not None and c["kind"] == "greet" and "Sam" in c["text"], f"she greets them by name: {c['text'] if c else None!r}")
+    m.executive.act(c, at(80, 19) + 3)
+    check(not any(x["kind"] == "greet" for x in m.executive.candidates(m.percept(at(80, 19) + 8, dict(state)))), "...once")
+    robot_state.person_name, robot_state.person_seen_ts = "Sam", time.time()
+    check("talking to Sam" in m.prompt_context("hi", at(80, 19, 1)), "and knows who she's talking to")
+    pre = talk("who am I?", at(80, 19, 2)); check(pre.reply and "Sam" in pre.reply, f"'who am I' -> {pre.reply!r}")
+    robot_state.person_name = None
+    m.on_person(None, at(80, 19, 5))
+    kinds = {x["kind"] for x in m.executive.candidates(m.percept(at(80, 19, 5) + 3, dict(state)))}
+    check("stranger" in kinds, f"a face she doesn't know: she may ask who it is ({sorted(kinds)})")
+    m.notice("on the kitchen route, near the second stop, there's something in the way now", at(80, 19, 6))
+    obs = [o for o in m.vision.observations(10) if "kitchen route" in o["text"]]
+    check(obs and not obs[-1]["spoken"] and obs[-1]["significance"] >= 0.6,
+          "a patrol's difference becomes something she noticed, and may mention")
+
     print("\n   warmth, not desire: nothing of libido is ported")
     m.mood = Mood(0.0, 0.3, temper=0.0); m.drives.values["social"] = 0.7
     talk("you're so cute, I missed you", at(80, 20))

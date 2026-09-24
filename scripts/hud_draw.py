@@ -185,3 +185,81 @@ def draw_idle_overlay(surface: pygame.Surface, fonts: dict) -> None:
     surface.blit(msg, msg.get_rect(
         center=(surface.get_width() // 2, surface.get_height() // 2)
     ))
+
+
+# ── Mind panel (kida_mind) ────────────────────────────────────────────────
+# Shared by the Pi HUD (ui.py fills `mind` from kida_mind_host) and the PC
+# controller (filled from the robot's /mind). `mind` is Mind.status() plus
+# "person" and "last_exchange"; None/{} = no mind running (panel not drawn).
+_MIND_BARS = (("Lonely", "social"), ("Curious", "curiosity"), ("Jumpy", "security"), ("Sleepy", "sleepiness"))
+
+
+def _wrap(font, text: str, width: int, max_lines: int) -> list:
+    words, lines, line = (text or "").split(), [], ""
+    for w in words:
+        trial = f"{line} {w}".strip()
+        if font.size(trial)[0] <= width:
+            line = trial
+        else:
+            if line:
+                lines.append(line)
+            line = w
+        if len(lines) >= max_lines:
+            break
+    if line and len(lines) < max_lines:
+        lines.append(line)
+    if len(lines) == max_lines and " ".join(lines) != " ".join(words):
+        lines[-1] = lines[-1].rstrip(".,") + "…"
+    return lines
+
+
+def mind_panel_rect(sw: int, sh: int, hud_y: int, sen_x2: int, btn_panel_x: int):
+    """Where the mind panel goes: the free HUD space between the sensor grid
+    and the button panel. None if the window is too narrow for it."""
+    x = sen_x2 + 260
+    w = btn_panel_x - 18 - x
+    if w < 260:
+        return None
+    return pygame.Rect(x, hud_y + 62, w, sh - hud_y - 70)
+
+
+def draw_mind_panel(surface: pygame.Surface, fonts: dict, rect, mind: dict | None) -> None:
+    if rect is None or not mind or not mind.get("mood"):
+        return
+    draw_panel(surface, rect, fill=(12, 10, 24), alpha=225, border=(70, 52, 110), radius=6)
+    x, y, w = rect.x + 10, rect.y + 8, rect.width - 20
+    label = mind["mood"].get("label", "?") + ("  (asleep)" if mind.get("sleeping") else "")
+    head = fonts["sm"].render(f"MIND  ♡ {label}", True, (205, 170, 240))
+    surface.blit(head, (x, y))
+    if mind.get("person"):
+        who = fonts["xs"].render(f"with {mind['person']}", True, (120, 230, 170))
+        surface.blit(who, (x + head.get_width() + 14, y + 3))
+    y += 24
+
+    drives = mind.get("drives", {})
+    bar_w = max(60, (w - 4 * 64) // 4)
+    for i, (name, key) in enumerate(_MIND_BARS):
+        bx = x + i * (bar_w + 64)
+        surface.blit(fonts["xs"].render(name, True, (150, 140, 185)), (bx, y))
+        track = pygame.Rect(bx + 58, y + 4, bar_w, 8)
+        pygame.draw.rect(surface, (30, 28, 50), track, border_radius=3)
+        v = max(0.0, min(1.0, float(drives.get(key, 0) or 0)))
+        if v:
+            pygame.draw.rect(surface, (150, 120, 240), (track.x, track.y, int(track.w * v), track.h), border_radius=3)
+    y += 22
+
+    bottom = rect.bottom - 6
+    thought = mind.get("thought")
+    if thought and y + 16 < bottom:
+        for line in _wrap(fonts["xs"], "… " + thought, w, 2):
+            surface.blit(fonts["xs"].render(line, True, (190, 180, 220)), (x, y))
+            y += 16
+        y += 4
+    ex = mind.get("last_exchange") or {}
+    for who, key, color in (("You", "you", (140, 170, 220)), ("KIDA", "kida", (230, 190, 240))):
+        if ex.get(key) and y + 16 < bottom:
+            for line in _wrap(fonts["xs"], f"{who}: {ex[key]}", w, 2):
+                if y + 16 >= bottom:
+                    break
+                surface.blit(fonts["xs"].render(line, True, color), (x, y))
+                y += 16

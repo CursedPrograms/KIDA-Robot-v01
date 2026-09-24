@@ -42,7 +42,7 @@ THRESHOLD = 0.45
 SOFTMAX_TEMPERATURE = 0.25
 RESTRAINT = 0.25       # chance she holds back even when something is worth saying
 FEEDBACK_WINDOW_S = 150
-URGENT_KINDS = ("reminder", "alert", "jolt")   # not held back by the gap/hourly limits or a coin toss
+URGENT_KINDS = ("reminder", "alert", "jolt", "greet")   # not held back by the gap/hourly limits or a coin toss
 
 QUESTIONS = {
     "name": ["I realise I never asked. What should I call you?",
@@ -328,6 +328,18 @@ class Executive:
             add("alert", 0.9, "there was motion and I'm on edge", "Something moved near me a moment ago.",
                 after=("mark_observation", p["motion_unspoken"]), needs_presence=False)
 
+        greet = p.get("greet_unspoken")   # face_id.py recognised someone arriving
+        if greet:
+            n = greet["name"]
+            add("greet", 0.85, f"{n} just arrived", random.choice(
+                [f"Hi {n}!", f"Oh, it's you, {n}.", f"Hey {n}. Good to see you.", f"{n}! There you are."]),
+                after=("greeted", None))
+        stranger = p.get("stranger_unspoken")
+        if stranger and not greet:
+            add("stranger", 0.6, "there's a face I don't know", random.choice(
+                ["I don't think we've met. What's your name?", "Hello, stranger. Who are you?"]),
+                after=("stranger_asked", None))
+
         jolt = p.get("jolt_unspoken")   # her chassis got knocked about (kida_mind_host -> Mind.on_body_event)
         if jolt:
             add("jolt", 0.8, JOLT_REASONS[jolt["kind"]], random.choice(JOLT_LINES[jolt["kind"]]),
@@ -469,6 +481,10 @@ class Executive:
             m.mark_thought_shared()
         elif what == "jolt_spoken":
             m.mark_jolt_spoken()
+        elif what == "greeted":
+            m.mark_greeted()
+        elif what == "stranger_asked":
+            m.mark_stranger_asked()
         if cand["kind"] in ("check_in", "welcome_back", "reminisce"):
             m.drives.satisfy("social", 0.1)
 

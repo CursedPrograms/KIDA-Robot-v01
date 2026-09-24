@@ -19,6 +19,7 @@
 //   QAWS scheme  Q/A left track fwd/back, W/S right track fwd/back
 //   1-8 mode  Space stop  X speed  I inference  M music  L LEDs  K effects
 //   U lock/unlock  C photo  V video  , / . scheme WASD / QAWS  Esc quit (Q too, in WASD)
+//   T type to KIDA (her answer shows in the MIND panel)  H go home
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -70,7 +71,7 @@ struct Button {
     std::wstring label;
     COLORREF color;
     std::string command;      // sent on click, unless special
-    enum Special { None, Lock, Scheme, Camera, Play } special = None;
+    enum Special { None, Lock, Scheme, Camera, Play, Chat } special = None;
     RECT rect{};
 };
 
@@ -87,11 +88,12 @@ bool g_mouseDown = false;
 
 HFONT g_fSm, g_fXs, g_fHd, g_fNoSig, g_fBtn;
 
-enum class Prompt { None, Unlock, Address };
+enum class Prompt { None, Unlock, Address, Chat };
 Prompt g_prompt = Prompt::None;
 std::wstring g_promptText;
 std::wstring g_promptError;
 bool g_unlockPending = false;
+bool g_swallowChar = false;        // the key that opened a prompt mustn't also type into it
 
 // ── helpers ─────────────────────────────────────────────────────────────
 COLORREF shade(COLORREF c, int d) {
@@ -249,6 +251,8 @@ void createButtons() {
         {L"Next Track", pink, "music_skip"},
         {L"Stop Music", pink, "music_stop"},
         {L"Toggle LEDs", pink, "leds_toggle"},
+        {L"Go Home", blue, "go_home"},
+        {L"Type to KIDA", RGB(160, 200, 220), "", Button::Chat},
         {L"Lock Motors", RGB(140, 200, 140), "", Button::Lock},
         {L"Scheme: WASD", RGB(160, 160, 220), "", Button::Scheme},
     };
@@ -264,6 +268,12 @@ void openUnlock() {
     g_promptError.clear();
 }
 
+void openChat() {
+    g_prompt = Prompt::Chat;
+    g_promptText.clear();
+    g_promptError.clear();
+}
+
 void lockClick() {
     if (!g_robot) return;
     if (g_status["motor_lock"].truthy()) openUnlock();
@@ -273,6 +283,7 @@ void lockClick() {
 void clickButton(const Button& b) {
     if (!g_robot || !buttonEnabled(b)) return;
     if (b.special == Button::Lock) return lockClick();
+    if (b.special == Button::Chat) return openChat();
     if (b.special == Button::Scheme) {
         g_robot->send(g_status["drive_scheme"].text("WASD") == "WASD" ? "scheme_qaws" : "scheme_wasd");
         return;
@@ -323,7 +334,15 @@ void releaseAllDriveKeys() {
     sendKeyDrive();
 }
 
+void onKeyDownImpl(int vk);
+
 void onKeyDown(int vk) {
+    Prompt before = g_prompt;
+    onKeyDownImpl(vk);
+    if (before == Prompt::None && g_prompt != Prompt::None) g_swallowChar = true;
+}
+
+void onKeyDownImpl(int vk) {
     if (g_prompt != Prompt::None) {
         if (vk == VK_ESCAPE) {
             if (g_prompt == Prompt::Address && !g_robot) { PostMessageW(g_hwnd, WM_CLOSE, 0, 0); return; }
@@ -332,7 +351,11 @@ void onKeyDown(int vk) {
             if (!g_promptText.empty()) g_promptText.pop_back();
             g_promptError.clear();
         } else if (vk == VK_RETURN) {
-            if (g_prompt == Prompt::Address) {
+            if (g_prompt == Prompt::Chat) {
+                if (g_robot && !g_promptText.empty())
+                    g_robot->send("chat", "\"text\":" + jsonQuote(narrow(g_promptText)));
+                g_prompt = Prompt::None;
+            } else if (g_prompt == Prompt::Address) {
                 std::string addr = narrow(g_promptText);
                 if (connectTo(addr)) { saveAddress(addr); g_prompt = Prompt::None; }
                 else g_promptError = L"That doesn't look like an address";
@@ -362,6 +385,8 @@ void onKeyDown(int vk) {
         case 'K': g_robot->send("leds_effects_toggle"); break;
         case 'U': lockClick(); break;
         case 'C': g_robot->send("photo"); break;
+        case 'T': openChat(); break;
+        case 'H': g_robot->send("go_home"); break;
         case 'V': g_robot->send("video_start"); break;
         case VK_OEM_COMMA: g_robot->send("scheme_wasd"); break;
         case VK_OEM_PERIOD: g_robot->send("scheme_qaws"); break;
@@ -454,21 +479,69 @@ void drawButtons(HDC dc, int hudY, int panelX, const RECT& panel) {
     }
 }
 
+// MIND panel — the inner life, from /mind (hidden if the robot has none):
+// mood + who's there, her four needs, her latest thought, and the last
+// exchange, since whoever typed may not hear her answer.
+void drawWrapped(HDC dc, RECT& r, const std::wstring& s, COLORREF c, int maxLines) {
+    if (s.empty() || r.top >= r.bottom) return;
+    HGDIOBJ old = SelectObject(dc, g_fXs);
+    SetTextColor(dc, c);
+    RECT box{r.left, r.top, r.right, std::min(r.bottom, (LONG)(r.top + 16 * maxLines))};
+    DrawTextW(dc, s.c_str(), (int)s.size(), &box, DT_WORDBREAK | DT_END_ELLIPSIS | DT_NOPREFIX | DT_EDITCONTROL);
+    RECT calc{r.left, r.top, r.right, r.top};
+    DrawTextW(dc, s.c_str(), (int)s.size(), &calc, DT_WORDBREAK | DT_CALCRECT | DT_NOPREFIX | DT_EDITCONTROL);
+    SelectObject(dc, old);
+    r.top += std::min((LONG)(16 * maxLines), calc.bottom - calc.top) + 4;
+}
+
+void drawMind(HDC dc, const RECT& panel) {
+    const JValue& m = g_mind;
+    if (m.isNull() || m["mood"].isNull() || panel.right - panel.left < 260 || panel.bottom - panel.top < 60) return;
+    roundRect(dc, panel, RGB(12, 10, 24), RGB(70, 52, 110), 6);
+    int x = panel.left + 10, y = panel.top + 8, w = panel.right - panel.left - 20;
+    std::wstring label = widen(m["mood"]["label"].text("?")) + (m["sleeping"].truthy() ? L"  (asleep)" : L"");
+    int hw = text(dc, x, y, L"MIND  " + label, RGB(205, 170, 240), g_fSm);
+    if (!m["person"].isNull()) text(dc, x + hw + 14, y + 3, L"with " + widen(m["person"].text("")), RGB(120, 230, 170), g_fXs);
+    y += 24;
+    const char* keys[4] = {"social", "curiosity", "security", "sleepiness"};
+    const wchar_t* names[4] = {L"Lonely", L"Curious", L"Jumpy", L"Sleepy"};
+    int barW = std::max(60, (w - 4 * 64) / 4);
+    for (int i = 0; i < 4; ++i) {
+        int bx = x + i * (barW + 64);
+        text(dc, bx, y, names[i], RGB(150, 140, 185), g_fXs);
+        RECT track{bx + 58, y + 4, bx + 58 + barW, y + 12};
+        roundRect(dc, track, RGB(30, 28, 50), RGB(30, 28, 50), 3);
+        double v = std::max(0.0, std::min(1.0, m["drives"][keys[i]].num()));
+        if (v > 0) { RECT fill = track; fill.right = fill.left + (int)(barW * v); roundRect(dc, fill, RGB(150, 120, 240), RGB(150, 120, 240), 3); }
+    }
+    y += 22;
+    RECT r{x, y, x + w, panel.bottom - 6};
+    if (!m["thought"].isNull()) drawWrapped(dc, r, L"... " + widen(m["thought"].text("")), RGB(190, 180, 220), 2);
+    const JValue& ex = m["last_exchange"];
+    if (!ex.isNull()) {
+        drawWrapped(dc, r, L"You: " + widen(ex["you"].text("")), RGB(140, 170, 220), 2);
+        drawWrapped(dc, r, L"KIDA: " + widen(ex["kida"].text("")), RGB(230, 190, 240), 3);
+    }
+}
+
 void drawPrompt(HDC dc, const RECT& client) {
     dim(dc, client, 200);
     RECT box{0, 0, 420, 160};
     OffsetRect(&box, (client.right - 420) / 2, (client.bottom - 160) / 2);
-    bool unlock = g_prompt == Prompt::Unlock;
-    roundRect(dc, box, RGB(20, 24, 36), unlock ? RGB(200, 80, 80) : RGB(80, 140, 220), 10, 2);
-    std::wstring title = unlock ? L"ENTER PASSWORD TO UNLOCK MOTORS" : L"ROBOT ADDRESS (e.g. 192.168.1.50)";
+    bool unlock = g_prompt == Prompt::Unlock, chat = g_prompt == Prompt::Chat;
+    roundRect(dc, box, RGB(20, 24, 36), unlock ? RGB(200, 80, 80) : chat ? RGB(160, 120, 230) : RGB(80, 140, 220), 10, 2);
+    std::wstring title = unlock ? L"ENTER PASSWORD TO UNLOCK MOTORS"
+                       : chat ? L"TYPE A MESSAGE TO KIDA" : L"ROBOT ADDRESS (e.g. 192.168.1.50)";
     RECT t = box; t.bottom = t.top + 44;
     textCentered(dc, t, title, RGB(220, 220, 235), g_fSm);
     RECT field{box.left + 20, box.top + 52, box.right - 20, box.top + 86};
     roundRect(dc, field, RGB(10, 12, 20), RGB(70, 80, 110), 4);
     std::wstring shown = unlock ? std::wstring(g_promptText.size(), L'*') : g_promptText;
+    if (shown.size() > 44) shown = L"..." + shown.substr(shown.size() - 41);   // keep the end in view
     text(dc, field.left + 8, field.top + 7, shown + L"_", RGB(235, 235, 245), g_fSm);
     RECT hint{box.left, box.top + 94, box.right, box.top + 120};
-    std::wstring h = g_unlockPending ? L"checking..." : unlock ? L"Enter = unlock    Esc = cancel" : L"Enter = connect    Esc = quit";
+    std::wstring h = g_unlockPending ? L"checking..." : unlock ? L"Enter = unlock    Esc = cancel"
+                   : chat ? L"Enter = send    Esc = cancel" : L"Enter = connect    Esc = quit";
     textCentered(dc, hint, h, RGB(120, 130, 160), g_fXs);
     if (!g_promptError.empty()) {
         RECT e{box.left, box.top + 120, box.right, box.bottom - 6};
@@ -506,6 +579,8 @@ void paint(HDC dc, const RECT& client) {
     drawStatus(dc, hudY, senX1);
     drawSensors(dc, senX1, senX2, senTop);
     drawButtons(dc, hudY, btnX, btnPanel);
+    RECT mindPanel{senX2 + 260, hudY + SEN_TOP_OFFSET - 2, btnX - 18, sh - 8};
+    drawMind(dc, mindPanel);
 
     if (g_status["mode"].text("") == "IDLE") {
         dim(dc, client, 220);
@@ -564,7 +639,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             onKeyUp((int)wp);
             return 0;
         case WM_CHAR:
-            if (g_prompt != Prompt::None && wp >= 32 && wp != 127 && g_promptText.size() < 64) {
+            if (g_swallowChar) { g_swallowChar = false; return 0; }
+            if (g_prompt != Prompt::None && wp >= 32 && wp != 127
+                && g_promptText.size() < (g_prompt == Prompt::Chat ? 500u : 64u)) {
                 g_promptText.push_back((wchar_t)wp);
                 g_promptError.clear();
             }

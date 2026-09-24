@@ -58,7 +58,7 @@ def drive_heartbeat(pressed_keys, remote) -> None:
 
 
 def handle_events(events, buttons: list, pressed_keys: set, remote,
-                  lock_prompt=None) -> dict:
+                  lock_prompt=None, chat_prompt=None) -> dict:
     """lock_prompt is main.py's PasswordPrompt, so the 'U' key can open the
     same on-screen prompt the "Lock Motors" button uses (optional; 'U' is a
     no-op without it)."""
@@ -127,6 +127,10 @@ def handle_events(events, buttons: list, pressed_keys: set, remote,
                 else:
                     remote.send_action("motor_lock_on")
 
+            elif k == pygame.K_t and chat_prompt is not None:   # type to her
+                chat_prompt.open(lambda text: remote.send_action("chat", text=text))
+            elif k == pygame.K_h:
+                remote.send_action("go_home")
             elif k == pygame.K_c:
                 remote.send_action("photo")
             elif k == pygame.K_v:

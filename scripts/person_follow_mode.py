@@ -26,6 +26,10 @@
 #   closer than BACKOFF_CM → back away slowly
 #   closer than FOLLOW_CM  → hold position, just turn to keep facing them
 #   further                → drive toward them, easing off as the gap closes
+# Something close ahead and nearer than you (within AVOID_CM) → she goes round
+# it: looks left and right with the servo-mounted ultrasonic/laser, turns
+# toward the side with more room (using odometry's gyro heading), drives
+# past, turns back, and picks you up again with the camera (_avoid()).
 # Anything on the range sensors closer than the person also caps forward
 # speed, so stereo never drives it into an obstacle in between.
 # Person lost for LOST_TIMEOUT_S → stop and wait (no blind searching).
@@ -80,8 +84,81 @@ STEREO_MAX_CM    = 800
 MATCH_MAX_H_DIFF = 0.5   # max relative difference in angular box height
 DEPTH_SMOOTHING  = 0.5   # EMA weight of each new stereo depth reading
 
+# ── Going round obstacles ──
+AVOID_CM         = 45       # something this close ahead (and nearer than the person) → detour
+AVOID_MARGIN_CM  = 30       # ...and the person is at least this much further away
+AVOID_COOLDOWN_S = 4.0
+BOXED_CM         = 35       # both sides closer than this: don't try, just wait
+SCAN_LEFT_DEG    = 45       # servo angles for "look left" / "look right" (arduino00's SERVO_LEFT/RIGHT)
+SCAN_RIGHT_DEG   = 135
+AVOID_TURN_DEG   = 50
+AVOID_PASS_CM    = 40
+AVOID_PWM        = 150
+
 _stop_event = threading.Event()
 _thread: threading.Thread | None = None
+
+
+def _clearance(us_cm, laser_mm) -> float:
+    """How much room there is in one direction (cm); no echo = plenty."""
+    vals = []
+    if us_cm is not None and us_cm > 0:
+        vals.append(us_cm)
+    if laser_mm is not None and laser_mm > 0:
+        vals.append(laser_mm / 10.0)
+    return min(vals) if vals else 300.0
+
+
+def _turn_to(target_deg: float, timeout_s: float = 4.0) -> None:
+    import odometry
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline and not _stop_event.is_set():
+        err = (target_deg - odometry.pose()[2] + 180.0) % 360.0 - 180.0
+        if abs(err) < 6:
+            break
+        t = AVOID_PWM if err > 0 else -AVOID_PWM          # + = turn left (CCW)
+        set_left_motor(-t); set_right_motor(t)
+        time.sleep(0.05)
+    set_left_motor(0); set_right_motor(0)
+
+
+def _drive_cm(cm: float, timeout_s: float = 4.0) -> None:
+    import odometry
+    x0, y0, _ = odometry.pose()
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline and not _stop_event.is_set():
+        x, y, _ = odometry.pose()
+        if math.hypot(x - x0, y - y0) >= cm:
+            break
+        d = closest_cm()
+        if (d is not None and d < 20) or _parse_int(state.ballSwitchValue) == 1:
+            break
+        set_left_motor(AVOID_PWM); set_right_motor(AVOID_PWM)
+        time.sleep(0.05)
+    set_left_motor(0); set_right_motor(0)
+
+
+def _avoid() -> str:
+    """Look both ways with the servo-mounted sensor, turn toward the side with
+    more room, go past, turn back. Blocking (a few seconds)."""
+    import lidar_sweep
+    import odometry
+    room = {}
+    for side, angle in (("left", SCAN_LEFT_DEG), ("right", SCAN_RIGHT_DEG)):
+        if _stop_event.is_set():
+            return "stopped"
+        us, laser = lidar_sweep._read_one_angle(angle)
+        room[side] = _clearance(us, laser)
+    send_command("dev00", "SERVO:90")
+    best = max(room, key=room.get)
+    if room[best] < BOXED_CM:
+        return f"boxed in (left {room['left']:.0f} cm, right {room['right']:.0f} cm) — waiting"
+    start_h = odometry.pose()[2]
+    sign = 1 if best == "left" else -1
+    _turn_to(start_h + sign * AVOID_TURN_DEG)
+    _drive_cm(AVOID_PASS_CM)
+    _turn_to(start_h)
+    return f"went round it on the {best} ({room[best]:.0f} cm of room)"
 
 
 # ── geometry helpers ─────────────────────────────────────────────────────
@@ -216,6 +293,7 @@ def _run():
         print("🚶 Person follow: no cam-0 inference available — mono (IMX500 only)")
 
     prev_cx   = None
+    last_avoid = 0.0
     last_seen = 0.0
     sent      = None
     depth_cm  = None     # smoothed stereo depth
@@ -249,6 +327,21 @@ def _run():
                     offset = math.degrees(math.atan(bearing_t)) / CAM1_HFOV_DEG
                     turn = 0.0 if abs(offset) < CENTER_DEADBAND else offset * TURN_GAIN
                     fwd = _forward(person_cm, obstacle, y2 - y1)
+
+                    # Something between her and you? Go round it instead of
+                    # just stopping (the range sensors see it, the person is
+                    # further off - or she can't tell how far, but it's close).
+                    if (obstacle is not None and obstacle < AVOID_CM
+                            and (person_cm is None or person_cm > obstacle + AVOID_MARGIN_CM)
+                            and time.monotonic() - last_avoid > AVOID_COOLDOWN_S):
+                        set_left_motor(0); set_right_motor(0)
+                        sent = (0, 0)
+                        state.systemStatus = "Follow: something's in the way — looking for a way round"
+                        result = _avoid()
+                        last_avoid = time.monotonic()
+                        last_seen = time.monotonic()      # give the camera a moment to find you again
+                        state.systemStatus = f"Follow: {result}"
+                        continue
 
                     left, right = fwd + turn, fwd - turn
                     scale = max(1.0, abs(left), abs(right))

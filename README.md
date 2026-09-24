@@ -127,6 +127,16 @@ KIDA has the same inner life as DREAM (ported from DREAM's `dream_mind`, minus t
 The web dashboard shows a **Mind** panel (`/mind`); the Pi HUD shows her mood next to the gamepad indicator.
 Self-test (fake LLM, scratch folder — never touches her real memories): `cd scripts && python -m kida_mind.selftest`
 
+### Knowing people, getting around, and her day
+
+* **Faces** (`face_id.py`) — tell her your name ("my name is Sam"), then say **"remember my face"** and look at cam-1 for ~10 s ("remember this face as Alex" for someone else). She greets people she knows by name, asks strangers who they are, and knows who she's talking to. Only face fingerprints are stored (`memories/faces.json`), never pictures; "forget my face" removes them. One-time model download: `cd scripts && python3 face_id.py --download`.
+* **Where she is** (`odometry.py`) — no wheel encoders, so dead reckoning: distance from the motor commands, heading from the MPU6050 gyro. Set `CM_PER_S_AT_FULL` once (drive 3 s at speed 255, measure). LIDAR sweeps are now stamped with her pose, so maps from different spots line up.
+* **Go home** — "go home" / 🏠 / `H` on the controllers drives back to where she started (or where you said "this is home"). Stops for obstacles and bumps, and hands straight back to you the moment you touch a control.
+* **Routes** (`routes.py`) — "record a route called kitchen", drive it, "save the route". Then "run the kitchen route", or "patrol kitchen" (there and back until you say "stop patrolling"). She remembers what each stop looked like and tells you if something's changed ("near the second stop, there's something in the way now"). Start a replay where you started recording, facing the same way.
+* **Person follow** now goes *around* things between you and her: she looks left and right with the servo sensor and detours toward the side with more room.
+* **Today** (`daylog.py`) — how far she drove, who she saw, bumps, her mood through the day, conversations and photos, summarised on the web page (with a mood strip, and past days); after 9 pm it goes into her journal.
+* **Mind on the controllers** — both PC controllers and the Pi HUD show her mood, needs, latest thought and the last exchange; press **T** (or "Type to KIDA") to talk to her from the PC.
+
 ---
 
 ## Prerequisites

@@ -80,6 +80,14 @@ if __name__ == "__main__":
     vibration_guard.start()
     face_emotion_mode.start()
 
+    # Where she is (dead reckoning + gyro), getting around by herself, who's
+    # there, and a record of the day.
+    import odometry, navigator, face_id, daylog
+    odometry.start()
+    navigator.init()
+    face_id.start()
+    daylog.start()
+
     # music is now initialised inside run_ui via MusicPlayer()
     # init_music() call removed
 

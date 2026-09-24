@@ -212,6 +212,20 @@ class _EmotionClassifier:
         return EMOTION_LABELS[idx], float(probs[idx])
 
 
+_detector: "_FaceDetector | None" = None
+_detector_lock = threading.Lock()
+
+
+def detect_faces(frame_rgb: np.ndarray) -> list:
+    """Face boxes in frame_rgb — the one shared Hailo detector, also used by
+    face_id.py (recognising who's there), so there's a single VDevice for it."""
+    global _detector
+    with _detector_lock:
+        if _detector is None:
+            _detector = _FaceDetector()
+        return _detector.detect(frame_rgb)
+
+
 def _motion_active() -> bool:
     return str(getattr(state, "motionValue", "0")) in ("1", "HIGH", "True")
 
@@ -230,7 +244,6 @@ def _should_capture() -> bool:
 
 
 def _loop() -> None:
-    face_detector: _FaceDetector | None = None
     emotion_clf: _EmotionClassifier | None = None
     last_capture = 0.0
 
@@ -250,12 +263,10 @@ def _loop() -> None:
             if frame is None:
                 continue
 
-            if face_detector is None:
-                face_detector = _FaceDetector()
             if emotion_clf is None:
                 emotion_clf = _EmotionClassifier()
 
-            boxes = face_detector.detect(frame)
+            boxes = detect_faces(frame)
             if not boxes:
                 state.detected_emotion = None
                 continue

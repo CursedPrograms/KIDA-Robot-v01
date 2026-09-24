@@ -55,6 +55,7 @@ BODY_EVERY_S = 30
 NIGHT_MIN_S = 2 * 3600   # a nap isn't a night: only this much sleep counts toward `nights`
 
 JOLT_FRESH_S = 45        # a bump she hasn't remarked on is only worth mentioning this long
+GREET_FRESH_S = 60       # ...and someone arriving is only worth greeting this long after
 
 # What knocking her chassis about does to her: (mood valence, intensity, security bump).
 BODY_EVENTS = {
@@ -134,6 +135,8 @@ class Mind:
         self._expr_thread = None
         self._expr_stop = threading.Event()
         self._jolt = None               # the last knock her chassis took: {"kind", "ts", "spoken"}
+        self._greet = None              # someone she recognised: {"name", "ts", "spoken"} (face_id.py)
+        self._stranger = None           # a face she doesn't know: {"ts", "spoken"}
         self._last_drive_note = 0.0
         self._register_tools()
 
@@ -328,6 +331,10 @@ class Mind:
             "drives": dict(self.drives.values), "sleepiness": self.drives.sleepiness(hour),
             "jolt_unspoken": (self._jolt if self._jolt and not self._jolt["spoken"]
                               and now - self._jolt["ts"] < JOLT_FRESH_S else None),
+            "greet_unspoken": (self._greet if self._greet and not self._greet["spoken"]
+                               and now - self._greet["ts"] < GREET_FRESH_S else None),
+            "stranger_unspoken": (self._stranger if self._stranger and not self._stranger["spoken"]
+                                  and now - self._stranger["ts"] < GREET_FRESH_S else None),
             "clock": senses.clock(now)["time"], "weekday": senses.clock(now)["weekday"],
             "birthday_in": self._birthday_in(now),
             "body_worst": max(self.body.feelings(now), key=lambda f: f[1], default=None),
@@ -389,6 +396,47 @@ class Mind:
         self.mood.appraise(valence, intensity)
         self.drives.bump("security", security)
         self._jolt = {"kind": kind, "ts": now, "spoken": False}
+
+    def on_person(self, name, now=None):
+        """face_id.py recognised someone (name), or keeps seeing a face she
+        doesn't know (None). Someone she knows arriving lifts her; she'll greet
+        them by name. A stranger makes her a little alert, and curious."""
+        now = now or self.now()
+        if name:
+            self._greet = {"name": name, "ts": now, "spoken": False}
+            self.mood.appraise(0.3, 0.4)
+            self.drives.satisfy("social", 0.1)
+            self.on_sensor("PRESENT")
+        else:
+            self._stranger = {"ts": now, "spoken": False}
+            self.drives.bump("security", 0.15)
+            self.drives.bump("curiosity", 0.1)
+
+    @staticmethod
+    def _who_is_here(now=None):
+        """The person face_id.py recognises in front of her right now, or None."""
+        try:
+            import state
+            name, ts = state.person_name, state.person_seen_ts
+        except Exception:
+            return None
+        return name if name and time.time() - ts < 90 else None
+
+    def mark_greeted(self):
+        if self._greet:
+            self._greet["spoken"] = True
+
+    def mark_stranger_asked(self):
+        if self._stranger:
+            self._stranger["spoken"] = True
+
+    def notice(self, text, now=None):
+        """Something out there changed (routes.py, on a patrol): it's worth
+        remembering, it scratches the curiosity itch, and she may mention it."""
+        now = now or self.now()
+        self.vision.record(text, kind="patrol", significance=0.7, now=now)
+        add_thought(f"I noticed that {text}.", "note")
+        self.drives.satisfy("curiosity", 0.05)
 
     def mark_jolt_spoken(self):
         if self._jolt:
@@ -576,6 +624,9 @@ class Mind:
         if need:
             lines.append({"social": "You've been lonely.", "curiosity": "You're restless with curiosity.",
                           "security": "You're on edge after a jolt.", "sleep": "You're sleepy."}[need[0]])
+        who = self._who_is_here(now)
+        if who:
+            lines.append(f"You're talking to {who} - you recognise their face.")
         lines.append(self.self_model.core_block())
         recalled = self.memory.recall(text, k=2, mood_valence=self.mood.valence, now=now)
         if self._pending is not None:
@@ -787,6 +838,15 @@ class Mind:
         if re.search(r"\b(did you|do you) dream\b|\bwhat did you dream\b|\btell me (about )?your dream\b", t):
             return ("I don't dream. When I sleep I just sort through my memories - "
                     "dreaming would cost my Pi too much.")
+        if re.search(r"\bwho am i\b|\bdo you (know|recogni[sz]e) me\b", t):
+            who = self._who_is_here(now)
+            if who:
+                return f"You're {who}. I'd know that face anywhere."
+            return ("I can't place your face yet. Tell me your name, then say 'remember my face' "
+                    "and look at me for a few seconds.")
+        if re.search(r"\bwho (do you see|is (here|there|that))\b|\bwho'?s (here|there)\b", t):
+            who = self._who_is_here(now)
+            return f"I see {who}." if who else "Nobody I recognise right now."
         if re.search(r"\bwhat are you thinking( about)?\b|\bwhat'?s on your mind\b", t):
             th = latest_thought()
             return th["text"] if th else "Honestly? Nothing much yet. I haven't had a chance to reflect."
@@ -871,6 +931,11 @@ class Mind:
         self.self_model.forget_user()
         self.vision = Vision()
         facts.forget_all()
+        try:                                   # the faces she knows (face_id.py), if it's there
+            import face_id
+            face_id.forget_all()
+        except Exception:
+            pass
         self.conversations = 0
         self.save()
         return n

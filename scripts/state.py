@@ -82,8 +82,18 @@ vibration_active: bool = False
 joystick_name: str | None = None
 joystick_pending_mode: int | None = None   # LB/RB picked a mode, not applied yet
 
+# --- Odometry (written by odometry.py) — (x_cm, y_cm, heading_deg), home = (0, 0, 0) ---
+pose: tuple = (0.0, 0.0, 0.0)
+
+# --- Who's here (written by face_id.py) ---
+person_name: str | None = None      # the recognised person in front of her right now, or None
+person_seen_ts: float = 0.0         # time.time() of that recognition
+
 # --- Inner life (written by kida_mind_host.py, read by hud_draw.py) ---
 mind_label: str | None = None   # e.g. "content", "lonely", "sleepy (asleep)"; None = no mind running
+# The last thing said to her and her answer (kida_chat_wakeword.py) — shown in
+# the controllers' mind panel, since whoever typed it may not hear her speak.
+last_exchange: dict | None = None   # {"you": str, "kida": str, "ts": float}
 
 # --- Ambient face emotion (written by face_emotion_mode, read by HUD + LLM) ---
 detected_emotion: tuple | None = None   # (label: str, confidence: float) of the largest face in view, or None

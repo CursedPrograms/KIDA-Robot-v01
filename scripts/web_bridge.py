@@ -5,6 +5,7 @@
 # server.py can call into them safely.
 
 import os
+import threading
 import time
 
 _music_ctrl           = None
@@ -64,9 +65,23 @@ def _mind_activity(command: str, left=None, right=None) -> None:
             return   # heartbeats/zeros and aiming aren't "someone's here" on their own
     else:
         moving = command in _DRIVE_DIRECTIONS or command in _MOVING_COMMANDS
+    if moving or command in ('hard_stop', 'move_stop'):
+        _user_took_over()
     try:
         import kida_mind_host
         kida_mind_host.note_activity("drive" if moving else "web")
+    except Exception:
+        pass
+
+
+def _user_took_over() -> None:
+    """You drove or pressed stop: whatever she's navigating by herself (go
+    home, a route, a patrol) ends right there."""
+    try:
+        import navigator
+        if navigator.active():
+            import routes
+            routes.stop()
     except Exception:
         pass
 
@@ -112,12 +127,14 @@ def _unit(value) -> float:
 
 
 def action(command: str, password: str | None = None,
-           left=None, right=None, angle=None, throttle=None, turn=None) -> bool:
+           left=None, right=None, angle=None, throttle=None, turn=None,
+           name=None, text=None) -> bool:
     """Dispatch a web action command. Returns True if recognised and it
     succeeded (motor_lock_off returns False on a wrong password).
     left/right are only used by 'joy_drive' (per-side throttle, -1..1),
     angle only by 'servo_aim' (degrees, 90 = straight ahead), throttle/turn
-    only by 'move_curve' (each -1 or +1: a WASD diagonal, see drive_mix.py)."""
+    only by 'move_curve' (each -1 or +1: a WASD diagonal, see drive_mix.py),
+    name by the route/face actions, text by 'chat' (typing to her)."""
     from mode_control import switch_mode
 
     _mind_activity(command, left, right)
@@ -307,8 +324,48 @@ def action(command: str, password: str | None = None,
         import wheel_calibration
         return wheel_calibration.run_calibration()
     elif command == 'lidar_sweep':
-        import lidar_sweep
-        return lidar_sweep.run_sweep()
+        # stamped with where odometry thinks she is, so sweeps from different
+        # spots line up in mapper/build_3d_map.py instead of all at (0, 0)
+        import lidar_sweep, odometry
+        x, y, heading = odometry.pose()
+        return lidar_sweep.run_sweep(x, y, heading) is not None
+    # ── getting around by herself (odometry / navigator / routes) ──
+    elif command == 'go_home':
+        import navigator
+        return navigator.go_home()
+    elif command == 'set_home':
+        import odometry
+        odometry.set_home()
+    elif command == 'nav_stop':
+        import routes
+        routes.stop()
+    elif command == 'route_record_start':
+        import routes
+        return routes.record_start(name or "my route")
+    elif command == 'route_record_stop':
+        import routes
+        return routes.record_stop() is not None
+    elif command in ('route_play', 'route_patrol'):
+        import routes
+        return routes.play(name or "", patrol=command == 'route_patrol')
+    elif command == 'route_delete':
+        import routes
+        return routes.delete(name or "")
+    # ── faces (face_id.py) ──
+    elif command == 'face_enroll':
+        import face_id
+        if not name or not face_id.available():
+            return False
+        threading.Thread(target=face_id.enroll, args=(name,), daemon=True).start()   # takes ~10 s
+    elif command == 'face_forget':
+        import face_id
+        return face_id.forget(name or "")
+    # ── typing to her (web page / PC controllers) ──
+    elif command == 'chat':
+        if not text or not str(text).strip():
+            return False
+        import kida_chat_wakeword
+        kida_chat_wakeword.submit_text(str(text)[:500])
     elif command == 'leds_toggle':
         import leds
         leds.toggle_leds()

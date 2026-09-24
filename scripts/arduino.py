@@ -482,6 +482,15 @@ def send_command(dev, cmd):
 
         print(f"➡ {dev} ← {cmd}")
 
+        if dev == "dev00":
+            # Every motor command passes through here, so this is where
+            # dead-reckoning odometry learns what the tracks are doing.
+            try:
+                import odometry
+                odometry.note_command(cmd)
+            except Exception:
+                pass
+
     except Exception as e:
 
         print(f"⚠ send failed {dev}: {e}")
