@@ -21,15 +21,16 @@ import os
 import sys
 
 _HERE        = os.path.dirname(os.path.abspath(__file__))
-_SCRIPTS_DIR = os.path.dirname(_HERE)
+_SCRIPTS_DIR = os.path.join(os.path.dirname(_HERE), "scripts")
+_SHIMS_DIR   = os.path.join(_HERE, "scripts")
 
 # scripts/ — the shared, hardware-agnostic modules (state.py, hud_draw.py,
 # hud_layout.py, button_widget.py). Inserted first...
 sys.path.insert(0, _SCRIPTS_DIR)
-# ...then this directory, so it takes priority for any same-named module
+# ...then controller/scripts/, so it takes priority for any same-named module
 # the robot side implements with real hardware (mode_manager.py,
 # camera_actions.py, buttons.py) — this dir's shims win the lookup.
-sys.path.insert(0, _HERE)
+sys.path.insert(0, _SHIMS_DIR)
 
 import pygame
 
@@ -41,6 +42,7 @@ from button_widget import Button
 from password_prompt import PasswordPrompt
 from buttons import create_buttons
 from remote_client import RemoteClient
+from joystick_drive import JoystickDrive
 import event_handler
 
 APP_NAME = "KIDA — Remote Controller"
@@ -80,6 +82,7 @@ def run_controller() -> None:
     screen = pygame.display.set_mode((SW, SH), pygame.RESIZABLE)
     pygame.display.set_caption(APP_NAME)
     pygame.mouse.set_visible(True)
+    joystick = JoystickDrive(remote)
 
     fonts = {
         "sm":    pygame.font.SysFont("monospace", 16),
@@ -144,6 +147,7 @@ def run_controller() -> None:
     running               = True
 
     print("🎮 Keys: 1=KB 2=IR 3=AUTO 4=IDLE | I=infer | M=music | U=lock/unlock | SPC=stop | Q/ESC=close")
+    print("🕹️  Joystick (KEYBOARD mode): stick=drive | A/trigger=photo | B=stop | X/Y=speed -/+")
 
     while running:
         # ── Character face — fetched once, on first successful connection ──
@@ -213,6 +217,10 @@ def run_controller() -> None:
         # ════════════════════════════════
         raw_events = pygame.event.get()
 
+        # Joystick first, so releasing the stick still reaches the robot
+        # even while the unlock prompt below is swallowing input.
+        joystick.handle_events(raw_events)
+
         # While the unlock prompt is open, every key goes to it — nothing
         # else (mode switches, drive keys, buttons) should fire mid-entry.
         if lock_prompt.active:
@@ -232,6 +240,7 @@ def run_controller() -> None:
     #    moving after this window closes ──
     for _ in list(pressed_keys):
         remote.send_action("move_stop")
+    joystick.stop()
     remote.stop()
     pygame.quit()
     print("✅ Controller closed")

@@ -19,8 +19,17 @@
 #   V        — record a video
 #   Q        — quit for good (process exits, run.sh will not restart it)
 #   ESC      — close the UI (run.sh restarts it after a few seconds)
+#
+# Gamepad plugged into the Pi (USB / Logitech wireless dongle) — KEYBOARD mode:
+#   left stick — drive (analog)   A/trigger — photo   B — stop
+#   X — speed −                   Y — speed +
+#   (see joystick_drive.py; a pad plugged into the PC is read by the
+#    controller / website instead)
 
 import sys, os, json, time, threading, platform
+# The Pi's own gamepad must keep working even if the HUD window loses
+# focus (SDL drops joystick input for unfocused windows by default).
+os.environ.setdefault("SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", "1")
 import pygame
 import config
 import leds
@@ -56,6 +65,7 @@ from camera_threads import (frame_queue, frame_queue2,
                              start_cam0, stop_cam0)
 from imx500_cam1 import create_imx500_camera, start_imx500_cam1, stop_imx500_cam1
 from mode_control import init_mode_control
+from joystick_drive import JoystickDrive, LocalActions
 
 # ─────────────────────────────────────────────
 #  Startup (runs at import time)
@@ -312,6 +322,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
     last_photo_path_seen  = None
 
     mode_manager.set_mode(DriveMode.KEYBOARD, stop_motors=False)
+    joystick = JoystickDrive(LocalActions())
     print("🎮 Keys: 1=KB 2=IR 3=AUTO 4=IDLE | I=infer | M=music | U=lock/unlock | SPC=stop | ESC=close Q=quit for good")
 
     # ═══════════════════════════════════════════
@@ -421,6 +432,15 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
         # ════════════════════════════════
         raw_events = pygame.event.get()
 
+        # Gamepad first, so releasing the stick still stops the robot even
+        # while a prompt below is swallowing input.
+        joystick.handle_events(raw_events)
+
+        # Speed can change outside this loop (gamepad X/Y, web, remote
+        # controller) — follow it so X and the HUD start from the real value.
+        if isinstance(state.motorSpeedValue, int):
+            motor_speed = motor_speed_box[0] = state.motorSpeedValue
+
         # While a prompt is open, every key goes to it — nothing else (mode
         # switches, drive keys, buttons) should fire mid-entry.
         if lock_prompt.active:
@@ -463,6 +483,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
     #  CLEANUP
     # ════════════════════════════════
     print("🧹 Cleaning up…")
+    joystick.stop()
     music_ctrl.stop()
     # Must happen before cam.stop()/cam.close() below — stopping the camera
     # while the H264Encoder still has an active recording leaves its

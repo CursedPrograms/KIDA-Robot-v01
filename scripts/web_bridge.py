@@ -68,9 +68,19 @@ def music_playing() -> bool:
     return bool(_music_ctrl and _music_ctrl.is_playing())
 
 
-def action(command: str, password: str | None = None) -> bool:
+def _unit(value) -> float:
+    """Coerce a joystick value from the request JSON into [-1, 1]."""
+    try:
+        return max(-1.0, min(1.0, float(value)))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def action(command: str, password: str | None = None,
+           left=None, right=None) -> bool:
     """Dispatch a web action command. Returns True if recognised and it
-    succeeded (motor_lock_off returns False on a wrong password)."""
+    succeeded (motor_lock_off returns False on a wrong password).
+    left/right are only used by 'joy_drive' (per-side throttle, -1..1)."""
     from mode_control import switch_mode
 
     if command == 'music_play':
@@ -152,6 +162,29 @@ def action(command: str, password: str | None = None) -> bool:
             set_driving_lights()
             _last_web_drive_ts = time.time()
             _web_driving = True
+    elif command == 'joy_drive':
+        # Analog joystick drive from the website (Gamepad API) or the remote
+        # controller (pygame) — the stick is plugged into the browser/PC,
+        # never the robot. Both clients do the arcade mix themselves and send
+        # per-side throttle in [-1, 1], scaled here by the current speed
+        # setting so Speed +/- and X still cap how fast the stick can go.
+        # Clients resend while the stick is deflected, so the same dead-man
+        # timeout as the drive keys covers a dropped connection.
+        import mode_manager, state
+        from arduino import (set_left_motor, set_right_motor,
+                             set_driving_lights, set_stopped_lights)
+        if mode_manager.is_keyboard():
+            speed = state.motorSpeedValue if isinstance(state.motorSpeedValue, int) else 0
+            l, r = _unit(left), _unit(right)
+            set_left_motor(round(l * speed))
+            set_right_motor(round(r * speed))
+            moving = bool(l or r)
+            if moving and not _web_driving:
+                set_driving_lights()
+            elif not moving and _web_driving:
+                set_stopped_lights()
+            _last_web_drive_ts = time.time()
+            _web_driving = moving
     elif command == 'left_stop':
         from arduino import set_left_motor
         set_left_motor(0)

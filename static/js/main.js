@@ -463,3 +463,109 @@ if (schemeBtn) {
     sendAction(next === 'QAWS' ? 'scheme_qaws' : 'scheme_wasd');
   });
 }
+
+// ── Joystick (Gamepad API) ───────────────────────────────────────
+// Same stick and mapping as the PC remote controller
+// (scripts/joystick_drive.py): plugged into this computer,
+// never the robot. Stick X/Y is arcade-mixed into left/right track
+// throttle (-1..1) and sent as 'joy_drive'; the robot scales it by the
+// current speed setting and only obeys it in KEYBOARD mode. Resent every
+// JOY_HEARTBEAT_MS while deflected, for the same dead-man timeout the drive
+// keys rely on. Browsers only expose a gamepad after a button is pressed.
+const JOY_AXIS_TURN      = 0;
+const JOY_AXIS_THROTTLE  = 1;
+const JOY_DEADZONE       = 0.08;
+// Generic stick trigger/B1/B2/B3, or Logitech (X mode) / Xbox A/B/X/Y.
+const JOY_BUTTON_ACTIONS = { 0: 'photo', 1: 'hard_stop', 2: 'speed_down', 3: 'speed_up' };
+// Logitech in D mode ("Cordless RumblePad 2") orders the face buttons X, A, B, Y.
+const JOY_D_MODE_ACTIONS = { 1: 'photo', 2: 'hard_stop', 0: 'speed_down', 3: 'speed_up' };
+const JOY_SEND_MS        = 50;
+const JOY_HEARTBEAT_MS   = 250;
+
+const joyStatus = $('joy-status');
+let _joyIndex       = null;
+let _joySent        = [0, 0];
+let _joyLastSend    = 0;
+let _joyInFlight    = false;
+let _joyPrevButtons = [];
+let _joyStatusText  = '';
+
+function joyDz(v) { return Math.abs(v) < JOY_DEADZONE ? 0 : v; }
+
+function joyMix(turn, throttle) {
+  const fwd = -joyDz(throttle);
+  const t   = joyDz(turn);
+  const l = fwd + t, r = fwd - t;
+  const s = Math.max(1, Math.abs(l), Math.abs(r));
+  return [Math.round(l / s * 100) / 100, Math.round(r / s * 100) / 100];
+}
+
+function setJoyStatus(text) {
+  if (!joyStatus || text === _joyStatusText) return;
+  _joyStatusText = text;
+  joyStatus.textContent = text;
+}
+
+// Separate from sendAction(): that refetches /status after every call,
+// which at joystick send rates would hammer the robot for nothing.
+async function postJoyDrive(l, r) {
+  if (_joyInFlight) return;
+  _joyInFlight = true;
+  _joyLastSend = performance.now();
+  try {
+    const res = await fetch('/action', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ command: 'joy_drive', left: l, right: r }),
+    });
+    if (res.ok) _joySent = [l, r];
+  } catch (_) {
+    // unsent — the next tick sees the mismatch and retries
+  } finally {
+    _joyInFlight = false;
+  }
+}
+
+function joyTick(now) {
+  requestAnimationFrame(joyTick);
+
+  // No stick, or the window isn't focused (browsers freeze gamepad values
+  // for unfocused pages, so a held stick would keep resending forever):
+  // treat as centred, which sends one stop if we were moving.
+  let l = 0, r = 0;
+  const gp = _joyIndex !== null ? navigator.getGamepads()[_joyIndex] : null;
+  if (gp && document.hasFocus()) {
+    // Only remap if the browser hasn't already normalised it to the
+    // 'standard' layout (where A/B/X/Y are always 0/1/2/3).
+    const dMode   = gp.mapping !== 'standard' && /rumblepad/i.test(gp.id);
+    const actions = dMode ? JOY_D_MODE_ACTIONS : JOY_BUTTON_ACTIONS;
+    gp.buttons.forEach((b, i) => {
+      if (b.pressed && !_joyPrevButtons[i] && actions[i]) sendAction(actions[i]);
+      _joyPrevButtons[i] = b.pressed;
+    });
+    [l, r] = joyMix(gp.axes[JOY_AXIS_TURN] ?? 0, gp.axes[JOY_AXIS_THROTTLE] ?? 0);
+    setJoyStatus(`🕹️ ${gp.id.slice(0, 32)} — L ${l.toFixed(2)}  R ${r.toFixed(2)}`);
+  } else if (gp) {
+    setJoyStatus(`🕹️ ${gp.id.slice(0, 32)} — paused (window not focused)`);
+  }
+
+  if (now - _joyLastSend < JOY_SEND_MS) return;
+  const changed = l !== _joySent[0] || r !== _joySent[1];
+  const moving  = l !== 0 || r !== 0;
+  if (changed || (moving && now - _joyLastSend >= JOY_HEARTBEAT_MS)) postJoyDrive(l, r);
+}
+
+window.addEventListener('gamepadconnected', (e) => {
+  if (_joyIndex === null) {
+    _joyIndex = e.gamepad.index;
+    _joyPrevButtons = e.gamepad.buttons.map((b) => b.pressed);
+  }
+});
+
+window.addEventListener('gamepaddisconnected', (e) => {
+  if (e.gamepad.index !== _joyIndex) return;
+  _joyIndex = null;
+  setJoyStatus('No joystick — plug one in and press a button');
+});
+
+requestAnimationFrame(joyTick);

@@ -205,7 +205,8 @@ def action():
         data     = request.get_json(force=True) or {}
         cmd      = data.get('command', '')
         password = data.get('password')
-        ok       = web_bridge.action(cmd, password=password)
+        ok       = web_bridge.action(cmd, password=password,
+                                     left=data.get('left'), right=data.get('right'))
         return jsonify({'ok': ok, 'command': cmd})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500

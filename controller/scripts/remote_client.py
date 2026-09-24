@@ -119,8 +119,9 @@ class RemoteClient:
             return None
 
     # ── outbound commands ──
-    def send_action(self, command: str, password: str | None = None) -> bool:
-        payload = {"command": command}
+    def send_action(self, command: str, password: str | None = None, **fields) -> bool:
+        """fields: extra JSON keys, e.g. left/right for 'joy_drive'."""
+        payload = {"command": command, **fields}
         if password is not None:
             payload["password"] = password
         try:
