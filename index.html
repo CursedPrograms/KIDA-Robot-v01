@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KIDA-01 — Kinetic Interactive Drive Automaton</title>
+<meta name="description" content="KIDA-01 is a Raspberry Pi 5 tank robot with a Hailo-8L AI accelerator, dual cameras, a local LLM and an inner life: mood, memory, faces, routes and going home.">
+<meta name="color-scheme" content="dark">
+<meta property="og:title" content="KIDA-01 — Kinetic Interactive Drive Automaton">
+<meta property="og:description" content="A Raspberry Pi 5 + Hailo-8L tank robot with local AI and an inner life.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="images/kida_avatar.jpeg">
+<link rel="icon" href="site/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="site/apple-touch-icon.png">
+<link rel="stylesheet" href="site/style.css">
+<script src="site/site.js" defer></script>
+</head>
+<body>
+
+<nav aria-label="Primary">
+  <div class="wrap">
+    <a class="brand" href="#top">KIDA-01</a>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#inner-life">Inner life</a></li>
+      <li><a href="#hardware">Hardware</a></li>
+      <li><a href="#setup">Setup</a></li>
+      <li><a href="#screens">Screens</a></li>
+      <li><a href="https://github.com/CursedPrograms/KIDA-Robot-v01">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="eyebrow">A DREAM Robotics Agent &middot; v01</div>
+    <h1>KIDA-01</h1>
+    <p class="tagline">Kinetic Interactive Drive Automaton</p>
+    <p class="lede">The flagship of the RIFT fleet. A Raspberry Pi 5 with a Hailo-8L accelerator runs neural vision at the edge, two cameras give her day and night sight, and a local LLM lets her talk, remember and decide without the cloud.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/CursedPrograms/KIDA-Robot-v01">View on GitHub</a>
+      <a class="btn" href="#inner-life">Her inner life</a>
+      <a class="btn" href="https://ko-fi.com/cursedentertainment">Support on Ko-fi</a>
+    </div>
+    <div class="tags" aria-label="Technologies">
+      <span class="tag">Python</span>
+      <span class="tag">C++</span>
+      <span class="tag">Raspberry Pi 5</span>
+      <span class="tag">Hailo-8L</span>
+      <span class="tag">Arduino</span>
+      <span class="tag">MIT License</span>
+    </div>
+    <figure class="avatar">
+      <img src="images/kida_avatar.jpeg" alt="KIDA-01's avatar: a human representation of the robot" width="512" height="512">
+      <figcaption>KIDA-01 &middot; avatar</figcaption>
+    </figure>
+    <div class="photos">
+      <figure>
+        <img src="images/demo/kida.jpg" alt="KIDA-01, the Raspberry Pi 5 tank robot" width="3264" height="1840" loading="lazy">
+        <figcaption>KIDA-01</figcaption>
+      </figure>
+      <figure>
+        <img src="images/demo/KIDA001.jpg" alt="KIDA-01 close up" width="3840" height="2160" loading="lazy">
+        <figcaption>Close up</figcaption>
+      </figure>
+      <figure>
+        <img src="images/demo/KIDA002.jpg" alt="KIDA-01 from another angle" width="3840" height="2160" loading="lazy">
+        <figcaption>Detail</figcaption>
+      </figure>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section id="overview">
+  <div class="wrap">
+    <h2>Overview</h2>
+    <h3 class="title">Edge AI on tracks</h3>
+    <div class="grid cols-3">
+      <div class="card">
+        <span class="k">Neural</span>
+        <h4>13 TOPS at the edge</h4>
+        <p>The Hailo-8L runs real-time object detection and tracking on the robot itself.</p>
+      </div>
+      <div class="card">
+        <span class="k">Vision</span>
+        <h4>Hybrid dual cameras</h4>
+        <p>A night-vision camera and the IMX500 AI camera work side by side for round-the-clock awareness.</p>
+      </div>
+      <div class="card">
+        <span class="k">Voice</span>
+        <h4>Local LLM</h4>
+        <p>Whisper listens, Ollama thinks and Piper speaks, all on-device and private.</p>
+      </div>
+      <div class="card">
+        <span class="k">Navigate</span>
+        <h4>Autonomous driving</h4>
+        <p>Obstacle avoidance, LIDAR sweeps stamped with her pose, person follow that detours around things, and going home.</p>
+      </div>
+      <div class="card">
+        <span class="k">People</span>
+        <h4>Faces she knows</h4>
+        <p>Say &ldquo;remember my face&rdquo; and she greets you by name next time. Only face fingerprints are stored, never pictures.</p>
+      </div>
+      <div class="card">
+        <span class="k">Routes</span>
+        <h4>Record &amp; patrol</h4>
+        <p>Teach her a route, replay it or patrol it, and she'll tell you if something has changed along the way.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="inner-life">
+  <div class="wrap">
+    <h2>Inner life</h2>
+    <h3 class="title">Someone at home</h3>
+    <p class="muted">KIDA has the same inner life as DREAM, ported from <code>dream_mind</code> and adapted to a robot body (without dreaming, which would cost the Pi too much). It's optional: if it can't load, KIDA runs exactly as before.</p>
+    <div class="grid cols-3">
+      <div class="card">
+        <span class="k">Mood</span>
+        <h4>Mood &amp; needs</h4>
+        <p>Valence and arousal, a wandering good-day/bad-day temperament, and needs: loneliness, curiosity, feeling on edge and sleep pressure.</p>
+      </div>
+      <div class="card">
+        <span class="k">Memory</span>
+        <h4>A memory graph</h4>
+        <p>Every conversation becomes an episode. Recall is associative and mood-coloured, and memories fade unless they matter.</p>
+      </div>
+      <div class="card">
+        <span class="k">Body</span>
+        <h4>Feeling her body</h4>
+        <p>Bumps, near tip-overs, rough rides, her battery and her Pi's load and temperature all reach her mood. She says &ldquo;ow&rdquo;.</p>
+      </div>
+      <div class="card">
+        <span class="k">Eyes</span>
+        <h4>Glances</h4>
+        <p>About once a minute she glances through cam-1. Nothing is saved, only what she noticed.</p>
+      </div>
+      <div class="card">
+        <span class="k">Sleep</span>
+        <h4>Dozing off</h4>
+        <p>After a quiet spell she sleeps in IDLE mode and tidies her memories. Talking to her, driving her or a mode change wakes her.</p>
+      </div>
+      <div class="card">
+        <span class="k">Initiative</span>
+        <h4>Speaking first</h4>
+        <p>A reminder, a question, missing you, a bump. With restraint: never at 3&nbsp;am, never to an empty room.</p>
+      </div>
+      <div class="card">
+        <span class="k">Care</span>
+        <h4>Boundaries</h4>
+        <p>She won't pretend to be human, says when something stings, and drops everything for anyone in danger.</p>
+      </div>
+      <div class="card">
+        <span class="k">Control</span>
+        <h4>Your control</h4>
+        <p>&ldquo;Forget that&rdquo;, &ldquo;forget everything&rdquo;, &ldquo;stop talking on your own&rdquo;. Stop, lock and quit are always honoured.</p>
+      </div>
+      <div class="card">
+        <span class="k">Day</span>
+        <h4>Today</h4>
+        <p>Distance driven, who she saw, bumps and her mood through the day, summarised on the web page and written into her journal after 9&nbsp;pm.</p>
+      </div>
+    </div>
+    <p class="muted spaced">The web dashboard has a <strong>Mind</strong> panel (<code>/mind</code>), and both PC controllers and the Pi HUD show her mood, needs and latest thought. Press <kbd>T</kbd> to type to her.</p>
+  </div>
+</section>
+
+<section id="controls">
+  <div class="wrap">
+    <h2>Controls</h2>
+    <h3 class="title">Two ways to drive</h3>
+    <div class="grid cols-2">
+      <div class="card mode">
+        <span class="k"><kbd>1</kbd> &middot; Coordinated</span>
+        <h4>WASD vectoring</h4>
+        <p><kbd>W</kbd>/<kbd>S</kbd> forward and back, <kbd>A</kbd>/<kbd>D</kbd> rotate.</p>
+      </div>
+      <div class="card mode">
+        <span class="k"><kbd>2</kbd> &middot; Independent</span>
+        <h4>Tank-style banks</h4>
+        <p><kbd>Q</kbd>/<kbd>A</kbd> drive the left bank, <kbd>W</kbd>/<kbd>S</kbd> the right.</p>
+      </div>
+    </div>
+    <h3 class="sub">Keys</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Key</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>X</kbd></td><td>Speed control</td></tr>
+          <tr><td><kbd>TAB</kbd> / <kbd>U</kbd></td><td>Cycle modes / user control mode</td></tr>
+          <tr><td><kbd>C</kbd> / <kbd>V</kbd></td><td>Take a photo / record video</td></tr>
+          <tr><td><kbd>K</kbd> / <kbd>L</kbd></td><td>Light effects / lights on-off</td></tr>
+          <tr><td><kbd>H</kbd></td><td>Go home</td></tr>
+          <tr><td><kbd>T</kbd></td><td>Type to KIDA</td></tr>
+          <tr><td><kbd>M</kbd> / <kbd>Space</kbd></td><td>Play music / stop music</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted spaced">Network: SSID <code>NORA</code>, password <code>12345678</code>. Connect through <a href="https://github.com/CursedPrograms/RIFT">RIFT</a> on port <code>5004</code>.</p>
+  </div>
+</section>
+
+<section id="hardware">
+  <div class="wrap">
+    <h2>Hardware</h2>
+    <h3 class="title">What she's built from</h3>
+    <div class="grid cols-2">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Compute</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Main board</td><td>Raspberry Pi 5 (4&nbsp;GB)</td></tr>
+          <tr><td>AI accelerator</td><td>Hailo-8L (13 TOPS) on an NVMe + AI HAT</td></tr>
+          <tr><td>Storage</td><td>NVMe SSD</td></tr>
+          <tr><td>Microcontrollers</td><td>RGBduino Jenny (DEV0), Arduino UNO (DEV1)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Drive &amp; power</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Chassis</td><td>Robot tank chassis</td></tr>
+          <tr><td>Motors</td><td>2&times; 12&nbsp;V DC via L298N</td></tr>
+          <tr><td>Motor battery</td><td>3S 21700 (12.6&nbsp;V)</td></tr>
+          <tr><td>Compute battery</td><td>3S 18650 via Pi UPS</td></tr>
+          <tr><td>Regulator</td><td>LM2596S (12&nbsp;V &rarr; 11.5&nbsp;V)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Senses</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Cameras</td><td>Pi Night Vision + Pi AI Camera (IMX500)</td></tr>
+          <tr><td>Distance</td><td>2&times; HC-SR04 (one on a servo), ToF laser</td></tr>
+          <tr><td>Ground</td><td>3-channel line tracker</td></tr>
+          <tr><td>Other</td><td>Ball switch, IR receiver, UV, LDR, PIR</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Audio &amp; control</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Output</td><td>Pi speakers</td></tr>
+          <tr><td>Input</td><td>USB microphone</td></tr>
+          <tr><td>Controllers</td><td>PC, Android, iPhone, wireless keyboard, IR remote</td></tr>
+        </tbody>
+      </table>
+    </div>
+    </div>
+    <p class="note"><strong>Ground loop warning:</strong> all modules must share a common GND. Without it you get erratic motors and noisy sensors.</p>
+    <h3 class="sub">Pinout</h3>
+    <div class="grid cols-2">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>DEV0 (drive)</th><th>Pin</th></tr></thead>
+        <tbody>
+          <tr><td>Right motor PWM / DIR1 / DIR2</td><td class="mono">D6 / D7 / D9</td></tr>
+          <tr><td>Left motor PWM / DIR1 / DIR2</td><td class="mono">D3 / D4 / D5</td></tr>
+          <tr><td>Servo</td><td class="mono">D10</td></tr>
+          <tr><td>Ultrasonic fixed TRIG / ECHO</td><td class="mono">A1 / A0</td></tr>
+          <tr><td>Ultrasonic servo TRIG / ECHO</td><td class="mono">A2 / A3</td></tr>
+          <tr><td>NeoPixel strips 1 / 2</td><td class="mono">D13 / D12</td></tr>
+          <tr><td>Button / buzzer</td><td class="mono">D2 / D8</td></tr>
+          <tr><td>VL53L0X SDA / SCL</td><td class="mono">A4 / A5</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>DEV1 (senses)</th><th>Pin</th></tr></thead>
+        <tbody>
+          <tr><td>IR receiver</td><td class="mono">D5</td></tr>
+          <tr><td>Front / back lights (MOSFET)</td><td class="mono">D2 / D3</td></tr>
+          <tr><td>Metal sensor</td><td class="mono">A0</td></tr>
+          <tr><td>Photoresistor</td><td class="mono">A1</td></tr>
+          <tr><td>UV sensor</td><td class="mono">A2</td></tr>
+          <tr><td>Ball switch</td><td class="mono">A3</td></tr>
+          <tr><td>PIR</td><td class="mono">D4</td></tr>
+          <tr><td>Line follower L / M / R</td><td class="mono">D8 / D10 / D9</td></tr>
+        </tbody>
+      </table>
+    </div>
+    </div>
+  </div>
+</section>
+
+<section id="setup">
+  <div class="wrap">
+    <h2>Setup</h2>
+    <h3 class="title">Bringing her up</h3>
+    <p class="muted">Raspberry Pi OS (Bookworm) is recommended. The full guide in the README covers each piece; these are the essentials.</p>
+<pre><span class="c"># AI camera models and Hailo runtime</span>
+<span class="p">$</span> sudo apt update &amp;&amp; sudo apt full-upgrade
+<span class="p">$</span> sudo apt install imx500-models hailo-all
+<span class="p">$</span> hailortcli fw-control identify
+
+<span class="c"># Local language model</span>
+<span class="p">$</span> sudo snap install ollama
+<span class="p">$</span> ollama pull gemma3:4b-it-qat
+
+<span class="c"># Python environment, speech in and out</span>
+<span class="p">$</span> python3 -m venv ~/kida-venv &amp;&amp; source ~/kida-venv/bin/activate
+<span class="p">$</span> pip install -r requirements.txt
+<span class="p">$</span> pip install git+https://github.com/openai/whisper.git piper-tts</pre>
+    <p class="muted">Then run her:</p>
+<pre><span class="p">$</span> source venv/bin/activate
+<span class="p">$</span> python scripts/main.py</pre>
+    <p class="note"><strong>Hailo not detected?</strong> A DKMS module may have failed to build. Pin back to 4.19, which has stable kernel module support, and hold the kernel packages. Also enable PCIe Gen 3 for the AI HAT with <code>dtparam=pciex1_gen=3</code> in <code>/boot/firmware/config.txt</code>.</p>
+    <p class="muted spaced">To start her on boot, the README has a ready-made systemd service (recommended), plus crontab and desktop autostart options.</p>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="wrap">
+    <h2>Screens</h2>
+    <h3 class="title">The controllers</h3>
+    <p class="muted">Captured without a robot connected, so live values show their offline state.</p>
+    <div class="screens">
+      <figure class="shot">
+        <img src="images/screenshots/remote-controller.png" alt="KIDA-01's remote controller with camera panels and mind readout" width="1280" height="741" loading="lazy">
+        <figcaption>Remote controller (pygame)</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/screenshots/web-dashboard.png" alt="KIDA-01's web dashboard" width="1280" height="823" loading="lazy">
+        <figcaption>Web dashboard</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="related">
+  <div class="wrap">
+    <h2>DREAM Robotics</h2>
+    <h3 class="title">The rest of the family</h3>
+    <div class="related">
+      <a href="https://github.com/CursedPrograms/MILA-Robot-v00">MILA-Robot-v00</a>
+      <a href="https://github.com/CursedPrograms/IDA-Robot-v00">IDA-Robot-v00</a>
+      <a href="https://github.com/CursedPrograms/KIDA-Robot-v00">KIDA-Robot-v00</a>
+      <a href="https://github.com/CursedPrograms/NORA-Robot-v00">NORA-Robot-v00</a>
+      <a href="https://github.com/CursedPrograms/WHIP-Robot-v00">WHIP-Robot-v00</a>
+      <a href="https://github.com/CursedPrograms/ARM-Robot-v01">ARM-Robot-v01</a>
+      <a href="https://github.com/CursedPrograms/RIFT">RIFT</a>
+      <a href="https://github.com/CursedPrograms/DREAM">DREAM</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="https://github.com/CursedPrograms/KIDA-Robot-v01">GitHub</a>
+      <a href="https://x.com/NorowaretaGemu">X: @NorowaretaGemu</a>
+      <a href="https://cursed-entertainment.itch.io/">itch.io</a>
+      <a href="https://ko-fi.com/cursedentertainment">Ko-fi</a>
+      <a href="https://github.com/CursedPrograms/KIDA-Robot-v01/blob/main/LICENSE">MIT License</a>
+    </div>
+
+    <div class="logos">
+      <img src="hailo_logo.png" alt="Hailo" width="180" loading="lazy">
+      <a href="https://ko-fi.com/cursedentertainment">
+        <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support Cursed Entertainment on Ko-fi" width="180" loading="lazy">
+      </a>
+      <a href="https://cursed-entertainment.itch.io/">
+        <img src="https://github.com/CursedPrograms/cursedentertainment/raw/main/images/logos/logo-wide-grey.png" alt="Cursed Entertainment" width="250" loading="lazy">
+      </a>
+      <a href="https://github.com/SynthWomb">
+        <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png?raw=true" alt="SynthWomb" width="200" loading="lazy">
+      </a>
+    </div>
+
+    <div>&copy; Cursed Entertainment 2026</div>
+  </div>
+</footer>
+
+</body>
+</html>

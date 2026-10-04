@@ -53,7 +53,11 @@ def run_ui(model=None, mode="cam", task="detect"):
 
     pygame.init()
     screen = pygame.display.set_mode(config.SCREEN_SIZE)
-    pygame.display.set_caption("KIDA")
+    pygame.display.set_caption("KIDA")
+    try:  # window icon: the robot's avatar
+        pygame.display.set_icon(pygame.image.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "images", "kida01-icon.png")))
+    except (pygame.error, OSError):
+        pass
 
     # Initialize hardware
     ina219_module = INA219(addr=0x41)

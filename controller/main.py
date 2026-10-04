@@ -82,6 +82,10 @@ def run_controller() -> None:
     SW, SH = info.current_w, info.current_h
     screen = pygame.display.set_mode((SW, SH), pygame.RESIZABLE)
     pygame.display.set_caption(APP_NAME)
+    try:  # window icon: the robot's avatar
+        pygame.display.set_icon(pygame.image.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "images", "kida01-icon.png")))
+    except (pygame.error, OSError):
+        pass
     pygame.mouse.set_visible(True)
 
     fonts = {

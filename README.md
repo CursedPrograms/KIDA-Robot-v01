@@ -23,15 +23,20 @@
 
 ---
 
-<div align="center">
-  <img src="/images/demo/kida.jpg" alt="KIDA Robot" width="400"/>
-</div>
-
 # KIDA-01 
 ## Kinetic Interactive Drive Automaton
 ### A DREAM Robotics Agent
 
 - Robot Type: Tank
+
+<div align="center">
+  <img src="images/kida_avatar.jpeg" alt="KIDA-01 avatar: a human representation of the robot" width="320"/>
+  <p><i>KIDA-01</i></p>
+</div>
+
+<div align="center">
+  <img src="/images/demo/kida.jpg" alt="KIDA Robot" width="400"/>
+</div>
 
 ---
 
@@ -232,6 +237,9 @@ Self-test (fake LLM, scratch folder — never touches her real memories): `cd sc
 
 > [!CAUTION]
 > **Ground Loop Warning:** All modules must share a common GND. Failure to bridge grounds will cause erratic motor behavior and sensor noise.
+
+> [!WARNING]
+> **Buzzer and left motor share a timer on DEV0.** `tone()` on the buzzer (D8) uses Timer2, which also drives PWM on D3, the left motor's speed pin. While a beep plays, the left track's speed is disturbed. Fix it by swapping two wires and the matching constants in `arduino00.ino`: **left PWM ↔ left DIR2** (`MOTOR_LEFT_PWM` → 5, `MOTOR_LEFT_DIR2` → 3). Pin 5 is Timer0 PWM, like the right motor's pin 6.
 
 <details>
 <summary><b>Power Distribution Wiring</b></summary>
@@ -863,6 +871,17 @@ X-GNOME-Autostart-enabled=true
 <div align="center">
   <img src="hailo_logo.png" alt="Hailo" width="200"/>
 </div>
+## Screenshots
+
+<div align="center">
+  <img src="images/screenshots/remote-controller.png" alt="Remote controller" width="640"/>
+  <img src="images/screenshots/web-dashboard.png" alt="Web dashboard" width="640"/>
+</div>
+
+<p align="center"><i>Remote controller, Web dashboard. Captured without a robot connected, so live values show their offline state.</i></p>
+
+---
+
 <br>
 <div align="center">© Cursed Entertainment 2026</div>
 <br>

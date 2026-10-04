@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Colour scheme for KIDA-01, sampled from images/kida_avatar.jpeg.
+  Avatar palette: pink hair, teal light, midnight blue.
+  Used by the GitHub Pages site (index.html) and any UI that loads it.
+
+  Format: one colour per line, written exactly as  name="..." value="#RRGGBB".
+-->
+<colour_scheme>
+  <!-- Surfaces -->
+  <colour name="background"       value="#080A12"/>  <!-- window / page background -->
+  <colour name="panel"            value="#0E1220"/>  <!-- cards, panels, idle buttons -->
+  <colour name="border"           value="#1C2440"/>  <!-- panel edges, button outlines -->
+  <colour name="divider"          value="#141A2E"/>  <!-- lines between rows -->
+
+  <!-- Text -->
+  <colour name="text"             value="#F2E9ED"/>  <!-- primary text -->
+  <colour name="text_sec"         value="#A8949F"/>  <!-- secondary text -->
+  <colour name="text_dim"         value="#6B5761"/>  <!-- labels, section titles -->
+
+  <!-- Accents -->
+  <colour name="accent"           value="#BD558C"/>  <!-- logo, links, selected / hover -->
+  <colour name="accent_hover"     value="#C16094"/>  <!-- lighter accent: values, connected dot -->
+  <colour name="accent2"          value="#3D98B3"/>  <!-- second avatar colour: highlights, tags -->
+  <colour name="accent3"          value="#AF6F90"/>  <!-- third avatar colour -->
+
+  <!-- Buttons -->
+  <colour name="button_hover_bg"  value="#250E1A"/>  <!-- button fill when hovered / selected -->
+  <colour name="danger_bg"        value="#210F0D"/>  <!-- STOP button fill -->
+</colour_scheme>
