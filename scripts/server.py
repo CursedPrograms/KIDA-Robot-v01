@@ -139,10 +139,12 @@ def last_photo():
 
 @app.route('/character_face')
 def character_face():
-    face_path = os.path.join(_here, '..', 'images', 'characters', 'KIDA002.jpeg')
-    if not os.path.isfile(face_path):
-        return '', 404
-    return send_file(face_path)
+    # KIDA's avatar (her human representation) first, the old character art as a fallback
+    for face_path in (os.path.join(_here, '..', 'images', 'kida_avatar.jpeg'),
+                      os.path.join(_here, '..', 'images', 'characters', 'KIDA002.jpeg')):
+        if os.path.isfile(face_path):
+            return send_file(face_path)
+    return '', 404
 
 
 def _pose_json() -> dict:

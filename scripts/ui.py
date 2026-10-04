@@ -214,23 +214,21 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
         print(f"⚠️ sensor_assist: {e}")
 
     # ── Assets ──
-    # Character face — 1:1 panel (FACE_RECT). Starts on KIDA002.jpeg if
-    # present; 'C' still cycles through every image in the characters folder.
-    char_filenames = sorted(
-        f for f in os.listdir(config.CHARACTER_FOLDER)
+    # Character face — 1:1 panel (FACE_RECT). Starts on KIDA's avatar
+    # (images/kida_avatar.jpeg); 'C' still cycles through every image in the
+    # characters folder after it.
+    avatar_path = os.path.join(os.path.dirname(config.CHARACTER_FOLDER), "kida_avatar.jpeg")
+    char_paths = ([avatar_path] if os.path.isfile(avatar_path) else []) + [
+        os.path.join(config.CHARACTER_FOLDER, f)
+        for f in sorted(os.listdir(config.CHARACTER_FOLDER))
         if f.lower().endswith((".jpg", ".jpeg", ".png"))
-    )
-    char_imgs = [
-        pygame.transform.smoothscale(
-            pygame.image.load(os.path.join(config.CHARACTER_FOLDER, fname)).convert_alpha(),
-            FACE_RECT.size,
-        )
-        for fname in char_filenames
     ]
-    char_idx = next(
-        (i for i, f in enumerate(char_filenames) if f.lower() == "kida002.jpeg"),
-        0,
-    )
+    char_filenames = [os.path.basename(p) for p in char_paths]
+    char_imgs = [
+        pygame.transform.smoothscale(pygame.image.load(p).convert_alpha(), FACE_RECT.size)
+        for p in char_paths
+    ]
+    char_idx = 0
     char_image = char_imgs[char_idx] if char_imgs else None
 
     bg = pygame.image.load(config.BACKGROUND_IMAGE).convert()

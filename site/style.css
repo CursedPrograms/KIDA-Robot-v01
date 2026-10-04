@@ -4,13 +4,13 @@
   --bg: #080A12;
   --panel: #0E1220;
   --border: #1C2440;
-  --accent: #BD558C;
-  --accent2: #3D98B3;
+  --accent: #DF5BA3;
+  --accent2: #57A8B6;
   --green: #00ff88;
   --text: #F2E9ED;
   --sub: #A8949F;
-  --glow: 189, 85, 140;
-  --glow2: 61, 152, 179;
+  --glow: 223, 91, 163;
+  --glow2: 87, 168, 182;
   --mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", Menlo, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }

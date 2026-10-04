@@ -19,10 +19,10 @@
   <colour name="text_dim"         value="#6B5761"/>  <!-- labels, section titles -->
 
   <!-- Accents -->
-  <colour name="accent"           value="#BD558C"/>  <!-- logo, links, selected / hover -->
-  <colour name="accent_hover"     value="#C16094"/>  <!-- lighter accent: values, connected dot -->
-  <colour name="accent2"          value="#3D98B3"/>  <!-- second avatar colour: highlights, tags -->
-  <colour name="accent3"          value="#AF6F90"/>  <!-- third avatar colour -->
+  <colour name="accent"           value="#DF5BA3"/>  <!-- logo, links, selected / hover -->
+  <colour name="accent_hover"     value="#E570B0"/>  <!-- lighter accent: values, connected dot -->
+  <colour name="accent2"          value="#57A8B6"/>  <!-- second avatar colour: highlights, tags -->
+  <colour name="accent3"          value="#C94E8F"/>  <!-- third avatar colour -->
 
   <!-- Buttons -->
   <colour name="button_hover_bg"  value="#250E1A"/>  <!-- button fill when hovered / selected -->

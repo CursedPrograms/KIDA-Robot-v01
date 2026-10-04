@@ -66,14 +66,15 @@ def run_ui(model=None, mode="cam", task="detect"):
     send_command("dev00", "RAINBOW")
     music.init_music()
 
-    # Load character images
+    # Load character images, KIDA's avatar first
+    avatar_path = os.path.join(os.path.dirname(config.CHARACTER_FOLDER), "kida_avatar.jpeg")
     character_images = [
-        pygame.transform.scale(
-            pygame.image.load(os.path.join(config.CHARACTER_FOLDER, f)),
-            config.IMAGE_SIZE,
-        )
-        for f in os.listdir(config.CHARACTER_FOLDER)
-        if f.lower().endswith((".jpg", ".jpeg", ".png"))
+        pygame.transform.scale(pygame.image.load(p), config.IMAGE_SIZE)
+        for p in ([avatar_path] if os.path.isfile(avatar_path) else []) + [
+            os.path.join(config.CHARACTER_FOLDER, f)
+            for f in sorted(os.listdir(config.CHARACTER_FOLDER))
+            if f.lower().endswith((".jpg", ".jpeg", ".png"))
+        ]
     ]
 
     # Load background
