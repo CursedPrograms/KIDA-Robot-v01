@@ -211,6 +211,19 @@ def action(command: str, password: str | None = None,
         send_command("dev00", f"SERVO:{deg}")
         import camera_actions
         camera_actions.cycle_camera()
+    elif command == 'chirp':
+        # The fleet's conversations (RIFT, over WiFi): say utterance `text`
+        # (0-13, see arduino00/talk_bf.h) in Brainfuck on the buzzer. The
+        # Arduino stays quiet while she's moving (tone() shares the left
+        # motor's timer).
+        from arduino import send_command
+        try:
+            u = int(text)
+        except (TypeError, ValueError):
+            return False
+        if not 0 <= u <= 13:
+            return False
+        send_command("dev00", f"TALK:{u}")
     elif command == 'save_inference':
         import camera_actions
         camera_actions.save_inference_photo()

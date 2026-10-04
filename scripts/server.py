@@ -284,6 +284,15 @@ def action():
         return jsonify({'ok': False, 'error': str(e)}), 500
 
 
+@app.route('/chirp')
+def chirp():
+    # RIFT's fleet conversations: /chirp?u=<0-13> says that utterance (a
+    # Brainfuck phrase, beeped on the buzzer). `from` is only for the log.
+    import web_bridge
+    ok = web_bridge.action('chirp', text=request.args.get('u'))
+    return jsonify({'ok': ok}), (200 if ok else 400)
+
+
 @app.route('/voice_upload', methods=['POST'])
 def voice_upload():
     # A workaround for the robot's own USB mic being too quiet: record on

@@ -139,6 +139,13 @@ void playTone(uint16_t freq, uint16_t dur = 0) {
 }
 void stopTone() { noTone(Config::BUZZER_PIN); }
 
+// ---- TALKING: the fleet's conversations, in Brainfuck ----
+// "TALK:<u>" says utterance u (0-6 phrases, 7-13 replies; see talk_bf.h):
+// a Brainfuck program that prints the words, beeped one tone per symbol.
+// TALK_VOICE_PCT pitches it to KIDA's voice (bright).
+#include "talk_bf.h"
+const uint8_t TALK_VOICE_PCT = 130;
+
 // ===============================================
 // LIGHT HELPERS
 // ===============================================
@@ -511,6 +518,13 @@ void processSerialCommand(char *cmd) {
     executeMotorCommand(MotorDirection::STOP);
     Serial.println("AUTO_MODE_OFF");
   }
+  // tone() shares Timer2 with the left motor's PWM (D3), so she only talks
+  // while she's standing still -- a phrase never changes her speed.
+  else if (strncmp(cmd, "TALK:", 5) == 0) {
+    bool moving = autonomousMode || robotState.direction != MotorDirection::STOP
+                  || tankLeftSpeed != 0 || tankRightSpeed != 0;
+    if (!moving) talkStart(atoi(cmd + 5));
+  }
   else if (strcmp(cmd, "WHOAMI") == 0) {
     Serial.println("I_AM_DEV00");
   }
@@ -641,6 +655,7 @@ void loop() {
   // read, even while autonomousMode is true — otherwise the Pi can never
   // reach the Arduino to turn autonomous mode off again.
   handleSerialInput();
+  talkStep(Config::BUZZER_PIN, TALK_VOICE_PCT);
 
 if (autonomousMode) {
   if (millis() - lastCommandMs > Config::AUTONOMOUS_WATCHDOG_MS) {
