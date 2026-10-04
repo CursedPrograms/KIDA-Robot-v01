@@ -200,6 +200,8 @@
       </table>
     </div>
     <p class="muted spaced">Network: SSID <code>NORA</code>, password <code>12345678</code>. Connect through <a href="https://github.com/CursedPrograms/RIFT">RIFT</a> on port <code>5004</code>.</p>
+    <h3 class="sub">Driven by NORA</h3>
+    <p class="muted"><a href="https://cursedprograms.github.io/NORA-Robot-v00/">NORA</a> can drive KIDA-01 through her IR transmitter: Samsung-format IR at address <code>0x0DA4</code>, with the fleet link&rsquo;s commands <code>0x48</code>&ndash;<code>0x4F</code> (drive, stop, obstacle, manual, speed). The IR Arduino (<code>arduino01</code>) prints each command as the IR line the Pi already reads (<code>IRforward</code>, <code>IRrelease</code>, <code>IR3</code>&hellip;), so nothing on the Pi changed. Driving switches her into IR Remote mode; she stops once the link has been quiet for 500 ms.</p>
   </div>
 </section>
 

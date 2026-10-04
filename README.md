@@ -100,6 +100,9 @@ Use the numeric keys to hot-swap between drive logics:
 | <kbd>L</kbd> | Turn On/Off Lights | Turn On/Off Lights |
 
 
+### Driven by NORA (fleet IR link)
+[NORA](https://github.com/CursedPrograms/NORA-Robot-v00) can drive KIDA-01 through her IR transmitter, from her web page, Python controller or Bluetooth. The frames are Samsung-format IR at address `0x0DA4`, with the fleet link's commands: `0x48` forward, `0x49` back, `0x4A` left, `0x4B` right, `0x4C` stop, `0x4D` obstacle mode, `0x4E` manual, `0x4F` speed. The IR Arduino (`arduino01`) prints each command as the IR line the Pi already reads (`IRforward`, `IRrelease`, `IR3`…), so nothing on the Pi changed. Driving switches her into IR Remote mode; she stops once the link has been quiet for 500 ms.
+
 ### 🎵 Media & System
 * <kbd>M</kbd> **Play Music**
 * <kbd>Space</kbd> **Stop Music** / Audio Interrupt

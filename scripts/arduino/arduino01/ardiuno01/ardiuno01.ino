@@ -67,6 +67,28 @@ unsigned long lastIRTime = 0;
 unsigned long lastIRCode = 0;
 bool irButtonHeld = false;
 #define IR_TIMEOUT 300  // ms with no signal = button released
+unsigned long irTimeoutMs = IR_TIMEOUT;   // remote or link, whichever is driving
+
+// ─────────────────────────────
+// FLEET LINK (commands relayed by NORA)
+// ─────────────────────────────
+// NORA's web page, Python controller and Bluetooth link can drive KIDA through
+// NORA's IR transmitter: Samsung-format frames at KIDA_LINK_ADDRESS, with the
+// command codes the whole fleet link uses (IDA 0x0DA1, MILA 0x0DA2, WHIP
+// 0x0DA3). Each is printed as the IR line the Pi already understands, so
+// arduino.py / ir_bridge.py need no changes. Drive commands repeat every
+// 150 ms while held; "IRrelease" follows once they've been quiet LINK_TIMEOUT.
+#define KIDA_LINK_ADDRESS 0x0DA4
+#define LINK_FORWARD   0x48
+#define LINK_BACKWARD  0x49
+#define LINK_LEFT      0x4A
+#define LINK_RIGHT     0x4B
+#define LINK_STOP      0x4C
+#define LINK_OBSTACLE  0x4D
+#define LINK_MANUAL    0x4E   // IR remote mode
+#define LINK_SPEED     0x4F   // speed up
+#define LINK_TIMEOUT   500
+uint8_t lastLinkCmd = 0;
 
 // ─────────────────────────────
 // SETUP
@@ -105,7 +127,13 @@ void loop() {
 // ─────────────────────────────
 void handleIR() {
   if (irrecv.decode(&results)) {
+    if (irrecv.decodedIRData.protocol == SAMSUNG && irrecv.decodedIRData.address == KIDA_LINK_ADDRESS) {
+      handleLink(irrecv.decodedIRData.command);
+      irrecv.resume();
+      return;
+    }
     unsigned long code = results.value;
+    irTimeoutMs = IR_TIMEOUT;
 
     // 0xFFFFFFFF means "still held" — use last known code
     if (code == 0xFFFFFFFF) {
@@ -150,11 +178,38 @@ void handleIR() {
   }
 
   // ── Button release detection ──
-  if (irButtonHeld && (millis() - lastIRTime > IR_TIMEOUT)) {
+  if (irButtonHeld && (millis() - lastIRTime > irTimeoutMs)) {
     irButtonHeld = false;
     Serial.println("IRrelease");  // Pi knows the button was let go
     lastIRCode = 0;
+    lastLinkCmd = 0;
   }
+}
+
+// A link command from NORA, printed as the matching remote line. A drive
+// switches the Pi into IR remote mode first ("IR1") on the first frame of a
+// press; repeated frames just keep the press alive.
+void handleLink(uint8_t c) {
+  const char* drive = nullptr;
+  switch (c) {
+    case LINK_FORWARD:  drive = "IRforward"; break;
+    case LINK_BACKWARD: drive = "IRdown";    break;
+    case LINK_LEFT:     drive = "IRleft";    break;
+    case LINK_RIGHT:    drive = "IRright";   break;
+    case LINK_STOP:     Serial.println("IRrelease");     irButtonHeld = false; lastLinkCmd = 0; return;
+    case LINK_OBSTACLE: Serial.println("IR3");           return;
+    case LINK_MANUAL:   Serial.println("IR1");           return;
+    case LINK_SPEED:    Serial.println("IRfastforward"); return;
+    default: return;
+  }
+  if (c != lastLinkCmd) {
+    if (!lastLinkCmd) Serial.println("IR1");
+    Serial.println(drive);
+    lastLinkCmd = c;
+  }
+  lastIRTime   = millis();
+  irButtonHeld = true;
+  irTimeoutMs  = LINK_TIMEOUT;
 }
 
 // ─────────────────────────────
