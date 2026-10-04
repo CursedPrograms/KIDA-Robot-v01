@@ -36,7 +36,10 @@ class Button:
         pygame.draw.rect(surface, (80, 80, 80), self.rect, 2, border_radius=12)
 
         text_color = (120, 120, 120) if not self.enabled else (0, 0, 0)
-        label = self.font.render(self.text, True, text_color)
+        text = self.text
+        while len(text) > 1 and self.font.size(text)[0] > self.rect.width - 10:
+            text = text[:-2] + "…"   # too long for the button: trim, never spill out
+        label = self.font.render(text, True, text_color)
         surface.blit(label, label.get_rect(center=self.rect.center))
 
     def update(self, mouse_pos, mouse_down):

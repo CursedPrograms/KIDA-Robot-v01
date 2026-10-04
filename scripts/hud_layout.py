@@ -11,7 +11,7 @@ CAM_H_FRAC = 0.40   # fraction of screen height used by the camera row
 
 SEN_X1_OFFSET  = 14
 SEN_X2_OFFSET  = 280
-SEN_TOP_OFFSET = 46
+SEN_TOP_OFFSET = 62   # below the three status rows (power, status, hints)
 
 BTN_PANEL_WIDTH = 320
 

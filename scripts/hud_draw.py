@@ -7,6 +7,7 @@ import pygame
 import state
 import mode_manager
 import camera_actions
+import hud_layout
 from state import DriveMode
 
 # ── Mode label config ──
@@ -23,6 +24,20 @@ _MODE_LABEL = {
 
 # ── Panel surface cache (avoids per-frame allocation) ──
 _panel_cache: dict = {}
+
+
+def _fit(font, text: str, width: int) -> str:
+    """Trim text with an ellipsis so it renders no wider than width."""
+    if font.size(text)[0] <= width:
+        return text
+    while len(text) > 1 and font.size(text + "…")[0] > width:
+        text = text[:-1]
+    return text.rstrip() + "…" if width > 0 else ""
+
+
+def _text_right(surface: pygame.Surface) -> int:
+    """Right edge for HUD text: just left of the CONTROLS panel."""
+    return surface.get_width() - hud_layout.BTN_PANEL_WIDTH - 12
 
 
 def draw_panel(surface: pygame.Surface, rect: pygame.Rect,
@@ -48,10 +63,10 @@ def draw_camera_panel(surface: pygame.Surface, frame, rect: pygame.Rect,
             print(f"[Draw {label}] {e}")
     else:
         draw_panel(surface, rect, fill=(8, 10, 18), alpha=240)
-        sig = nosig_font.render(f"[ {label} — NO SIGNAL ]", True, (60, 75, 100))
+        sig = nosig_font.render(_fit(nosig_font, f"[ {label} — NO SIGNAL ]", rect.width - 12), True, (60, 75, 100))
         surface.blit(sig, sig.get_rect(center=rect.center))
     pygame.draw.rect(surface, (50, 72, 115), rect, 2)
-    tag = label_font.render(label, True, (150, 185, 255))
+    tag = label_font.render(_fit(label_font, label, rect.width - 12), True, (150, 185, 255))
     surface.blit(tag, (rect.x + 6, rect.y + 5))
 
 
@@ -63,10 +78,10 @@ def draw_static_panel(surface: pygame.Surface, image_surf, rect: pygame.Rect,
         surface.blit(image_surf, rect.topleft)
     else:
         draw_panel(surface, rect, fill=(8, 10, 18), alpha=240)
-        sig = nosig_font.render(f"[ {label} — NO SIGNAL ]", True, (60, 75, 100))
+        sig = nosig_font.render(_fit(nosig_font, f"[ {label} — NO SIGNAL ]", rect.width - 12), True, (60, 75, 100))
         surface.blit(sig, sig.get_rect(center=rect.center))
     pygame.draw.rect(surface, (50, 72, 115), rect, 2)
-    tag = label_font.render(label, True, (150, 185, 255))
+    tag = label_font.render(_fit(label_font, label, rect.width - 12), True, (150, 185, 255))
     surface.blit(tag, (rect.x + 6, rect.y + 5))
 
 
@@ -83,28 +98,33 @@ def draw_status_strip(surface: pygame.Surface, fonts: dict,
     mode_label, mode_color = _MODE_LABEL.get(cur_mode, ("???", (200, 200, 200)))
     music_sym             = "▶" if music_on else "■"
 
+    right = _text_right(surface)
     pw = fonts["sm"].render(
-        f"  ⚡{bus_v:.2f}V  {cur_ma/1000:.3f}A  {pwr_w:.2f}W  🔋{bat_pct:.0f}%",
+        _fit(fonts["sm"], f"  ⚡{bus_v:.2f}V  {cur_ma/1000:.3f}A  {pwr_w:.2f}W  🔋{bat_pct:.0f}%", right - sen_x1),
         True, (70, 215, 100),
     )
     surface.blit(pw, (sen_x1, hud_y + 6))
 
+    # The mode tag always shows; the rest of the row is trimmed to make room
+    mode_surf = fonts["sm"].render(f" [{mode_label}]", True, mode_color)
     st_base = fonts["sm"].render(
-        f"  Spd:{motor_speed}  T:{cpu_temp}  CPU:{cpu:.0f}%  "
-        f"RAM:{ram:.0f}%  IP:{local_ip}  "
-        f"Inf:{'ON' if inference_on else 'off'}  Mus:{music_sym}  Mode:",
+        _fit(fonts["sm"],
+             f"  Spd:{motor_speed}  T:{cpu_temp}  CPU:{cpu:.0f}%  "
+             f"RAM:{ram:.0f}%  IP:{local_ip}  "
+             f"Inf:{'ON' if inference_on else 'off'}  Mus:{music_sym}  Mode:",
+             right - sen_x1 - mode_surf.get_width()),
         True, (160, 190, 235),
     )
     surface.blit(st_base, (sen_x1, hud_y + 24))
 
-    mode_surf = fonts["sm"].render(f" [{mode_label}]", True, mode_color)
     surface.blit(mode_surf, (sen_x1 + st_base.get_width(), hud_y + 24))
 
     hint = fonts["xs"].render(
-        "  1=KB  2=IR  3=AUTO  4=IDLE  5=LINE  6=WATCH  7=LANE  8=FOLLOW",
+        _fit(fonts["xs"], "  1=KB  2=IR  3=AUTO  4=IDLE  5=LINE  6=WATCH  7=LANE  8=FOLLOW", right - sen_x1),
         True, (80, 100, 140),
     )
     surface.blit(hint, (sen_x1, hud_y + 42))
+    x = sen_x1 + hint.get_width() + 12
 
     # Gamepad plugged into *this* machine (joystick_drive.py sets the name)
     pad = getattr(state, "joystick_name", None)
@@ -112,22 +132,26 @@ def draw_status_strip(surface: pygame.Surface, fonts: dict,
     pad_text = f"  🎮 {pad[:28]}" if pad else "  🎮 no pad"
     if pad and pending:
         pad_text += f"  → mode {pending}…"
+    if right - x < 60:
+        return   # no room left on the hint row
     pad_surf = fonts["xs"].render(
-        pad_text, True, (100, 220, 140) if pad else (90, 90, 110),
+        _fit(fonts["xs"], pad_text, right - x), True, (100, 220, 140) if pad else (90, 90, 110),
     )
-    surface.blit(pad_surf, (sen_x1 + hint.get_width() + 12, hud_y + 42))
+    surface.blit(pad_surf, (x, hud_y + 42))
+    x += pad_surf.get_width() + 8
 
     # Her inner life (kida_mind_host.py keeps this current); absent = no mind running
     mind = getattr(state, "mind_label", None)
-    if mind:
-        mind_surf = fonts["xs"].render(f"  ♡ {mind}", True, (200, 160, 235))
-        surface.blit(mind_surf, (sen_x1 + hint.get_width() + 12 + pad_surf.get_width() + 8, hud_y + 42))
+    if mind and right - x >= 60:
+        mind_surf = fonts["xs"].render(_fit(fonts["xs"], f"  ♡ {mind}", right - x), True, (200, 160, 235))
+        surface.blit(mind_surf, (x, hud_y + 42))
 
 
 def draw_sensor_grid(surface: pygame.Surface, fonts: dict,
                      sensor_rows: list, lbl_surfaces: list,
                      sen_x1: int, sen_x2: int, sen_top: int) -> None:
     mid = (len(sensor_rows) + 1) // 2
+    val_w = (sen_x2 - sen_x1) - 88 - 18   # a value never runs into the next column
     for i, ((attr, _), lbl_surf) in enumerate(zip(sensor_rows, lbl_surfaces)):
         col = 0 if i < mid else 1
         row = i if i < mid else i - mid
@@ -135,7 +159,7 @@ def draw_sensor_grid(surface: pygame.Surface, fonts: dict,
         y   = sen_top + row * 19
         surface.blit(lbl_surf, (x, y))
         val_s = fonts["xs"].render(
-            str(getattr(state, attr, "—")), True, (215, 230, 255)
+            _fit(fonts["xs"], str(getattr(state, attr, "—")), val_w), True, (215, 230, 255)
         )
         surface.blit(val_s, (x + 88, y))
 
@@ -150,18 +174,27 @@ def draw_button_panel(surface: pygame.Surface, fonts: dict,
         fonts["hd"].render("CONTROLS", True, (100, 150, 210)),
         (btn_panel_x, hud_y + 8),
     )
-    btn_cols   = 2
     btn_margin = 6
     bx0        = btn_panel_x + 4
     by0        = hud_y + 34
-    btn_w      = (btn_panel_rect.width - btn_margin * (btn_cols + 1)) // btn_cols
+    avail_h    = btn_panel_rect.bottom - 6 - by0
+    # Two columns of 36 px buttons when they fit; otherwise shorter buttons,
+    # and a third column if they would get too short to read.
+    for btn_cols in (2, 3):
+        rows  = max(1, -(-len(buttons) // btn_cols))
+        btn_h = min(36, (avail_h - btn_margin * (rows - 1)) // rows)
+        if btn_h >= 22:
+            break
+    btn_h = max(btn_h, 16)
+    btn_w = (btn_panel_rect.width - btn_margin * (btn_cols + 1)) // btn_cols
 
     for idx, button in enumerate(buttons):
         col = idx % btn_cols
         row = idx // btn_cols
-        button.rect.x     = bx0 + col * (btn_w + btn_margin)
-        button.rect.y     = by0 + row * (button.rect.height + btn_margin)
-        button.rect.width = btn_w
+        button.rect.x      = bx0 + col * (btn_w + btn_margin)
+        button.rect.y      = by0 + row * (btn_h + btn_margin)
+        button.rect.width  = btn_w
+        button.rect.height = btn_h
         if hasattr(button, "label") and button.label in ("Play", "▶", "Play Music"):
             button.enabled = not music_on
         if hasattr(button, "label") and button.label.startswith("Cam:"):
@@ -179,7 +212,7 @@ def draw_idle_overlay(surface: pygame.Surface, fonts: dict) -> None:
     overlay.fill((0, 0, 0, 220))
     surface.blit(overlay, (0, 0))
     msg = fonts["hd"].render(
-        "[ IDLE — press 1-7 to select a mode ]",
+        _fit(fonts["hd"], "[ IDLE — press 1-8 to select a mode ]", surface.get_width() - 24),
         True, (140, 60, 60),
     )
     surface.blit(msg, msg.get_rect(
@@ -229,24 +262,29 @@ def draw_mind_panel(surface: pygame.Surface, fonts: dict, rect, mind: dict | Non
     draw_panel(surface, rect, fill=(12, 10, 24), alpha=225, border=(70, 52, 110), radius=6)
     x, y, w = rect.x + 10, rect.y + 8, rect.width - 20
     label = mind["mood"].get("label", "?") + ("  (asleep)" if mind.get("sleeping") else "")
-    head = fonts["sm"].render(f"MIND  ♡ {label}", True, (205, 170, 240))
+    head = fonts["sm"].render(_fit(fonts["sm"], f"MIND  ♡ {label}", w), True, (205, 170, 240))
     surface.blit(head, (x, y))
-    if mind.get("person"):
-        who = fonts["xs"].render(f"with {mind['person']}", True, (120, 230, 170))
+    who_w = w - head.get_width() - 14
+    if mind.get("person") and who_w >= 60:
+        who = fonts["xs"].render(_fit(fonts["xs"], f"with {mind['person']}", who_w), True, (120, 230, 170))
         surface.blit(who, (x + head.get_width() + 14, y + 3))
     y += 24
 
+    # Four drive bars in a row, or two rows of two when the panel is narrow
     drives = mind.get("drives", {})
-    bar_w = max(60, (w - 4 * 64) // 4)
+    cols  = 4 if w >= 480 else 2
+    slot  = w // cols
+    bar_w = slot - 58 - 10
     for i, (name, key) in enumerate(_MIND_BARS):
-        bx = x + i * (bar_w + 64)
-        surface.blit(fonts["xs"].render(name, True, (150, 140, 185)), (bx, y))
-        track = pygame.Rect(bx + 58, y + 4, bar_w, 8)
+        bx = x + (i % cols) * slot
+        by = y + (i // cols) * 18
+        surface.blit(fonts["xs"].render(name, True, (150, 140, 185)), (bx, by))
+        track = pygame.Rect(bx + 58, by + 4, bar_w, 8)
         pygame.draw.rect(surface, (30, 28, 50), track, border_radius=3)
         v = max(0.0, min(1.0, float(drives.get(key, 0) or 0)))
         if v:
             pygame.draw.rect(surface, (150, 120, 240), (track.x, track.y, int(track.w * v), track.h), border_radius=3)
-    y += 22
+    y += 22 + (len(_MIND_BARS) // cols - 1) * 18
 
     bottom = rect.bottom - 6
     thought = mind.get("thought")
