@@ -183,3 +183,20 @@ footer .logos img { display: block; height: auto; max-width: 100%; }
 footer .links { display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: center; margin-bottom: 8px; }
 
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn { transition: none; } }
+
+/* music player (site/player.js) */
+.player { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.pl-now { display: flex; align-items: center; gap: 10px; }
+.pl-btn { background: none; border: 1px solid var(--border); color: var(--accent); border-radius: 50%; width: 40px; height: 40px;
+  font-size: 15px; cursor: pointer; flex: none; }
+.pl-btn:hover { border-color: var(--accent); background: rgba(var(--glow), .12); }
+.pl-play { width: 48px; height: 48px; font-size: 18px; }
+.pl-info { flex: 1; min-width: 0; }
+.pl-title { font-family: var(--mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-bar { display: flex; align-items: center; gap: 8px; font: 12px var(--mono); color: var(--sub); }
+.pl-seek { flex: 1; accent-color: var(--accent); min-width: 0; }
+.pl-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
+.pl-list button { width: 100%; text-align: left; background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--sub);
+  font: 13px var(--mono); padding: 6px 10px; cursor: pointer; }
+.pl-list button:hover { color: var(--text); border-color: var(--accent); }
+.pl-list li.on button { color: var(--accent); border-color: var(--accent); background: rgba(var(--glow), .08); }
