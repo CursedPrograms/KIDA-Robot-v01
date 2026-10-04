@@ -225,6 +225,7 @@ void handleSerialCommands() {
   else if (cmd == "LIGHT_BACK_ON") TurnOnBackLights();
   else if (cmd == "LIGHT_BACK_OFF") TurnOffBackLights();
   else if (cmd == "WHOAMI") Serial.println("I_AM_DEV01");
+  else if (cmd == "WHO") Serial.println("I am Kida01Dev01");   // the fleet-wide handshake
 }
 
 // ─────────────────────────────

@@ -110,6 +110,9 @@ struct SensorReadings {
   long us1        = -1;  // servo high
   bool btnState   = false;
 };
+// Declared here, after the struct: the Arduino IDE puts its own generated
+// prototypes above this file's types, where SensorReadings doesn't exist yet.
+SensorReadings getAllSensorReadings();
 
 bool autonomousMode = false;
 unsigned long lastCommandMs = 0;   // last time a serial line was received (watchdog)
@@ -527,6 +530,9 @@ void processSerialCommand(char *cmd) {
   }
   else if (strcmp(cmd, "WHOAMI") == 0) {
     Serial.println("I_AM_DEV00");
+  }
+  else if (strcmp(cmd, "WHO") == 0) {
+    Serial.println("I am Kida01Dev00");   // the fleet-wide handshake (ARM, DREAM, NINA's board_id)
   }
 }
 
