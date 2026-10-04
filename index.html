@@ -202,6 +202,8 @@
     <p class="muted spaced">Network: SSID <code>NORA</code>, password <code>12345678</code>. Connect through <a href="https://github.com/CursedPrograms/RIFT">RIFT</a> on port <code>5004</code>.</p>
     <h3 class="sub">Driven by NORA</h3>
     <p class="muted"><a href="https://cursedprograms.github.io/NORA-Robot-v00/">NORA</a> can drive KIDA-01 through her IR transmitter: Samsung-format IR at address <code>0x0DA4</code>, with the fleet link&rsquo;s commands <code>0x48</code>&ndash;<code>0x4F</code> (drive, stop, obstacle, manual, speed). The IR Arduino (<code>arduino01</code>) prints each command as the IR line the Pi already reads (<code>IRforward</code>, <code>IRrelease</code>, <code>IR3</code>&hellip;), so nothing on the Pi changed. Driving switches her into IR Remote mode; she stops once the link has been quiet for 500 ms.</p>
+    <h3 class="sub">Talking, in Brainfuck</h3>
+    <p class="muted">Every phrase is a <strong>Brainfuck</strong> program that prints its words &mdash; hello is <code>++++++++[&gt;+++++++++++++&lt;-]&gt;.+.</code> &rarr; <code>hi</code> &mdash; and a robot says it by beeping the program on its buzzer, one tone per symbol, in its own voice. <a href="https://cursedprograms.github.io/RIFT/">RIFT</a> runs the conversations and asks each robot to speak with <code>GET /chirp?u=&lt;0-13&gt;</code> (phrases 0&ndash;6, replies 7&ndash;13). KIDA&rsquo;s voice is the brightest: <code>server.py</code> passes <code>TALK:&lt;u&gt;</code> to the motor Arduino, which beeps it on D8, only while she&rsquo;s standing still (the buzzer shares a timer with the left motor).</p>
   </div>
 </section>
 
