@@ -1,6 +1,9 @@
 // app.rc — version info for KIDA-Controller.exe (shows in the file's Properties)
 #include <winver.h>
 
+// Window / exe icon: KIDA's avatar (images/kida01.ico); main.cpp loads it as resource 1.
+1 ICON "../../../images/kida01.ico"
+
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     1,0,0,0
 PRODUCTVERSION  1,0,0,0
