@@ -45,3 +45,4 @@ tqdm
 pyyaml
 loguru
 scipy>=1.9
+bleak

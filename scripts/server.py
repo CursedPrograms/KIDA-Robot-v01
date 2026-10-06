@@ -11,6 +11,7 @@ from flask import Flask, render_template, Response, jsonify, request, send_file
 from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser
 
 import fleet_register
+from fleet_near import FleetNear
 
 _here = os.path.dirname(os.path.abspath(__file__))
 app = Flask(
@@ -107,6 +108,16 @@ def dashboard():
                            this_ip=my_ip,
                            this_port=THIS_PORT,
                            peers=peers)
+
+
+# Which robots are nearby: Bluetooth LE beacons from NORA, WHIP and the other KIDA,
+# heard by the Pi's own Bluetooth (fleet_near.py), and this robot's beacon for them.
+near = FleetNear(THIS_NAME).start()
+
+
+@app.route('/near')
+def near_robots():
+    return jsonify(near.status())
 
 
 @app.route('/ping')

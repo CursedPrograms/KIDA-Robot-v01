@@ -27,6 +27,7 @@
       <li><a href="#hardware">Hardware</a></li>
       <li><a href="#setup">Setup</a></li>
       <li><a href="#music">Music</a></li>
+      <li><a href="#near">Nearby</a></li>
       <li><a href="#screens">Screens</a></li>
       <li><a href="https://github.com/CursedPrograms/KIDA-Robot-v01">GitHub</a></li>
     </ul>
@@ -319,6 +320,20 @@
 <span class="p">$</span> python scripts/main.py</pre>
     <p class="note"><strong>Hailo not detected?</strong> A DKMS module may have failed to build. Pin back to 4.19, which has stable kernel module support, and hold the kernel packages. Also enable PCIe Gen 3 for the AI HAT with <code>dtparam=pciex1_gen=3</code> in <code>/boot/firmware/config.txt</code>.</p>
     <p class="muted spaced">To start her on boot, the README has a ready-made systemd service (recommended), plus crontab and desktop autostart options.</p>
+  </div>
+</section>
+
+<section id="near">
+  <div class="wrap">
+    <h2>Who's nearby</h2>
+    <h3 class="title">ESP-NOW + Bluetooth LE: the robots sense each other</h3>
+    <p class="muted">Every robot sends a small "I'm here" beacon twice a second. The signal strength says roughly how close each one is, and how it changes says whether it's <b>coming closer</b>, <b>steady</b> or <b>leaving</b>. Coarse, for "who's around": the ultrasonic and ToF sensors still do the precise avoiding.</p>
+    <div class="grid cols-3">
+      <div class="card"><span class="k">Zones</span><h4>Very close to far</h4><p>Above &minus;45 dBm very close, &minus;60 near, &minus;75 medium, below that far.</p></div>
+      <div class="card"><span class="k">Talk</span><h4>In Brainfuck</h4><p>Over ESP-NOW each beacon carries a program that prints <code>park</code>, <code>go</code>, <code>wait</code> or <code>hand</code>; the receiver runs it. RIFT decodes them too.</p></div>
+      <div class="card"><span class="k">Manners</span><h4>Who makes way</h4><p>A parked robot isn't the one moving; a yielding one is making way; a human-driven one gets space; otherwise the alphabet decides, and everyone makes way for MILA.</p></div>
+    </div>
+    <p class="muted spaced">A Pi can't speak ESP-NOW, so KIDA-01 uses the Pi's own <b>Bluetooth LE</b> to hear NORA, WHIP, KIDA-00 and RIFT and be heard. In <b>autonomous</b> mode the Pi steps in over her Arduino to give way, and slows her down near other robots. <code>GET /near</code> shows her list.</p>
   </div>
 </section>
 

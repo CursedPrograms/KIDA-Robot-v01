@@ -877,6 +877,37 @@ X-GNOME-Autostart-enabled=true
 <div align="center">
   <img src="hailo_logo.png" alt="Hailo" width="200"/>
 </div>
+## 📡 Who's nearby (ESP-NOW + Bluetooth LE)
+
+Every robot sends a small **"I'm here"** beacon twice a second and listens for the others'. From the **signal strength** it knows roughly how close each one is, and from how that changes over time whether it's **coming closer, steady or leaving**:
+
+| Signal | Zone |
+| :--- | :--- |
+| above −45 dBm | very close |
+| −45 to −60 dBm | near |
+| −60 to −75 dBm | medium |
+| below −75 dBm | far |
+
+It's coarse (walls, bodies and antenna angle all change it): for "who's around", not distance. Precise collision avoidance stays with the ultrasonic and ToF sensors.
+
+**They tell each other what they're doing**, because a rising signal looks the same from both sides even when only one robot moves. Over ESP-NOW they say it **in Brainfuck**, like the fleet's conversations: each beacon carries a program that prints `park`, `go`, `wait` or `hand` (a human is driving), and the receiver runs it. Bluetooth adverts are too small for a program, so BLE carries the same state as one byte.
+
+**Who makes way**, in self-driving modes only:
+
+| The other robot... | So this one... |
+| :--- | :--- |
+| is parked | is the one closing in: steers away |
+| is yielding | carries on, carefully |
+| is driven by a human | makes way (it's unpredictable) |
+| drives itself | follows the alphabet: KIDA00, KIDA01, NORA, WHIP; everyone makes way for MILA, who can't hear the others |
+| is leaving | carries on |
+
+Making way = stop for 2 s, turn away, then drive on (and not yield again for 5 s, so two robots that stay close don't take turns forever). While another robot is near, or coming closer, it drives slower with wider margins.
+
+A Pi can't speak ESP-NOW, so KIDA-01 uses the Pi's own **Bluetooth LE**: she beacons through `bluetoothctl` and listens with `bleak`, hearing NORA, WHIP, KIDA-00 and RIFT. In **autonomous** mode her Arduino drives, so `scripts/fleet_guard.py` steps in to give way (AUTO_OFF + STOP, LEFT, then AUTO_ON) and drops her to 60 % of your speed while a robot is near. `GET /near` shows her list. Code: `scripts/fleet_near.py`, `scripts/fleet_guard.py`.
+
+---
+
 ## Screenshots
 
 <div align="center">

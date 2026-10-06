@@ -92,6 +92,10 @@ if __name__ == "__main__":
     # init_music() call removed
 
     threading.Thread(target=run_flask_server, daemon=True).start()
+    # making way for the other robots, and telling them what she's doing (fleet_near.py over Bluetooth)
+    import fleet_guard
+    from server import near
+    fleet_guard.start(near)
     threading.Thread(target=voice_ai.main, daemon=True).start()
 
     script_dir   = os.path.dirname(os.path.abspath(__file__))
