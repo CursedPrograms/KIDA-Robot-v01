@@ -196,7 +196,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
     bg = pygame.transform.smoothscale(bg, (SW, SH))
     bg.set_alpha(28)
 
-    buttons      = create_buttons()
+    buttons      = create_buttons(music_ctrl)
     lbl_surfaces = [
         fonts["xs"].render(f"{lbl}:", True, (100, 130, 185))
         for _, lbl in SENSOR_ROWS
@@ -257,7 +257,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
         now = time.time()
         check_recording_timeout()
 
-        ir_bridge.poll(motor_speed_box)
+        ir_bridge.poll(motor_speed_box, music_ctrl)
         motor_speed = motor_speed_box[0]
 
         # ── Stats (throttled) ──

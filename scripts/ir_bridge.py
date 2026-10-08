@@ -5,7 +5,6 @@
 
 import state
 import config
-import music
 from state import DriveMode
 from arduino import send_command
 from mode_control import switch_mode
@@ -13,7 +12,6 @@ import mode_manager
 
 _last_ir_command = None
 _last_ir_mode    = None
-motor_speed_ref  = [config.DEFAULT_SPEED]   # mutable box shared with caller
 
 _IR_MODE_MAP = {
     "IR_REMOTE": DriveMode.IR_REMOTE,
@@ -22,7 +20,7 @@ _IR_MODE_MAP = {
     "IDLE":      DriveMode.IDLE,
 }
 
-def poll(motor_speed_box: list) -> None:
+def poll(motor_speed_box: list, music_ctrl=None) -> None:
     """
     Call once per frame from the main loop.
     motor_speed_box is a one-element list so the caller sees speed changes.
@@ -67,7 +65,11 @@ def poll(motor_speed_box: list) -> None:
         send_command("dev01", "LIGHT_FRONT_OFF")
         send_command("dev01", "LIGHT_BACK_ON")
     elif cmd == "PLAY":
-        music.play_next_track()
+        if music_ctrl:
+            music_ctrl.skip()
+        else:
+            import music
+            music.play_next_track()
     elif cmd == "SPEED_UP":
         motor_speed_box[0] = min(motor_speed_box[0] + config.SPEED_STEP,
                                  config.MAX_SPEED)

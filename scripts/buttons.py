@@ -3,7 +3,6 @@
 import pygame
 from leds import toggle_leds
 from camera_actions import take_photo, start_video, stop_video
-from music import play_next_track, stop_music, skip_music
 from arduino import send_command
 from mode_control import switch_mode
 
@@ -47,16 +46,20 @@ class Button:
         return self.enabled and self.rect.collidepoint(pos)
 
 
-def create_buttons() -> list:
+def create_buttons(music_ctrl=None) -> list:
     pink = (255, 182, 193)
+    if music_ctrl:
+        play, skip, stop = music_ctrl.start, music_ctrl.skip, music_ctrl.stop
+    else:   # older UIs (ui_main.py, ui-test.py) still use music.py
+        from music import play_next_track as play, skip_music as skip, stop_music as stop
 
     return [
         Button((650,  20, 160, 40), pink, "Take Photo",      take_photo),
         Button((650,  70, 160, 40), pink, "Record Video",    start_video),
         Button((650, 120, 160, 40), pink, "Keyboard Mode",   lambda: switch_mode(1)),
         Button((650, 170, 160, 40), pink, "Autonomous Mode", lambda: switch_mode(3)),
-        Button((650, 220, 160, 40), pink, "Play Music",      play_next_track),
-        Button((650, 270, 160, 40), pink, "Next Track",      skip_music),
-        Button((650, 320, 160, 40), pink, "Stop Music",      stop_music),
+        Button((650, 220, 160, 40), pink, "Play Music",      play),
+        Button((650, 270, 160, 40), pink, "Next Track",      skip),
+        Button((650, 320, 160, 40), pink, "Stop Music",      stop),
         Button((650, 370, 160, 40), pink, "Toggle LEDs",     toggle_leds),
     ]
