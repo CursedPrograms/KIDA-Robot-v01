@@ -295,9 +295,84 @@ def action():
         return jsonify({'ok': False, 'error': str(e)}), 500
 
 
+# ── Talking with DREAM (peer_talk.py) ──────────────────────────────────────────
+# When RIFT pairs her with another robot that has a mind, they play rock paper
+# scissors and the winner picks words (her Piper voice) or Brainfuck (the buzzer).
+# Only while nobody is with her and nobody is driving her.
+import peer_talk
+
+PEER_PERSONA = ("a small robot who drives around the house: you look around through your cameras, "
+                "patrol, follow people, and keep an eye on your battery.")
+_peer_until = 0.0   # she's saying a line to another robot until then
+
+
+def _peer_available():
+    import kida_mind_host as host
+    import web_bridge
+    mine = time.time() < _peer_until
+    if host.is_sleeping():
+        return False, "asleep"
+    if web_bridge.is_driving():
+        return False, "someone's driving me"
+    if host._present and not mine:
+        return False, "someone's here"
+    if host._busy and not mine:
+        return False, "busy"
+    return True, "alone"
+
+
+def _peer_speak(text):
+    global _peer_until
+    import kida_chat_wakeword
+    _peer_until = time.time() + 120
+    try:
+        kida_chat_wakeword.say_and_wait(text, timeout=90)
+    finally:
+        _peer_until = time.time() + 5
+
+
+def _peer_chirp(u):
+    import web_bridge
+    return web_bridge.action('chirp', text=str(u))
+
+
+def _peer_generate(prompt, **kw):
+    import kida_mind_host
+    if kida_mind_host.mind_llm is not None:
+        return kida_mind_host.mind_llm.generate(prompt, **kw)
+    options = {'temperature': kw.get('temperature', 0.7), 'num_predict': kw.get('num_predict', 70)}
+    if kw.get('stop'):
+        options['stop'] = kw['stop']
+    r = requests.post('http://localhost:11434/api/generate', timeout=kw.get('timeout', 90),
+                      json={'model': 'qwen2.5:0.5b', 'prompt': prompt, 'stream': False, 'options': options})
+    return r.json().get('response', '')
+
+
+def _peer_thought(text, kind):
+    from kida_mind.reflection import add_thought
+    add_thought(text, kind)
+
+
+def _peer_body():
+    import state
+    import mode_manager
+    body = {'mode': mode_manager.current_mode().name.lower()}
+    bat = getattr(state, 'bat_pct', None)
+    if bat:
+        body['battery'] = round(bat)
+    return body
+
+
+import kida_mind_host   # noqa: E402 (already loaded by kida_chat_wakeword; MIND is None if it failed)
+
+PEER = peer_talk.PeerTalk(THIS_NAME, PEER_PERSONA, kida_mind_host.MIND, _peer_generate, _peer_thought,
+                          _peer_speak, _peer_chirp, _peer_available, extra=_peer_body)
+peer_talk.register_routes(app, PEER)
+
+
 @app.route('/chirp')
 def chirp():
-    # RIFT's fleet conversations: /chirp?u=<0-13> says that utterance (a
+    # RIFT's fleet conversations: /chirp?u=<0-16> says that utterance (a
     # Brainfuck phrase, beeped on the buzzer). `from` is only for the log.
     import web_bridge
     ok = web_bridge.action('chirp', text=request.args.get('u'))

@@ -385,6 +385,16 @@ def say(text: str) -> None:
         _task_queue.put(("say", text.strip(), None))
 
 
+def say_and_wait(text: str, timeout: float = 90) -> bool:
+    """say(), then wait until she has actually said it (her lines to DREAM -
+    peer_talk.py - so DREAM answers when she's finished). False on timeout."""
+    if not (text and text.strip()):
+        return True
+    done = threading.Event()
+    _task_queue.put(("say", text.strip(), done))
+    return done.wait(timeout)
+
+
 def _handle(text: str, cues) -> None:
     """One thing the user said (or typed): robot command, or conversation."""
     mind = mind_host.MIND
@@ -448,6 +458,8 @@ def _task_worker():
         except Exception as e:
             print(f"⚠️ Task error: {e}")
         finally:
+            if kind == "say" and cues is not None:   # say_and_wait()'s Event
+                cues.set()
             _task_queue.task_done()
 
 

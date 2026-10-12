@@ -5,10 +5,11 @@
 // by beeping the source, one tone per symbol (bfToneHz/bfToneMs), scaled to
 // its own voice. Utterances 0-6 are phrases, 7-13 the matching replies:
 // 0 hello, 1 how are you, 2 happy, 3 curious, 4 sleepy, 5 let's play, 6 bye.
+// 14-16 are rock, paper, scissors (R, P, S) for the robots' games.
 #pragma once
 #include <Arduino.h>
 
-#define TALK_UTTERANCES 14
+#define TALK_UTTERANCES 17
 #define TALK_GAP_MS 10
 
 static const char TALK_BF_0[] PROGMEM = "++++++++[>+++++++++++++<-]>.+.";  // hello phrase -> "hi" (1.2 s)
@@ -25,14 +26,17 @@ static const char TALK_BF_10[] PROGMEM = "++++++++++[>+++++++++++<-]>+.-------.<
 static const char TALK_BF_11[] PROGMEM = "++++++++++[>+++++++++++<-]>.-----.+++++++++++.---------------.";  // sleepy reply -> "nite" (2.6 s)
 static const char TALK_BF_12[] PROGMEM = "+++++++++++[>+++++++++++<-]>.<++++[>-----<-]>.++++++++++++++.<+++++++++[>---------<-]>-.";  // play reply -> "yes!" (3.6 s)
 static const char TALK_BF_13[] PROGMEM = "+++++++[>++++++++++++++<-]>.<++++[>++++++<-]>-.<++++[>-----<-]>.<++++++[>-----------<-]>--.";  // bye reply -> "bye!" (3.7 s)
+static const char TALK_BF_14[] PROGMEM = "+++++++++[>+++++++++<-]>+.";  // rock move -> "R" (1.0 s)
+static const char TALK_BF_15[] PROGMEM = "++++++++[>++++++++++<-]>.";  // paper move -> "P" (1.0 s)
+static const char TALK_BF_16[] PROGMEM = "+++++++[>++++++++++++<-]>-.";  // scissors move -> "S" (1.1 s)
 
 static const char* const TALK_BF[TALK_UTTERANCES] PROGMEM = {
-  TALK_BF_0, TALK_BF_1, TALK_BF_2, TALK_BF_3, TALK_BF_4, TALK_BF_5, TALK_BF_6, TALK_BF_7, TALK_BF_8, TALK_BF_9, TALK_BF_10, TALK_BF_11, TALK_BF_12, TALK_BF_13
+  TALK_BF_0, TALK_BF_1, TALK_BF_2, TALK_BF_3, TALK_BF_4, TALK_BF_5, TALK_BF_6, TALK_BF_7, TALK_BF_8, TALK_BF_9, TALK_BF_10, TALK_BF_11, TALK_BF_12, TALK_BF_13, TALK_BF_14, TALK_BF_15, TALK_BF_16
 };
 
 // What each utterance prints, for logs and web pages.
 static const char* const TALK_TEXT[TALK_UTTERANCES] = {
-  "hi", "hru?", "yay", "hm?", "zzz", "play", "bye", "hi!", "ok:)", "yay!", "oh!", "nite", "yes!", "bye!"
+  "hi", "hru?", "yay", "hm?", "zzz", "play", "bye", "hi!", "ok:)", "yay!", "oh!", "nite", "yes!", "bye!", "R", "P", "S"
 };
 
 // Symbol n (0 = end) of utterance u, read from flash.

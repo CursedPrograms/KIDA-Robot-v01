@@ -49,6 +49,7 @@ def start_fleet_heartbeat(name, capabilities=None,
         "camera", "object_detection", "voice_assistant",
         "autonomous_drive", "sensors",
         "talk:5004",   # RIFT's conversations: /chirp?u= on server.py's port
+        "peer",        # ...and real ones with DREAM (/peer, see peer_talk.py)
     ]
 
     def _loop():
