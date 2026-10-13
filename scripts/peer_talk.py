@@ -1,7 +1,7 @@
 """peer_talk.py - two robots with minds talking to each other, refereed by RIFT.
 
-DREAM and KIDA-01 both run an LLM and an inner life, so when RIFT pairs them
-up (Fleet/conversations.py) they don't just trade phrasebook chirps:
+DREAM, KIDA-01 and TINA all run an LLM (DREAM and KIDA an inner life too),
+so when RIFT pairs them up (Fleet/conversations.py) they don't just trade phrasebook chirps:
 
   1. RIFT asks each for a rock-paper-scissors move (GET /peer/rps) at the same
      time, so neither sees the other's. Both beep their move (talk_bf.h 14-16).
@@ -11,12 +11,12 @@ up (Fleet/conversations.py) they don't just trade phrasebook chirps:
   3. RIFT relays a few turns (POST /peer/say). Each one carries the speaker's
      mind snapshot, so the listener answers knowing how the other feels.
 
-The same file lives in DREAM (peer_talk.py, next to app.py) and KIDA-01
-(scripts/peer_talk.py); each robot wires in its own hooks with PeerTalk(...)
-and register_routes(app). Keep the two copies the same.
+The same file lives in DREAM (peer_talk.py, next to app.py), KIDA-01
+(scripts/peer_talk.py) and TINA (tina/peer_talk.py); each wires in its own hooks
+with PeerTalk(...) and register_routes(app). Keep the three copies the same.
 
 The chirp-only robots (NORA, WHIP, MILA, ARM...) are untouched: RIFT keeps
-chirping with them as before, and DREAM / KIDA still answer /chirp.
+chirping with them as before, and DREAM / KIDA / TINA still answer /chirp.
 """
 
 import random
