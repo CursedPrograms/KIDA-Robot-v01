@@ -160,11 +160,16 @@ class PeerTalk:
         """Brainfuck: answer a phrase with its reply, or say something of her own."""
         if closing:
             return BYE + 7 if heard_u == BYE else BYE
+        if heard_u is None and not self.session["lines"]:
+            return HELLO                    # she speaks first: hello before anything else
+        if heard_u == HELLO:
+            return HELLO + 7
         if heard_u is not None and 0 <= heard_u < 7 and random.random() < 0.6:
             return heard_u + 7
         s = self.snapshot()
         w = [1.0] * 7
-        w[BYE] = 0.2
+        w[HELLO] = 0                        # they've said hello
+        w[BYE] = 0                          # goodbye is for the end (closing)
         w[SLEEPY] += 3 * (s.get("sleepy") or 0)
         w[CURIOUS] += 2 * (s.get("curious") or 0)
         w[HOW] += 2 * (s.get("lonely") or 0)
