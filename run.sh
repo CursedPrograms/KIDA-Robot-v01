@@ -1,12 +1,14 @@
 #!/bin/bash
 
-# Project directory
-PROJECT_DIR="/home/kida-01/Desktop/Kida-Robot"
-cd "$PROJECT_DIR"
+# Project directory: wherever this script is (it was fixed to /home/kida-01/Desktop/Kida-Robot)
+PROJECT_DIR="$(dirname "$(readlink -f "$0")")"
+cd "$PROJECT_DIR" || exit 1
 
-# Activate virtual environment if present
+# Activate her virtual environment: venv/ in the repo, else ~/kida-venv (the old service's)
 if [ -d "venv" ]; then
     source venv/bin/activate
+elif [ -d "$HOME/kida-venv" ]; then
+    source "$HOME/kida-venv/bin/activate"
 fi
 
 mkdir -p "$PROJECT_DIR/logs"

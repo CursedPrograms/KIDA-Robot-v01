@@ -87,6 +87,8 @@ unsigned long irTimeoutMs = IR_TIMEOUT;   // remote or link, whichever is drivin
 #define LINK_OBSTACLE  0x4D
 #define LINK_MANUAL    0x4E   // IR remote mode
 #define LINK_SPEED     0x4F   // speed up
+#define LINK_UNLOCK    0x50   // NORA frees her wheels: "IRunlock" to the Pi
+#define LINK_LOCK      0x51   // NORA locks them: "IRlock" to the Pi
 #define LINK_TIMEOUT   500
 uint8_t lastLinkCmd = 0;
 
@@ -199,6 +201,8 @@ void handleLink(uint8_t c) {
     case LINK_STOP:     Serial.println("IRrelease");     irButtonHeld = false; lastLinkCmd = 0; return;
     case LINK_OBSTACLE: Serial.println("IR3");           return;
     case LINK_MANUAL:   Serial.println("IR1");           return;
+    case LINK_UNLOCK:   Serial.println("IRunlock");      return;
+    case LINK_LOCK:     Serial.println("IRlock");        irButtonHeld = false; lastLinkCmd = 0; return;
     case LINK_SPEED:    Serial.println("IRfastforward"); return;
     default: return;
   }

@@ -30,8 +30,9 @@
 # above mean the same buttons on the Pi, on Windows and in the browser.
 # The "Generic USB Joystick" from ARM-Robot-v01 is read raw instead
 # (RAW_NAMES): SDL does have a mapping for its chip, but for a different
-# pad, which would move the trigger off 'photo'. Raw pads get the stick +
-# the four face-button actions only (trigger/B1/B2/B3 = A/B/X/Y).
+# pad, which would move the trigger off 'photo'. Raw pads get the stick,
+# the four face-button actions (trigger/B1/B2/B3 = A/B/X/Y) and the hat as
+# the d-pad (← / → mode, ↑ video).
 #
 # Rumble: the robot decides how hard (haptics.py — tipping, vibration,
 # obstacle while driving); the sink's rumble_level() fetches it and the pad
@@ -194,6 +195,9 @@ class _Pad:
             axes["lx"], axes["ly"] = js.get_axis(0), js.get_axis(1)
         pressed = {n for i, n in self.raw_buttons.items()
                    if i < js.get_numbuttons() and js.get_button(i)}
+        if js.get_numhats():             # a raw stick's hat (ARM's joystick) is the d-pad
+            hx, hy = js.get_hat(0)
+            pressed |= {n for n, on in (("dleft", hx < 0), ("dright", hx > 0), ("dup", hy > 0)) if on}
         return axes, pressed
 
     def rumble(self, low: float, high: float) -> None:

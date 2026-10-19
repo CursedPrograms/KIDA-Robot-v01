@@ -94,7 +94,8 @@ def handle_events(events, buttons: list, pressed_keys: set, remote,
             # Quit — Q and ESC both just close this window. There's no
             # run.sh restart loop on this side to distinguish them; that
             # split (see scripts/event_handler.py) is robot-specific.
-            elif k in (pygame.K_q, pygame.K_ESCAPE):
+            # In the QAWS scheme Q is the left track's forward, so only ESC quits.
+            elif k == pygame.K_ESCAPE or (k == pygame.K_q and state.drive_scheme != "QAWS"):
                 signals["quit"] = True
 
             elif k == pygame.K_i:

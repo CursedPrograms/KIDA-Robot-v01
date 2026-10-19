@@ -45,6 +45,7 @@ from buttons import create_buttons
 from remote_client import RemoteClient
 from joystick_drive import JoystickDrive
 import event_handler
+import keymap           # controller/scripts/keymap.py — the keys window (F1) and the README
 
 APP_NAME = "KIDA — Remote Controller"
 
@@ -164,10 +165,11 @@ def run_controller() -> None:
     last_photo_surf     = None
     last_photo_ts_seen  = None
     pressed_keys        = set()
+    show_keys           = False   # the keys window (F1)
     clock                = pygame.time.Clock()
     running               = True
 
-    print("🎮 Keys: 1=KB 2=IR 3=AUTO 4=IDLE | I=infer | M=music | U=lock/unlock | SPC=stop | Q/ESC=close")
+    print("🎮 Keys: 1=KB 2=IR 3=AUTO 4=IDLE | I=infer | M=music | U=lock/unlock | SPC=stop | Q/ESC=close | F1=all keys")
     print("🕹️  Joystick (KEYBOARD mode): L-stick=drive (tank scheme: LT/RT tracks, LB/RB reverse) R-stick=servo | A=photo B=stop X/Y=speed -/+ | D-pad L/R=mode Up=video Start=lock Back=sweep")
 
     while running:
@@ -231,6 +233,8 @@ def run_controller() -> None:
 
         lock_prompt.draw(screen, fonts)
         chat_prompt.draw(screen, fonts)
+        if show_keys:
+            keymap.draw(screen)
 
         pygame.display.flip()
         clock.tick(30)
@@ -253,6 +257,18 @@ def run_controller() -> None:
                     running = False
                 elif event.type == pygame.KEYDOWN:
                     prompt.handle_key(event)
+            continue
+
+        # The keys window: F1 opens it; while it's open F1 / ESC close it and other keys do nothing
+        if show_keys:
+            for event in raw_events:
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN and event.key in (pygame.K_F1, pygame.K_ESCAPE):
+                    show_keys = False
+            continue
+        if any(e.type == pygame.KEYDOWN and e.key == pygame.K_F1 for e in raw_events):
+            show_keys = True
             continue
 
         sigs = event_handler.handle_events(raw_events, buttons, pressed_keys, remote,

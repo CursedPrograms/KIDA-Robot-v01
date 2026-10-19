@@ -7,3 +7,6 @@
 *.txt linguist-generated=false
 *.txt linguist-documentation=false
 *.txt linguist-detectable=true
+
+# Shell scripts run on the Pi: always LF (a CR at a line end breaks bash)
+*.sh text eol=lf

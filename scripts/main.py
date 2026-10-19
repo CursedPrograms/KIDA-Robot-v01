@@ -97,6 +97,10 @@ if __name__ == "__main__":
     from server import near
     fleet_guard.start(near)
     threading.Thread(target=voice_ai.main, daemon=True).start()
+    # Big-text status on a small screen in HDMI 2 (its own program; config.json SmallScreen).
+    # Started before the HUD opens, so the HUD's window gets the keyboard.
+    import small_screen
+    small_screen.launch()
 
     script_dir   = os.path.dirname(os.path.abspath(__file__))
     model_path   = os.path.join(script_dir, "..", "resources", "models", "yolo11n.pt")
