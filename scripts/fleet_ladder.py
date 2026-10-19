@@ -43,7 +43,7 @@ from urllib.request import urlopen
 LADDER = ["RIFT",
           "DREAM", "NINA", "TINA",
           "NORACTL", "WHIPCTL", "KIDA01CTL", "KIDA00CTL", "ARMCTL",
-          "NORA", "WHIP", "KIDA01", "KIDA00", "ARM", "MILA"]
+          "NORA", "WHIP", "KIDA01", "KIDA00", "ARM", "MILA", "NIKA"]
 FLEET_PASSWORD = "mmvbkbak"        # the fleet's, the same as every robot's secrets.h
 REGISTRY_PORT = 5000
 CHECK_S = 15                       # look around this often

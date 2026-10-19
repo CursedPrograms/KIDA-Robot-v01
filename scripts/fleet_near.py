@@ -20,7 +20,7 @@ Avoiding each other - the same rules as NORA's and WHIP's fleet_near.h:
   it's yielding     -> it's making way: carry on, carefully
   a human drives it -> unpredictable: I make way
   it drives itself  -> the alphabet decides (KIDA00 first ... WHIP last);
-                       everyone makes way for MILA, who can't hear the others
+                       everyone makes way for MILA and NIKA, who can't hear the others
   coming closer     -> act sooner;   leaving -> no need to make way
 
     near = FleetNear("KIDA01").start()
@@ -183,7 +183,7 @@ class FleetNear:
         elif p["state"] in ("parked", "user"):
             my_turn = True
         else:
-            my_turn = p["name"] == "MILA" or self.name > p["name"]
+            my_turn = p["name"] in ("MILA", "NIKA") or self.name > p["name"]
         yield_at = CAUTION_RSSI if coming else YIELD_RSSI
         caution_at = -75 if coming else CAUTION_RSSI
         if p["rssi"] > yield_at and my_turn and not going:
