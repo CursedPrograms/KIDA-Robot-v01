@@ -150,10 +150,19 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
         except Exception as e:
             print(f"⚠️ {label}: {e}")
 
-    # ── Display ──
-    info   = pygame.display.Info()
-    SW, SH = info.current_w, info.current_h
-    screen = pygame.display.set_mode((SW, SH), pygame.FULLSCREEN)
+    # ── Display: the HUD goes on HDMI 0 (the desktop screen); HDMI 1 is the small
+    # touch screen's (small_screen.py). Only a small screen plugged in: the HUD keeps
+    # running in a hidden window, so it doesn't take that screen over.
+    import small_screen
+    hud = small_screen.display_index(0, fallback=0)
+    sizes = pygame.display.get_desktop_sizes()
+    if 0 <= hud < len(sizes):
+        SW, SH = sizes[hud]
+        screen = pygame.display.set_mode((SW, SH), pygame.FULLSCREEN, display=hud)
+    else:
+        print("🖥️  No screen in HDMI 0: the HUD runs without one")
+        SW, SH = 1280, 720
+        screen = pygame.display.set_mode((SW, SH), pygame.HIDDEN)
     pygame.display.set_caption(APP_NAME)
     try:  # window icon: the robot's avatar
         pygame.display.set_icon(pygame.image.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "images", "kida01-icon.png")))

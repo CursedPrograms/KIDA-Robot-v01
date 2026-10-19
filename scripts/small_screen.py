@@ -1,4 +1,4 @@
-# small_screen.py — KIDA-01's big-text screen for a small display on her second HDMI port
+# small_screen.py — KIDA-01's big-text screen for the small touch screen in her HDMI 1 port
 #
 # Her main HUD (ui.py) is far too detailed for a little screen, so this shows a
 # few things at arm's length instead: her face, what mode she's in, whether her
@@ -9,13 +9,18 @@
 # /mind on port 5004), so it never touches the motors, the cameras or the HUD.
 # main.py starts it by itself (launch() below); it closes when main.py does.
 #
-# config.json, under "Config" (all optional):
-#   "SmallScreen": {"Enabled": true, "Display": 1}
-#     Enabled  false = never start it
-#     Display  which screen, counted from 0 (HDMI 2 is usually 1)
+# Screens go by the Pi's HDMI port: HDMI 0 is the desktop screen (the HUD, ui.py), HDMI 1 the
+# small touch screen (this). The port is read from /sys/class/drm (HDMI-A-1 = HDMI 0, HDMI-A-2 =
+# HDMI 1), so it doesn't matter which screens are plugged in: SDL only numbers the connected ones.
 #
-# On its own, for trying it out:   python3 scripts/small_screen.py [--display 1] [--window]
-# With no screen on that port it waits, looking again every 15 s.
+# config.json, under "Config" (all optional):
+#   "SmallScreen": {"Enabled": true, "Port": 1}
+#     Enabled  false = never start it
+#     Port     the HDMI port the small screen is in (0 or 1)
+#     Display  off a Pi (no /sys/class/drm): which screen, counted from 0
+#
+# On its own, for trying it out:   python3 scripts/small_screen.py [--port 1] [--window]
+# With no screen in that port it waits, looking again every 15 s.
 
 import argparse
 import json
@@ -48,13 +53,39 @@ MODE_NAMES = {
 
 
 def settings() -> dict:
-    cfg = {"Enabled": True, "Display": 1}
+    cfg = {"Enabled": True, "Port": 1, "Display": 1}
     try:
         with open(os.path.join(_ROOT, "config.json"), encoding="utf-8") as f:
             cfg.update(json.load(f)["Config"].get("SmallScreen", {}))
     except (OSError, ValueError, KeyError):
         pass
     return cfg
+
+
+def hdmi_connected():
+    """{0: bool, 1: bool}: is a screen plugged into the Pi's HDMI 0 / HDMI 1? None off a Pi."""
+    import glob
+    ports, seen = {0: False, 1: False}, False
+    for n in (0, 1):
+        for path in glob.glob(f"/sys/class/drm/card*-HDMI-A-{n + 1}/status"):
+            seen = True
+            try:
+                with open(path) as f:
+                    ports[n] = ports[n] or f.read().strip() == "connected"
+            except OSError:
+                pass
+    return ports if seen else None
+
+
+def display_index(port, fallback=None):
+    """SDL's screen number for the screen in HDMI <port>: SDL counts only connected screens,
+    in port order. -1 if that port is empty; `fallback` off a Pi (no DRM connectors)."""
+    ports = hdmi_connected()
+    if ports is None:
+        return fallback
+    if not ports.get(port):
+        return -1
+    return sum(1 for p in range(port) if ports[p])
 
 
 def launch() -> None:
@@ -65,9 +96,10 @@ def launch() -> None:
         if not cfg.get("Enabled", True):
             return
         subprocess.Popen([sys.executable, os.path.abspath(__file__),
+                          "--port", str(int(cfg.get("Port", 1))),
                           "--display", str(int(cfg.get("Display", 1))),
                           "--parent", str(os.getpid())])
-        print(f"🖥️  Small screen: looking for display {cfg.get('Display', 1)}")
+        print(f"🖥️  Small screen: looking for a screen in HDMI {cfg.get('Port', 1)}")
     except Exception as e:
         print(f"⚠️ Small screen not started: {e}")
 
@@ -257,7 +289,8 @@ def parent_alive(pid):
 
 def main():
     ap = argparse.ArgumentParser(description="KIDA-01's big-text screen for a small display")
-    ap.add_argument("--display", type=int, default=settings().get("Display", 1))
+    ap.add_argument("--port", type=int, default=settings().get("Port", 1), help="HDMI port (0 or 1)")
+    ap.add_argument("--display", type=int, default=settings().get("Display", 1), help="off a Pi: screen number")
     ap.add_argument("--window", action="store_true", help="a 480x320 window instead (testing)")
     ap.add_argument("--parent", type=int, default=0, help="close when this process ends (main.py)")
     args = ap.parse_args()
@@ -265,11 +298,12 @@ def main():
     os.environ.setdefault("SDL_VIDEO_ALLOW_SCREENSAVER", "1")
     import pygame
 
-    # Wait for the screen (HDMI 2 may be empty, or plugged in later)
+    # Wait for the screen (HDMI 1 may be empty, or plugged in later)
     while True:
         pygame.display.init()
         sizes = pygame.display.get_desktop_sizes()
-        if args.window or args.display < len(sizes):
+        index = display_index(args.port, args.display)
+        if args.window or 0 <= index < len(sizes):
             break
         pygame.display.quit()
         if not parent_alive(args.parent):
@@ -280,7 +314,7 @@ def main():
     if args.window:
         screen = pygame.display.set_mode((480, 320))
     else:
-        screen = pygame.display.set_mode(sizes[args.display], pygame.FULLSCREEN, display=args.display)
+        screen = pygame.display.set_mode(sizes[index], pygame.FULLSCREEN, display=index)
         pygame.mouse.set_visible(False)
     pygame.display.set_caption("KIDA-01 small screen")
 
