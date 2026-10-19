@@ -78,7 +78,7 @@ def celebration_routine():
     print("🎉 Celebration started!")
 
     # Start run_chase_effect in a separate thread to avoid blocking main UI loop
-    threading.Thread(target=run_chase_effect, daemon=True).start()
+    threading.Thread(target=leds.run_chase_effect, daemon=True).start()
 
     music.play_next_track()
     send_command("dev0", "HAPPY")

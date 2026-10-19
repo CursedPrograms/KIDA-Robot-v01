@@ -141,7 +141,7 @@ class Matching:
         if cost_matrix.size == 0:
             return cost_matrix
         gating_dim = 2 if only_position else 4
-        gating_threshold = kalman_filter.chi2inv95[gating_dim]
+        gating_threshold = chi2inv95[gating_dim]
         measurements = np.asarray([det.to_xyah() for det in detections])
         for row, track in enumerate(tracks):
             gating_distance = kf.gating_distance(
@@ -155,7 +155,7 @@ class Matching:
         if cost_matrix.size == 0:
             return cost_matrix
         gating_dim = 2 if only_position else 4
-        gating_threshold = kalman_filter.chi2inv95[gating_dim]
+        gating_threshold = chi2inv95[gating_dim]
         measurements = np.asarray([det.to_xyah() for det in detections])
         for row, track in enumerate(tracks):
             gating_distance = kf.gating_distance(
