@@ -200,3 +200,11 @@ footer .links { display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: 
   font: 13px var(--mono); padding: 6px 10px; cursor: pointer; }
 .pl-list button:hover { color: var(--text); border-color: var(--accent); }
 .pl-list li.on button { color: var(--accent); border-color: var(--accent); background: rgba(var(--glow), .08); }
+
+/* The DREAM Robotics ecosystem block, the same on every site */
+section.eco { max-width: 880px; margin: 32px auto; padding: 18px 20px; border: 1px solid #2a2f3a; border-radius: 12px;
+  background: #11141a; color: #c9d1d9; font-family: system-ui, Segoe UI, sans-serif; font-size: 14px; line-height: 1.9; }
+section.eco .eco-title { font: 600 11px ui-monospace, Consolas, monospace; letter-spacing: .2em; text-transform: uppercase;
+  color: #8b949e; margin-bottom: 10px; }
+section.eco strong { color: #8b949e; }
+section.eco a { color: #58a6ff; text-decoration: none; }
