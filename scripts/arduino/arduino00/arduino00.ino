@@ -368,8 +368,8 @@ void obstacleAvoidance() {
   bool highObstacle = (highFront > 0 && highFront < Config::OBSTACLE_CM)
                    || (laser     > 0 && laser     < Config::OBSTACLE_MM);
 
-  if (lowObstacle)  Serial.println("LOW_OBSTACLE");
-  if (highObstacle) Serial.println("HIGH_OBSTACLE");
+  if (lowObstacle)  Serial.println(F("LOW_OBSTACLE"));
+  if (highObstacle) Serial.println(F("HIGH_OBSTACLE"));
 
   // Police strobe stop effect
   lightAlternate(strip1.Color(255, 0, 0), strip1.Color(0, 0, 255), 4, 80);
@@ -380,13 +380,13 @@ void obstacleAvoidance() {
   robotServo.write(Config::SERVO_LEFT);
   delay(400);
   long leftDist = readUltrasonicChecked(Config::US1_TRIG, Config::US1_ECHO);
-  Serial.print("SCAN_LEFT:"); Serial.println(leftDist);
+  Serial.print(F("SCAN_LEFT:")); Serial.println(leftDist);
   setSplitPixels(strip1.Color(255, 100, 0), strip1.Color(0, 0, 0)); // illuminate left
 
   robotServo.write(Config::SERVO_RIGHT);
   delay(400);
   long rightDist = readUltrasonicChecked(Config::US1_TRIG, Config::US1_ECHO);
-  Serial.print("SCAN_RIGHT:"); Serial.println(rightDist);
+  Serial.print(F("SCAN_RIGHT:")); Serial.println(rightDist);
   setSplitPixels(strip1.Color(0, 0, 0), strip1.Color(255, 100, 0)); // illuminate right
 
   robotServo.write(Config::SERVO_CENTER);
@@ -412,7 +412,7 @@ void obstacleAvoidance() {
 
   } else {
     // BOTH BLOCKED — reverse with angry strobe then pick best side
-    Serial.println("BOTH_BLOCKED");
+    Serial.println(F("BOTH_BLOCKED"));
     playTone(Config::TONE_REVERSE, 400);
     lightAlternate(strip1.Color(255, 0, 0), strip1.Color(255, 255, 255), 5, 90);
     executeMotorCommand(MotorDirection::BACKWARD);
@@ -439,7 +439,7 @@ long scanLeft() {
   robotServo.write(Config::SERVO_LEFT);
   delay(500);
   long dist = readUltrasonic(Config::US1_TRIG, Config::US1_ECHO);
-  Serial.print("LEFT:"); Serial.println(dist);
+  Serial.print(F("LEFT:")); Serial.println(dist);
   robotServo.write(Config::SERVO_CENTER);
   delay(500);
   return dist;
@@ -449,7 +449,7 @@ long scanRight() {
   robotServo.write(Config::SERVO_RIGHT);
   delay(500);
   long dist = readUltrasonic(Config::US1_TRIG, Config::US1_ECHO);
-  Serial.print("RIGHT:"); Serial.println(dist);
+  Serial.print(F("RIGHT:")); Serial.println(dist);
   robotServo.write(Config::SERVO_CENTER);
   delay(500);
   return dist;
@@ -494,8 +494,8 @@ void processSerialCommand(char *cmd) {
     tankRightSpeed = constrain(atoi(cmd + 7), -255, 255);
     setMotorSpeeds(tankLeftSpeed, tankRightSpeed);
   }
-  else if (strcmp(cmd, "SCANLEFT") == 0)  { long d = scanLeft();  Serial.print("SCANLEFT:");  Serial.println(d); }
-  else if (strcmp(cmd, "SCANRIGHT") == 0) { long d = scanRight(); Serial.print("SCANRIGHT:"); Serial.println(d); }
+  else if (strcmp(cmd, "SCANLEFT") == 0)  { long d = scanLeft();  Serial.print(F("SCANLEFT:"));  Serial.println(d); }
+  else if (strcmp(cmd, "SCANRIGHT") == 0) { long d = scanRight(); Serial.print(F("SCANRIGHT:")); Serial.println(d); }
   // Arbitrary-angle servo sweep for lidar_sweep.py — moves US1 (the
   // servo-mounted ultrasonic) to `angle` and reports its reading, without
   // the fixed-3-position SCANLEFT/SCANRIGHT/obstacleAvoidance() recenter
@@ -507,19 +507,19 @@ void processSerialCommand(char *cmd) {
     delay(150);  // let the servo settle before the ultrasonic reads a stable distance
     long d = readUltrasonicChecked(Config::US1_TRIG, Config::US1_ECHO);
     int laser = readLaserDistance();
-    Serial.print("SWEEP:"); Serial.print(angle);
-    Serial.print(","); Serial.print(d);
-    Serial.print(","); Serial.println(laser);
+    Serial.print(F("SWEEP:")); Serial.print(angle);
+    Serial.print(F(",")); Serial.print(d);
+    Serial.print(F(",")); Serial.println(laser);
   }
   else if (strcmp(cmd, "PING") == 0) { /* heartbeat only — resets the watchdog via handleSerialInput() */ }
   else if (strcmp(cmd, "AUTO_ON") == 0) {
     autonomousMode = true;
-    Serial.println("AUTO_MODE_ON");
+    Serial.println(F("AUTO_MODE_ON"));
   }
   else if (strcmp(cmd, "AUTO_OFF") == 0) {
     autonomousMode = false;
     executeMotorCommand(MotorDirection::STOP);
-    Serial.println("AUTO_MODE_OFF");
+    Serial.println(F("AUTO_MODE_OFF"));
   }
   // tone() shares Timer2 with the left motor's PWM (D3), so she only talks
   // while she's standing still -- a phrase never changes her speed.
@@ -529,10 +529,10 @@ void processSerialCommand(char *cmd) {
     if (!moving) talkStart(atoi(cmd + 5));
   }
   else if (strcmp(cmd, "WHOAMI") == 0) {
-    Serial.println("I_AM_DEV00");
+    Serial.println(F("I_AM_DEV00"));
   }
   else if (strcmp(cmd, "WHO") == 0) {
-    Serial.println("I am Kida01Dev00");   // the fleet-wide handshake (ARM, DREAM, NINA's board_id)
+    Serial.println(F("I am Kida01Dev00"));   // the fleet-wide handshake (ARM, DREAM, NINA's board_id)
   }
 }
 
@@ -668,7 +668,7 @@ if (autonomousMode) {
     // Pi has gone silent (crashed/killed/lost power) — don't keep driving blind.
     autonomousMode = false;
     executeMotorCommand(MotorDirection::STOP);
-    Serial.println("WATCHDOG_STOP_NO_HEARTBEAT");
+    Serial.println(F("WATCHDOG_STOP_NO_HEARTBEAT"));
   } else {
     obstacleAvoidance();
   }
@@ -681,9 +681,9 @@ if (autonomousMode) {
   // Sensor print (non-blocking)
   if (millis() - lastSensorPrint >= Config::SENSOR_INTERVAL) {
     lastSensorPrint = millis();
-    Serial.print("LASER:");       Serial.print(readings.laser);
-    Serial.print("|US0:");        Serial.print(readings.us0);
-    Serial.print("|US1:");        Serial.println(readings.us1);
+    Serial.print(F("LASER:"));       Serial.print(readings.laser);
+    Serial.print(F("|US0:"));        Serial.print(readings.us0);
+    Serial.print(F("|US1:"));        Serial.println(readings.us1);
   }
 
   // Button held — strobe white (non-blocking)
