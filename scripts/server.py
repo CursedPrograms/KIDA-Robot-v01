@@ -528,6 +528,8 @@ def options_json():
 # ── Entry point ──────────────────────────────────────────────────────────────────
 def run_flask_server():
     fleet_register.start_fleet_heartbeat(THIS_NAME)
+    import nina_report
+    nina_report.start(zeroconf)   # her state and distances to NINA every 15 s, once RIFT is found
     try:
         app.run(host='0.0.0.0', port=THIS_PORT, debug=False, threaded=True)
     finally:
