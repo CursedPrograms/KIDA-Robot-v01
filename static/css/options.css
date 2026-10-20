@@ -1,0 +1,99 @@
+/* options.css — her options page (/options), in the HUD's dark theme */
+
+:root {
+  --bg:       #07090f;
+  --panel:    #0a0e1a;
+  --border:   #1e3458;
+  --accent:   #6496e6;
+  --text:     #a0b8e8;
+  --text-dim: #4a5f80;
+  --text-val: #d7e6ff;
+  --green:    #46d764;
+  --red:      #c84040;
+  --font:     'Courier New', Courier, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 16px 16px 90px;
+}
+
+header { max-width: 760px; margin: 0 auto 16px; }
+h1 { color: var(--text-val); font-size: 20px; margin: 8px 0; }
+.back { color: var(--accent); text-decoration: none; }
+.hint, .dim { color: var(--text-dim); }
+code { color: var(--text-val); }
+
+main { max-width: 760px; margin: 0 auto; }
+
+details {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 8px 0;
+  padding: 6px 12px;
+}
+details details { background: transparent; }
+summary { cursor: pointer; color: var(--accent); font-weight: bold; padding: 4px 0; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid #121a30;
+}
+.row label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.row input[type=text], .row input[type=number], .row select {
+  flex: 0 1 260px;
+  min-width: 0;
+  background: var(--bg);
+  color: var(--text-val);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font: inherit;
+}
+.row input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); }
+.row.changed label { color: var(--text-val); }
+.row.changed label::after { content: " •"; color: var(--accent); }
+
+footer {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+footer input {
+  width: 110px;
+  background: var(--bg);
+  color: var(--text-val);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 7px 8px;
+  font: inherit;
+}
+button {
+  background: var(--accent);
+  color: var(--bg);
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 18px;
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+#msg.ok { color: var(--green); }
+#msg.err { color: var(--red); }

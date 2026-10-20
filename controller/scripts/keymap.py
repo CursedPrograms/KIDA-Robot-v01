@@ -24,6 +24,7 @@ KEYBOARD = [
         ("6", "WATCHDOG: person alarm"),
         ("7", "LANE DETECT (Hailo)"),
         ("8", "PERSON FOLLOW (cam 1)"),
+        ("9", "MIND: an LLM drives her (this PC's, or her own: Options, Mind)"),
     ]),
     ("Drive (KEYBOARD mode)", [
         ("W A S D", "WASD scheme: forward, left, back, right; W+A etc. curve"),
@@ -44,6 +45,7 @@ KEYBOARD = [
     ("Robot", [
         ("U", "lock the motors / unlock (asks for the password)"),
         ("T", "type a message to her (PC controller)"),
+        ("O", "her options: config.json (PC controller)"),
         ("H", "go home (PC controller)"),
         ("F1", "this keys window (PC controller)"),
         ("ESC", "close the window (on her: the UI restarts)"),

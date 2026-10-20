@@ -27,6 +27,7 @@ def create_buttons(remote) -> list:
         Button((0, 0, 160, 36), blue,   "Idle / Stop",    lambda: remote.send_action("mode_4")),
         Button((0, 0, 160, 36), red,    "Watchdog",       lambda: remote.send_action("mode_6")),
         Button((0, 0, 160, 36), purple, "Follow Person",  lambda: remote.send_action("mode_8")),
+        Button((0, 0, 160, 36), purple, "Mind Mode",      lambda: remote.send_action("mode_9")),
         # Music
         Button((0, 0, 160, 36), pink,   "Play Music",     lambda: remote.send_action("music_play")),
         Button((0, 0, 160, 36), pink,   "Next Track",     lambda: remote.send_action("music_skip")),

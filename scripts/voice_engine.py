@@ -280,6 +280,7 @@ _MODE_LINES = {
     "IDLE":          "Idle mode. Taking a break.",
     "WATCHDOG":      "Watchdog mode. I'm watching.",
     "PERSON_FOLLOW": "Follow mode. Lead the way.",
+    "MIND":          "Mind mode. Let me think about this.",
 }
 
 

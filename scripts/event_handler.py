@@ -110,6 +110,8 @@ def handle_events(events, buttons: list,
                 switch_mode(7)
             elif k == pygame.K_8:
                 switch_mode(8)
+            elif k == pygame.K_9:
+                switch_mode(9)   # MIND, when a mind can drive her
 
             # Quit — Q kills the process for good; ESC just closes the UI
             # and lets run.sh's restart loop bring it back up.

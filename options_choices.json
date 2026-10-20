@@ -1,0 +1,16 @@
+{
+  "Config/Cameras/NightCamSide": [
+    "left",
+    "right"
+  ],
+  "Config/Cameras/NightCamPort": [
+    0,
+    1
+  ],
+  "Config/Mind/Where": [
+    "auto",
+    "pc",
+    "self",
+    "off"
+  ]
+}

@@ -90,6 +90,8 @@ def handle_events(events, buttons: list, pressed_keys: set, remote,
                 remote.send_action("mode_7")
             elif k == pygame.K_8:
                 remote.send_action("mode_8")
+            elif k == pygame.K_9:
+                remote.send_action("mode_9")   # MIND
 
             # Quit — Q and ESC both just close this window. There's no
             # run.sh restart loop on this side to distinguish them; that

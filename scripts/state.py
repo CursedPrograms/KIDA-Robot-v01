@@ -14,6 +14,7 @@ class DriveMode(Enum):
     WATCHDOG      = "WATCHDOG"    # mode 6 / person-detection alarm
     LANE_DETECT   = "LANE_DETECT" # mode 7 / Hailo UFLD_v2 lane-following
     PERSON_FOLLOW = "PERSON_FOLLOW" # mode 8 / follow a person seen by cam-1's IMX500
+    MIND          = "MIND"          # mode 9 / an LLM drives her (kida_drive_mind.py)
 
 # ─────────────────────────────────────────────
 #  Active mode (single source of truth)

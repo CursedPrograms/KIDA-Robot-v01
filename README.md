@@ -217,6 +217,36 @@ KIDA has the same inner life as DREAM (ported from DREAM's `dream_mind`, minus t
 The web dashboard shows a **Mind** panel (`/mind`); the Pi HUD shows her mood next to the gamepad indicator.
 Self-test (fake LLM, scratch folder — never touches her real memories): `cd scripts && python -m kida_mind.selftest`
 
+## 🧠 MIND mode (mode 9): an LLM drives her
+
+The fleet's MIND mode (`scripts/kida_drive_mind.py`, `scripts/mind.py`, the same file as in NORA's, WHIP's, MILA's, NIKA's and ARM's controllers): she stands still, her mind looks at what she senses, thinks out loud, says something in her own voice, makes one short move, and remembers it. She's warm, nosy and chatty, and narrates what she finds like a nature documentary.
+
+**Where her mind runs** is an option: `config.json` `Mind` `Where`:
+
+| `Where` | Who drives her |
+|---|---|
+| `auto` (default) | Her PC controller when one that can think is connected (x86, 8 GB+ RAM, GTX 1050 or better; `mind.can_think()`), with its bigger model (qwen3 sized to the GPU) and both cameras through its vision model. With no PC, **her own Pi** does, with `SelfModel` on her own Ollama. A PC that connects takes over; if it goes quiet she carries on herself. |
+| `pc` | Only a PC, like the rest of the fleet. No PC, no MIND mode. |
+| `self` | Always her own Pi, even with a PC connected. |
+| `off` | No MIND mode. |
+
+`SelfModel` (`qwen2.5:0.5b`, the model her voice chat uses: small, so her own mind is simple), `SelfThink` (false; only qwen3-type models think) and `Goal` (what she's told to do) are there too.
+
+- **Starting it:** key **9** (on her or the PC controller), the **Mind Mode** button, or **🧠 Mind** in the web dashboard's mode list (shown only while a mind can drive her). Any other mode ends it.
+- **Thinking stays visible:** her own mind's thoughts show in her HUD's mind panel, the web dashboard (under Mode) and the PC controller; the PC's mind shows in the PC controller.
+- **Her body's reflexes stay on:** she won't drive forward into anything within 20 cm, a bump stops her, and the **motor lock** stops her completely. Signing in as her mind host doesn't unlock her motors (that's still U / the button / the IR remote).
+- She speaks with Piper when her own mind talks, and with the PC's Zira voice (a WAV played on her speaker, `POST /speak`) when the PC's does.
+- The fleet's contract: `/unlock?pw=&ctl=1`, `/status?ctl=1` (adds `mindHost`, `mindSteps`, `blocked`, `mindBrain`), `/mode?m=mind`, `/mind?act=fwd|bwd|left|right|stop&steps=1-4`.
+
+## ⚙️ Options
+
+Her `config.json` (cameras, small screen, MIND mode, ...) can be changed three ways, all the same settings:
+- **On her:** `python options.py` (or `options.bat` on Windows), the game-style menu every DREAM robot has.
+- **Her web page:** `http://<her-ip>:5004/options` (the **⚙ Options** link on the dashboard). Save with her PIN.
+- **The PC controller:** **O** or the **Options** button opens the same menu on the PC with her config; when you close it, she asks for her PIN and saves it.
+
+Saving keeps the old file as `config.json.bak`. Most settings take effect when she restarts. The PIN is a safety catch, not security.
+
 ### Knowing people, getting around, and her day
 
 * **Faces** (`face_id.py`) — tell her your name ("my name is Sam"), then say **"remember my face"** and look at cam-1 for ~10 s ("remember this face as Alex" for someone else). She greets people she knows by name, asks strangers who they are, and knows who she's talking to. Only face fingerprints are stored (`memories/faces.json`), never pictures; "forget my face" removes them. One-time model download: `cd scripts && python3 face_id.py --download`.
@@ -289,7 +319,7 @@ Two fixed front cameras, either side of her centreline, 8 cm apart lens to lens.
 | Cam 0 | Raspberry Pi Night Vision Camera (NoIR) | **Left** | **CAM/DISP 0** (`Picamera2(camera_num=0)`) | 62.2° | YOLO on the Hailo-8L |
 | Cam 1 | Raspberry Pi AI Camera (IMX500) | **Right** | **CAM/DISP 1** (the IMX500 library finds it) | 66.3° | its on-chip detector, always on |
 
-This is how she's wired today. The sides, the 8 cm baseline and the fields of view are set in `scripts/person_follow_mode.py` (`CAM_BASELINE_CM`, `CAM0_HFOV_DEG`, `CAM1_HFOV_DEG`, `INVERT_STEER`), the night camera's port in `scripts/ui.py`. They aren't in `config.json` yet.
+This is how she's wired today, and it's the default in `config.json` `Cameras` (`scripts/kida_config.py` reads it): `NightCamPort` 0, `NightCamSide` "left" (the AI camera is the other side), `NightCamHFovDeg` 62.2, `AICamHFovDeg` 66.3, `BaselineCm` 8.0, `InvertSteer` false. Change them in her options (below) if you move a camera; she uses them after a restart.
 
 ### Sensors
 | **Component** | **Details** |

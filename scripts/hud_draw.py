@@ -22,6 +22,7 @@ _MODE_LABEL = {
     DriveMode.WATCHDOG:      ("WATCH",(255,  80,  80)),
     DriveMode.LANE_DETECT:   ("LANE", ( 80, 208, 255)),
     DriveMode.PERSON_FOLLOW: ("FOLLOW",(120, 255, 200)),
+    DriveMode.MIND:          ("MIND", (255, 140, 220)),
     DriveMode.IDLE:          ("IDLE", (180,  80,  80)),
 }
 

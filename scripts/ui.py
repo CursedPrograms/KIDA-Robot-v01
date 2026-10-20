@@ -39,6 +39,9 @@ import leds
 import mode_manager
 import state
 import camera_memory
+import kida_config
+import kida_drive_mind   # MIND mode (9): an LLM drives her, her PC's or her own
+import mind_panel
 
 # music.py deleted — MusicPlayer is the sole music interface
 from music_player import MusicPlayer
@@ -301,7 +304,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
 
     if mode == "cam":
         try:
-            picam2 = Picamera2(camera_num=0)
+            picam2 = Picamera2(camera_num=kida_config.cameras()["NightCamPort"])
             picam2.configure(picam2.create_preview_configuration(
                 main={"format": "RGB888", "size": (640, 480)}))
             picam2.start()
@@ -460,7 +463,11 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
         if now - last_mind_view > 2.0:
             last_mind_view = now
             mind_view = _mind_view()
-        hud_draw.draw_mind_panel(screen, fonts, MIND_RECT, mind_view)
+        own = kida_drive_mind._self_mind   # MIND mode with her own Pi thinking: show her thoughts
+        if own is not None and own.on:
+            mind_panel.draw(screen, MIND_RECT, own, fonts["sm"], fonts["xs"], "KIDA-01", note="on her Pi")
+        else:
+            hud_draw.draw_mind_panel(screen, fonts, MIND_RECT, mind_view)
 
         if mode_manager.is_idle():
             hud_draw.draw_idle_overlay(screen, fonts)

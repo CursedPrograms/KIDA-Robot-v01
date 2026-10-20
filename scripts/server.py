@@ -203,7 +203,13 @@ def _rumble_json() -> dict:
 
 @app.route('/mind')
 def mind_status():
-    # KIDA's inner life (kida_mind): mood, needs, thoughts, dreams, goals.
+    # /mind?act=<move>&steps=1-4: the PC mind host's moves in MIND mode (kida_drive_mind.py).
+    if 'act' in request.args:
+        import kida_drive_mind
+        out, code = kida_drive_mind.pc_move(request.remote_addr, request.args.get('act', ''),
+                                            request.args.get('steps', '1'))
+        return jsonify(out), code
+    # Otherwise: KIDA's inner life (kida_mind): mood, needs, thoughts, dreams, goals.
     import kida_mind_host
     if kida_mind_host.MIND is None:
         return jsonify({'error': 'inner life unavailable'}), 503
@@ -255,6 +261,7 @@ def status():
         'rumble':       _rumble_json(),
         'pose':         _pose_json(),
         'person':       _person_now(),
+        **_mind_fields(),
         'sensors': {
             'Photo':    getattr(state, 'photoValue',       '—'),
             'UV':       getattr(state, 'uvValue',          '—'),
@@ -409,6 +416,112 @@ def voice_upload():
         return jsonify({'ok': True, 'transcribed': text})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
+
+
+# ── MIND mode (kida_drive_mind.py): an LLM drives her, her PC's or her own ──────────
+# The fleet's contract: a PC that can think unlocks with ctl=1 and checks in on
+# /status?ctl=1; /mode?m=mind; the PC's moves on /mind?act=&steps=; /speak plays its WAV.
+_ctl_ips: set = set()   # PCs that unlocked as a mind host
+
+
+def _mind_fields() -> dict:
+    import kida_drive_mind
+    if request.args.get('ctl') == '1' and request.remote_addr in _ctl_ips:
+        kida_drive_mind.check_in(request.remote_addr)
+    return kida_drive_mind.status_fields()
+
+
+@app.route('/unlock')
+def unlock():
+    # The PIN is a safety catch (her motor lock), not security. With ctl=1 a PC
+    # signs in as her mind host and her motor lock is left as it is (unlocking
+    # her wheels stays something a person does: U, the button, the IR remote).
+    import config
+    import motor_lock
+    if request.args.get('pw') != config.MOTOR_LOCK_PASSWORD:
+        return jsonify({'ok': False, 'error': 'wrong PIN'}), 403
+    if request.args.get('ctl') == '1':
+        import kida_drive_mind
+        _ctl_ips.add(request.remote_addr)
+        kida_drive_mind.check_in(request.remote_addr)
+    else:
+        motor_lock.try_unlock(request.args.get('pw'))
+    return jsonify({'ok': True, 'motor_lock': motor_lock.is_locked()})
+
+
+@app.route('/mode')
+def set_mode_route():
+    m = (request.args.get('m') or '').lower()
+    import web_bridge
+    if m == 'mind':
+        ok = web_bridge.action('mode_9')
+        return jsonify({'ok': ok, 'error': None if ok else 'no mind can drive her now'}), (200 if ok else 409)
+    numbers = {'keyboard': 1, 'kb': 1, 'ir': 2, 'auto': 3, 'idle': 4, 'line': 5,
+               'watchdog': 6, 'lane': 7, 'follow': 8}
+    if m not in numbers:
+        return jsonify({'ok': False, 'error': 'm is mind, keyboard, ir, auto, idle, line, watchdog, lane or follow'}), 400
+    return jsonify({'ok': web_bridge.action(f'mode_{numbers[m]}')})
+
+
+@app.route('/speak', methods=['POST'])
+def speak():
+    # A WAV from the PC's mind (mind.windows_wav), played on her voice channel.
+    import io
+    import pygame
+    try:
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+        pygame.mixer.Channel(7).play(pygame.mixer.Sound(io.BytesIO(request.get_data())))
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 400
+
+
+# ── Options (config.json), from any browser or the PC controller ──────────────────
+# GET /options is the page; /options.json is the file and the choices; POST saves it
+# (her PIN, the safety catch; config.json.bak keeps the old one). Most settings take
+# effect when she restarts.
+_ROOT = os.path.dirname(_here)
+
+
+def _read_json(name, default):
+    import json
+    try:
+        with open(os.path.join(_ROOT, name), encoding='utf-8') as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return default
+
+
+@app.route('/options')
+def options_page():
+    return render_template('options.html', this_name=THIS_NAME)
+
+
+@app.route('/options.json', methods=['GET', 'POST'])
+def options_json():
+    import json
+    import shutil
+    import config
+    if request.method == 'GET':   # json.dumps, not jsonify: that would sort her sections
+        return Response(json.dumps({'config': _read_json('config.json', {}),
+                                    'choices': _read_json('options_choices.json', {})}, ensure_ascii=False),
+                        mimetype='application/json')
+    body = request.get_json(force=True, silent=True) or {}
+    if str(body.get('password', '')) != config.MOTOR_LOCK_PASSWORD:
+        return jsonify({'ok': False, 'error': 'wrong PIN'}), 403
+    new = body.get('config')
+    if not isinstance(new, dict) or not isinstance(new.get('Config'), dict):
+        return jsonify({'ok': False, 'error': 'config must be {"Config": {...}}'}), 400
+    path = os.path.join(_ROOT, 'config.json')
+    if os.path.exists(path):
+        shutil.copy(path, path + '.bak')
+    with open(path + '.tmp', 'w', encoding='utf-8') as f:
+        json.dump(new, f, indent=2, ensure_ascii=False)
+        f.write('\n')
+    os.replace(path + '.tmp', path)
+    print(f"⚙️  Options saved from {request.remote_addr} (config.json.bak is the old one)")
+    return jsonify({'ok': True})
 
 
 # ── Entry point ──────────────────────────────────────────────────────────────────

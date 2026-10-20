@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ this_name }} Options</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="/static/css/options.css">
+</head>
+<body>
+  <header>
+    <a href="/" class="back">&larr; HUD</a>
+    <h1>{{ this_name }} &middot; Options</h1>
+    <p class="hint">Her <code>config.json</code>, the same settings as <code>options.py</code> on her and the PC controller's Options button. Most take effect when she restarts.</p>
+  </header>
+
+  <main id="tree"><p class="dim">Loading&hellip;</p></main>
+
+  <footer>
+    <input id="pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off">
+    <button id="save">Save</button>
+    <button id="revert" class="ghost">Revert</button>
+    <span id="msg"></span>
+  </footer>
+
+  <script src="/static/js/options.js"></script>
+</body>
+</html>

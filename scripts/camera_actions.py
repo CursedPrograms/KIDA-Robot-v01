@@ -35,7 +35,8 @@ def set_camera(cam=None, cam_id=0):
     """Initialize the global camera reference and register it under cam_id."""
     global picam2
     if cam is None:
-        cam = Picamera2()
+        import kida_config
+        cam = Picamera2(camera_num=kida_config.cameras()["NightCamPort"])
         preview_config = cam.create_preview_configuration(
             main={"size": (640, 480), "format": "RGB888"}
         )

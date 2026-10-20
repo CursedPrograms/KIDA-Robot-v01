@@ -167,6 +167,9 @@ def action(command: str, password: str | None = None,
         switch_mode(7)
     elif command == 'mode_8':
         switch_mode(8)
+    elif command == 'mode_9':   # MIND: refused when no mind can drive her
+        import kida_drive_mind
+        return kida_drive_mind.request_mode()
     elif command == 'voice_mode_wakeword':
         import state
         state.voice_mode = state.VoiceMode.WAKEWORD

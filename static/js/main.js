@@ -10,6 +10,7 @@ const MODE_COLORS = {
   WATCHDOG:      'mode-WATCHDOG',
   LANE_DETECT:   'mode-LANE_DETECT',
   PERSON_FOLLOW: 'mode-PERSON_FOLLOW',
+  MIND:          'mode-MIND',
   IDLE:          'mode-IDLE',
 };
 
@@ -89,6 +90,17 @@ async function fetchStatus() {
     const res  = await fetch('/status');
     const data = await res.json();
     applyStatus(data);
+    // MIND only while a mind can drive her (her PC checked in, or her own: Options, Mind)
+    const mindOpt = $('mode-mind-opt');
+    if (mindOpt) mindOpt.hidden = !(data.mindAvailable || data.mode === 'MIND');
+    const md = $('mind-drive');
+    if (md) {
+      const own = data.mindSelf;
+      md.textContent = data.mode !== 'MIND' ? ''
+        : own ? `🧠 ${own.state}${own.said ? ` — "${own.said}"` : ''}
+${own.thinking || ''}`
+        : data.mindBrain === 'pc' ? '🧠 her PC is thinking for her' : '';
+    }
   } catch (_) {
     // server not yet ready — silently retry
   }
@@ -117,6 +129,7 @@ const MODE_SELECT_MAP = {
   WATCHDOG:      'mode_6',
   LANE_DETECT:   'mode_7',
   PERSON_FOLLOW: 'mode_8',
+  MIND:          'mode_9',
 };
 
 async function sendAction(cmd, password) {

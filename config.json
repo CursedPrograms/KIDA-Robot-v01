@@ -1,13 +1,30 @@
 {
-    "Config": {
-      "AppName": "KIDA: Kinetic Interactive Drive Automaton",
-      "Description": "",
-      "ProjectStructure": {
-        "MainScript": "main.py",
-        "DependenciesScript": "scripts/install-dependencies.py"
-      },
-      "Scripts": {
-
-      }
+  "Config": {
+    "AppName": "KIDA: Kinetic Interactive Drive Automaton",
+    "Description": "",
+    "ProjectStructure": {
+      "MainScript": "main.py",
+      "DependenciesScript": "scripts/install-dependencies.py"
+    },
+    "Scripts": {},
+    "Cameras": {
+      "NightCamPort": 0,
+      "NightCamSide": "left",
+      "NightCamHFovDeg": 62.2,
+      "AICamHFovDeg": 66.3,
+      "BaselineCm": 8.0,
+      "InvertSteer": false
+    },
+    "SmallScreen": {
+      "Enabled": true,
+      "Port": 1,
+      "Display": 1
+    },
+    "Mind": {
+      "Where": "auto",
+      "SelfModel": "qwen2.5:0.5b",
+      "SelfThink": false,
+      "Goal": "explore the room, say what you notice, and don't bump into anything"
     }
   }
+}

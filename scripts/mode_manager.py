@@ -73,6 +73,10 @@ def set_mode_by_number(n: int) -> None:
         7: DriveMode.LANE_DETECT,
         8: DriveMode.PERSON_FOLLOW,
     }
+    if n == 9:   # MIND: only when a mind can drive her (kida_drive_mind.py: her PC or herself)
+        import kida_drive_mind
+        kida_drive_mind.request_mode()
+        return
     if n not in mapping:
         print(f"⚠️ Invalid mode number: {n}")
         return

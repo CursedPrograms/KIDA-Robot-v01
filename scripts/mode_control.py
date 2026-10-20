@@ -17,6 +17,7 @@ import line_follow_mode
 import watchdog_mode
 import lane_detect_mode
 import person_follow_mode
+import kida_drive_mind
 import voice_engine
 
 # ── Track the last mode so we can send AUTO_OFF when leaving ──
@@ -125,6 +126,12 @@ def _on_mode_changed(new_mode: DriveMode) -> None:
             person_follow_mode.start()
         except Exception as e:
             print(f"⚠️  PERSON_FOLLOW start: {e}")
+
+    # ── MIND mode: starts / stops her own mind, or waits for the PC's moves ──
+    try:
+        kida_drive_mind.on_mode_change(new_mode)
+    except Exception as e:
+        print(f"⚠️  MIND: {e}")
 
     # ── Voice acknowledgment ──
     try:

@@ -49,6 +49,7 @@ import threading
 import time
 import logging
 
+import kida_config
 import state
 from arduino import (send_command, set_left_motor, set_right_motor,
                      set_driving_lights, set_stopped_lights)
@@ -70,12 +71,13 @@ TURN_GAIN       = 1.4    # offset (-0.5..0.5 of frame) → turn (-0.7..0.7)
 CENTER_DEADBAND = 0.06
 MAX_PWM         = 180    # never faster than this, even at speed 255
 MIN_PWM         = 90     # below this the motors just stall
-INVERT_STEER    = False
-
-# ── Camera geometry (measure yours) ──
-CAM_BASELINE_CM = 8.0    # lens-to-lens distance, cam-0 (left) ↔ cam-1 (right)
-CAM0_HFOV_DEG   = 62.2   # night-vision cam — Pi v2 NoIR is 62.2, OV5647 boards 54–72
-CAM1_HFOV_DEG   = 66.3   # Raspberry Pi AI Camera (IMX500)
+# ── Camera geometry (measure yours) — config.json Config/Cameras, see kida_config.py ──
+_CAMS = kida_config.cameras()
+INVERT_STEER    = _CAMS["InvertSteer"]
+CAM_BASELINE_CM = _CAMS["BaselineCm"]       # lens-to-lens distance, cam-0 ↔ cam-1
+CAM0_HFOV_DEG   = _CAMS["NightCamHFovDeg"]  # night-vision cam — Pi v2 NoIR is 62.2, OV5647 boards 54–72
+CAM1_HFOV_DEG   = _CAMS["AICamHFovDeg"]     # Raspberry Pi AI Camera (IMX500)
+NIGHT_ON_LEFT   = _CAMS["NightCamSide"] == "left"   # today: night cam left, AI cam right
 CAM_ASPECT      = 3 / 4  # both run 4:3 frames
 
 STEREO_MAX_AGE_S = 0.3   # both views must be at least this fresh to pair
@@ -221,7 +223,9 @@ def _stereo(target: dict) -> tuple[float, float] | None:
         t_left = _bearing_tan((l_box[0] + l_box[2]) / 2, CAM0_HFOV_DEG)
         # Left camera sees everything further right than the right camera
         # does: tan_L - tan_R = baseline / Z, so it must be positive.
-        disparity = t_left - t_right
+        # (t_left is cam-0's, the night cam; t_right the IMX500's — swapped if
+        # config.json puts the night cam on the right.)
+        disparity = (t_left - t_right) if NIGHT_ON_LEFT else (t_right - t_left)
         if disparity <= 0:
             saw_negative = True
             continue
@@ -245,11 +249,13 @@ def _stereo(target: dict) -> tuple[float, float] | None:
 
 def _mono_bearing_tan(target: dict, dist: int | None) -> float:
     """IMX500-only fallback: its bearing, corrected for the camera sitting
-    CAM_BASELINE_CM/2 right of centre (at the range-sensor distance, or the
-    follow distance if nothing reads)."""
+    CAM_BASELINE_CM/2 right of centre (left, if config.json puts the night cam
+    on the right), at the range-sensor distance, or the follow distance if
+    nothing reads."""
     cx = (target["box"][0] + target["box"][2]) / 2
     z = dist if dist is not None else FOLLOW_CM
-    return _bearing_tan(cx, CAM1_HFOV_DEG) + (CAM_BASELINE_CM / 2) / max(z, 1)
+    side = 1 if NIGHT_ON_LEFT else -1
+    return _bearing_tan(cx, CAM1_HFOV_DEG) + side * (CAM_BASELINE_CM / 2) / max(z, 1)
 
 
 def _forward(person_cm: float | None, obstacle_cm: int | None, box_h: float) -> float:

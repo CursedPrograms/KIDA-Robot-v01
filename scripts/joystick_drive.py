@@ -324,7 +324,8 @@ class JoystickDrive:
             numbers = {DriveMode.KEYBOARD: 1, DriveMode.IR_REMOTE: 2,
                        DriveMode.AUTONOMOUS: 3, DriveMode.IDLE: 4,
                        DriveMode.LINE_FOLLOWER: 5, DriveMode.WATCHDOG: 6,
-                       DriveMode.LANE_DETECT: 7, DriveMode.PERSON_FOLLOW: 8}
+                       DriveMode.LANE_DETECT: 7, DriveMode.PERSON_FOLLOW: 8,
+                       DriveMode.MIND: 9}
             base = numbers.get(mode_manager.current_mode(), 1)
         else:
             base = self._pending_mode

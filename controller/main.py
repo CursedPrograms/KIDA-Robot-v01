@@ -46,6 +46,9 @@ from remote_client import RemoteClient
 from joystick_drive import JoystickDrive
 import event_handler
 import keymap           # controller/scripts/keymap.py — the keys window (F1) and the README
+import mind_panel       # scripts/mind_panel.py: a MIND-mode mind's thinking, as in the other controllers
+from drive_mind import DriveMind      # her MIND mode: this PC drives her when it can think
+from options_link import OptionsLink  # her options (config.json): O / the Options button
 
 APP_NAME = "KIDA — Remote Controller"
 
@@ -159,7 +162,16 @@ def run_controller() -> None:
         chat_prompt.open(lambda text: remote.send_action("chat", text=text))
 
     chat_btn = Button((0, 0, 160, 36), (160, 200, 220), "Type to KIDA", _chat_click)
-    buttons.extend([lock_btn, scheme_btn, chat_btn])
+
+    # Her options (config.json, the same menu as options.py on her), saved back with her PIN
+    options = OptionsLink(remote)
+    options_prompt = PasswordPrompt("HER PIN TO SAVE THE OPTIONS")
+    options_btn = Button((0, 0, 160, 36), (200, 200, 160), "Options", options.open)
+    buttons.extend([lock_btn, scheme_btn, chat_btn, options_btn])
+
+    # MIND mode (9): this PC's LLM drives her when it can think and her
+    # config.json Mind/Where lets it; otherwise her own Pi might (shown the same)
+    brain = DriveMind(remote)
 
     char_image          = None
     last_photo_surf     = None
@@ -223,7 +235,12 @@ def run_controller() -> None:
             screen, fonts, buttons, hud_y, btn_panel_x, btn_panel_rect,
             status.get("music_on", False),
         )
-        hud_draw.draw_mind_panel(screen, fonts, MIND_RECT, remote.mind)
+        brain.update(status)
+        driving_mind, where = brain.shown(status)
+        if driving_mind is not None:
+            mind_panel.draw(screen, MIND_RECT, driving_mind, fonts["sm"], fonts["xs"], "KIDA-01", note=where)
+        else:
+            hud_draw.draw_mind_panel(screen, fonts, MIND_RECT, remote.mind)
 
         if mode_manager.is_idle():
             hud_draw.draw_idle_overlay(screen, fonts)
@@ -233,6 +250,7 @@ def run_controller() -> None:
 
         lock_prompt.draw(screen, fonts)
         chat_prompt.draw(screen, fonts)
+        options_prompt.draw(screen, fonts)
         if show_keys:
             keymap.draw(screen)
 
@@ -250,8 +268,12 @@ def run_controller() -> None:
 
         # While the unlock prompt is open, every key goes to it — nothing
         # else (mode switches, drive keys, buttons) should fire mid-entry.
-        if lock_prompt.active or chat_prompt.active:
-            prompt = lock_prompt if lock_prompt.active else chat_prompt
+        if options.pending is not None and not (lock_prompt.active or chat_prompt.active or options_prompt.active):
+            edited, options.pending = options.pending, None   # ESC on the prompt drops the edit
+            options_prompt.open(lambda pin, d=edited: options.send(pin, d))
+        if lock_prompt.active or chat_prompt.active or options_prompt.active:
+            prompt = (lock_prompt if lock_prompt.active else chat_prompt if chat_prompt.active
+                      else options_prompt)
             for event in raw_events:
                 if event.type == pygame.QUIT:
                     running = False
@@ -270,6 +292,8 @@ def run_controller() -> None:
         if any(e.type == pygame.KEYDOWN and e.key == pygame.K_F1 for e in raw_events):
             show_keys = True
             continue
+        if any(e.type == pygame.KEYDOWN and e.key == pygame.K_o for e in raw_events):
+            options.open()
 
         sigs = event_handler.handle_events(raw_events, buttons, pressed_keys, remote,
                                            lock_prompt=lock_prompt, chat_prompt=chat_prompt)
@@ -281,6 +305,8 @@ def run_controller() -> None:
     #    moving after this window closes ──
     for _ in list(pressed_keys):
         remote.send_action("move_stop")
+    if brain.mind.on:
+        brain.mind.stop()
     joystick.stop()
     remote.stop()
     pygame.quit()

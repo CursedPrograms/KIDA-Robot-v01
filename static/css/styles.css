@@ -197,6 +197,7 @@ a:hover { text-decoration: underline; }
 .mode-WATCHDOG      { color: #ff5050; }
 .mode-LANE_DETECT   { color: #50d0ff; }
 .mode-PERSON_FOLLOW { color: #78ffc8; }
+.mode-MIND          { color: #ff8cdc; }
 .mode-IDLE          { color: var(--red); }
 
 /* ── Bottom ────────────────────────────────────────────────── */
@@ -290,6 +291,7 @@ a:hover { text-decoration: underline; }
 .mind-note { font-size: 11px; color: var(--text); font-style: italic; line-height: 1.35; }
 .mind-note:empty { display: none; }
 #mind-exchange { white-space: pre-line; }
+#mind-drive { white-space: pre-line; max-height: 9em; overflow-y: auto; margin-top: 4px; }
 
 /* ── Chat / routes / faces forms ─────────────────────────────── */
 .inline-form { display: flex; gap: 4px; }

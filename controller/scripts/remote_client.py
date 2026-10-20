@@ -34,6 +34,7 @@ class RemoteClient:
         self.mind             = None   # /mind (her inner life), None if the robot has none
         self.last_photo_ts    = None
         self.connected        = False
+        self.mind_host        = False  # drive_mind.py: this PC can drive her mind, so check in (ctl=1)
         self._running         = True
 
         threading.Thread(target=self._poll_status, daemon=True).start()
@@ -50,7 +51,7 @@ class RemoteClient:
         import camera_actions
         while self._running:
             try:
-                r = requests.get(f"{self.base_url}/status", timeout=1.5)
+                r = requests.get(f"{self.base_url}/status" + ("?ctl=1" if self.mind_host else ""), timeout=1.5)
                 data = r.json()
                 self.status    = data
                 self.connected = True

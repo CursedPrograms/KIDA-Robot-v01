@@ -22,6 +22,7 @@
     <div id="header">
       <span id="app-name">KIDA: Kinetic Interactive Drive Automaton</span>
       <span id="self-tag">{{ this_name }} &nbsp;·&nbsp; {{ this_ip }}:{{ this_port }}</span>
+      <a href="/options" id="options-link">⚙ Options</a>
       <button class="act-btn act-lock" id="lock-btn">🔒 Locked</button>
     </div>
 
@@ -270,10 +271,13 @@
               <option value="mode_6">🚨  Watchdog</option>
               <option value="mode_7">🛣️  Lane Detect</option>
               <option value="mode_8">🚶  Follow Person</option>
+              <option value="mode_9" id="mode-mind-opt" hidden>🧠  Mind</option>
               <option value="mode_4">⏹  Idle / Stop</option>
             </select>
             <button class="act-btn act-go" id="mode-go-btn">Go</button>
           </div>
+          <!-- MIND mode: her own mind's thinking (the PC's shows in its controller) -->
+          <div id="mind-drive" class="mind-note"></div>
         </div>
 
         <div class="ctrl-group">
