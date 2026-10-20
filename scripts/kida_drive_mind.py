@@ -133,6 +133,8 @@ def act(move: str, steps: int) -> dict:
         return {"ok": False, "error": f"no move {move}"}
     if state.motor_lock:
         return {"ok": False, "locked": True}
+    if getattr(state, "tipped", False):
+        return {"ok": False, "tipped": True}
     d = closest_cm()
     if move == "fwd" and d is not None and d < WALL_CM:
         _drive["blocked"] = True

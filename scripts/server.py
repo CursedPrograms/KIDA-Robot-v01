@@ -251,6 +251,7 @@ def status():
         'music_on':     web_bridge.music_playing(),
         'inference_on': getattr(state, 'inference_on', False),
         'motor_lock':   getattr(state, 'motor_lock', False),
+        'tipped':       getattr(state, 'tipped', False),
         'drive_scheme': getattr(state, 'drive_scheme', 'WASD'),
         'active_cam_id': camera_actions.active_cam_id,
         'last_photo_ts': last_photo_ts,

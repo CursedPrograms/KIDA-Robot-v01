@@ -226,6 +226,11 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
         sensor_assist.start()
     except Exception as e:
         print(f"⚠️ sensor_assist: {e}")
+    try:   # she stops when she tips over, in every mode (tip_guard.py)
+        import tip_guard
+        tip_guard.start()
+    except Exception as e:
+        print(f"⚠️ tip_guard: {e}")
 
     # ── Assets ──
     # Character face — 1:1 panel (FACE_RECT). Starts on KIDA's avatar

@@ -106,6 +106,7 @@ inference_on: bool = False
 # Starts locked — the robot must be explicitly unlocked with the password
 # every boot rather than driving away the moment it powers on.
 motor_lock: bool = True
+tipped: bool = False   # tip_guard.py: tilted past haptics.TIP_DEG — drive commands refused until she's level
 
 # --- Drive key scheme (KEYBOARD mode only) ---
 # "WASD"  — W/S drive both motors together, A/D rotate in place (default)

@@ -467,6 +467,12 @@ def send_command(dev, cmd):
     if dev == "dev00" and state.motor_lock and cmd != "STOP":
         print(f"🔒 Motor lock engaged — ignoring dev00 '{cmd}'")
         return
+    # Tipped over (tip_guard.py): nothing that moves her until she's level again
+    if dev == "dev00" and getattr(state, "tipped", False):
+        import tip_guard
+        if tip_guard.refuses(cmd):
+            print(f"🛑 Tipped — ignoring dev00 '{cmd}'")
+            return
 
     ser = arduinos.get(dev)
 

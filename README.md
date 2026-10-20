@@ -70,6 +70,7 @@ Core Features
 - [x] Autonomous Navigation: Advanced SLAM and obstacle avoidance powered by high-speed Raspberry Pi 5 architecture.
 - [x] Music Visualizer: while music plays, bars from the song itself rise along the bottom of her face on the HUD (`music_viz.py` + `audio_analysis.py`, KIDA-00's; they animate while a song is being read, or without pydub / ffmpeg).
 - [x] Music Together: RIFT conducts and she plays along in time with the fleet: `POST /music {"action": "play", "track": 7, "at": <RIFT's time>}` on :5004, synced to RIFT's clock (`fleet_music.py`, the same contract as KIDA-00 and TINA). Tracks are numbered by the number in the file name, as on NORA's SD card.
+- [x] Tip Stop: tilted more than 30° from her startup pose for a quarter second, in any mode, her motors stop, anything driving her by itself hands back to keyboard, and she says so; drive commands are refused until she's been level for a second (`scripts/tip_guard.py`, `tipped` in `/status`).
 - [x] Two Screens: the full HUD (`ui.py`) on HDMI 0, the desktop screen, and a big-text status board (`small_screen.py`: her face, mode, wheel lock, battery, what she's doing) on a small touch screen in HDMI 1. They go by the physical port, so either works on its own; with only the small screen plugged in the HUD keeps running hidden. `config.json` `SmallScreen` (`Enabled`, `Port`).
 
 </details>
