@@ -68,6 +68,8 @@ Core Features
 - [x] Hybrid Dual-Vision: Simultaneous processing of Night Vision and 4K AI camera feeds for 24/7 situational awareness.
 - [x] Local LLM Integration: Privacy-focused voice interaction and logic processing running entirely on-device.
 - [x] Autonomous Navigation: Advanced SLAM and obstacle avoidance powered by high-speed Raspberry Pi 5 architecture.
+- [x] Music Visualizer: while music plays, bars from the song itself rise along the bottom of her face on the HUD (`music_viz.py` + `audio_analysis.py`, KIDA-00's; they animate while a song is being read, or without pydub / ffmpeg).
+- [x] Music Together: RIFT conducts and she plays along in time with the fleet: `POST /music {"action": "play", "track": 7, "at": <RIFT's time>}` on :5004, synced to RIFT's clock (`fleet_music.py`, the same contract as KIDA-00 and TINA). Tracks are numbered by the number in the file name, as on NORA's SD card.
 - [x] Two Screens: the full HUD (`ui.py`) on HDMI 0, the desktop screen, and a big-text status board (`small_screen.py`: her face, mode, wheel lock, battery, what she's doing) on a small touch screen in HDMI 1. They go by the physical port, so either works on its own; with only the small screen plugged in the HUD keeps running hidden. `config.json` `SmallScreen` (`Enabled`, `Port`).
 
 </details>
@@ -280,10 +282,14 @@ Self-test (fake LLM, scratch folder — never touches her real memories): `cd sc
 | Power Switches | 4× (Main + UPS), 2× MOSFET SWITCHES|
 
 ### Cameras
-| **Component** | **Details** |
-|-----------|---------|
-| Camera 0 | Raspberry Pi Night Vision Camera |
-| Camera 1 | Raspberry Pi AI Camera (IMX500) |
+Two fixed front cameras, either side of her centreline, 8 cm apart lens to lens. Their views overlap in the centre, so what's straight ahead is in both (person-follow mode triangulates its distance from that).
+
+| **Camera** | **Type** | **Side** (facing forward with her) | **Pi 5 port** | **Horizontal FOV** | **Runs** |
+|---|---|---|---|---|---|
+| Cam 0 | Raspberry Pi Night Vision Camera (NoIR) | **Left** | **CAM/DISP 0** (`Picamera2(camera_num=0)`) | 62.2° | YOLO on the Hailo-8L |
+| Cam 1 | Raspberry Pi AI Camera (IMX500) | **Right** | **CAM/DISP 1** (the IMX500 library finds it) | 66.3° | its on-chip detector, always on |
+
+This is how she's wired today. The sides, the 8 cm baseline and the fields of view are set in `scripts/person_follow_mode.py` (`CAM_BASELINE_CM`, `CAM0_HFOV_DEG`, `CAM1_HFOV_DEG`, `INVERT_STEER`), the night camera's port in `scripts/ui.py`. They aren't in `config.json` yet.
 
 ### Sensors
 | **Component** | **Details** |

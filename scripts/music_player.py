@@ -3,6 +3,7 @@
 # Drop-in replacement for music.py — delete music.py after switching over.
 
 import os
+import re
 import glob
 import random
 import logging
@@ -42,6 +43,8 @@ class MusicPlayer:
         pygame.mixer.music.set_endevent(self.SONG_END)
 
         self.current_track: str  = ""
+        self.current_path:  str  = ""     # the full path (the visualizer reads the file)
+        self._loaded:       str  = ""     # loaded by load_number(), waiting for start_loaded()
         self.playing:       bool = False
         self.paused:        bool = False
         self._enabled:      bool = True   # mirrors music.py's music_enabled flag
@@ -84,6 +87,7 @@ class MusicPlayer:
             pygame.mixer.music.load(path)
             pygame.mixer.music.play()
             self.current_track = os.path.basename(path)
+            self.current_path  = path
             self.playing       = True
             self.paused        = False
             leds.start_music_wave()
@@ -113,6 +117,7 @@ class MusicPlayer:
         self.playing       = False
         self.paused        = False
         self.current_track = ""
+        self.current_path  = ""
         print("⏹️  Music stopped.")
 
     def skip(self) -> None:
@@ -164,6 +169,43 @@ class MusicPlayer:
     def is_playing(self) -> bool:
         """Return True if music is currently playing (mirrors music.is_music_playing)."""
         return pygame.mixer.music.get_busy()
+
+    # ─────────────────────────────────────────────
+    #  RIFT's music together (fleet_music.py) and the visualizer (music_viz.py)
+    # ─────────────────────────────────────────────
+
+    def load_number(self, n: int) -> bool:
+        """Load the track whose file name holds the number n (track07.mp3 is 7, as on NORA's SD
+        card), so start_loaded() can start it on the beat. False if there's no such track."""
+        for i, path in enumerate(self._playlist):
+            m = re.search(r"(\d+)", os.path.basename(path))
+            if m and int(m.group(1)) == n:
+                try:
+                    pygame.mixer.music.load(path)
+                except pygame.error as e:
+                    logger.error("Failed to load %s: %s", path, e)
+                    return False
+                self._index, self._loaded = i, path
+                self._manual_stop = True      # loading stopped whatever was playing: no auto-advance
+                return True
+        return False
+
+    def start_loaded(self) -> None:
+        """Start the track load_number() loaded, now."""
+        if not self._loaded:
+            return
+        self._manual_stop = False
+        self._enabled     = True
+        pygame.mixer.music.play()
+        self.current_track = os.path.basename(self._loaded)
+        self.current_path  = self._loaded
+        self.playing, self.paused, self._loaded = True, False, ""
+        leds.start_music_wave()
+        logger.info("Now playing (with the fleet): %s", self.current_track)
+
+    def position_s(self) -> float:
+        """Seconds into the current track."""
+        return max(0, pygame.mixer.music.get_pos()) / 1000.0
 
     # ─────────────────────────────────────────────
     #  Internal

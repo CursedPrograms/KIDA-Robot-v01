@@ -42,6 +42,7 @@ import camera_memory
 
 # music.py deleted — MusicPlayer is the sole music interface
 from music_player import MusicPlayer
+from music_viz import MusicBars   # the music visualizer (KIDA-00's bars, from the song itself)
 
 from state import DriveMode
 from buttons import create_buttons
@@ -207,6 +208,7 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
 
     # ── Music player (replaces music.init_music()) ──────────────────────────
     music_ctrl = MusicPlayer()   # reads config.MUSIC_FOLDER + config.SUPPORTED_FORMATS
+    music_bars = MusicBars()
 
     # Register with web bridge so Flask action routes can control playback
     try:
@@ -426,6 +428,11 @@ def run_ui(model=None, mode="cam", task="detect", tracker_path=None):
 
         hud_draw.draw_static_panel(screen, char_image, FACE_RECT,
                                    "KIDA", fonts["xs"], fonts["nosig"])
+        if music_ctrl.playing:   # the music visualizer, along the bottom of her face
+            bars_h = FACE_RECT.height // 4
+            hud_draw.draw_music_bars(screen, pygame.Rect(FACE_RECT.x + 4, FACE_RECT.bottom - bars_h - 4,
+                                                         FACE_RECT.width - 8, bars_h),
+                                     music_bars.amplitudes(music_ctrl))
         hud_draw.draw_camera_panel(screen, last_frame1, CAM1_RECT,
                                    "Cam 1", fonts["xs"], fonts["nosig"])
         hud_draw.draw_camera_panel(screen, last_frame0, CAM0_RECT,

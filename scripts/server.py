@@ -370,6 +370,20 @@ PEER = peer_talk.PeerTalk(THIS_NAME, PEER_PERSONA, kida_mind_host.MIND, _peer_ge
 peer_talk.register_routes(app, PEER)
 
 
+# ── Music together (RIFT conducts; fleet_music.py) ───────────────────────────────
+# POST {"action": "play"|"pause"|"resume"|"stop", "track": 7, "at": RIFT's time}; GET: what's playing.
+# RIFT's clock is on :5000 of whoever sent it (only RIFT conducts).
+import fleet_music   # noqa: E402
+
+
+@app.route('/music', methods=['GET', 'POST'])
+def music_together():
+    if request.method == 'GET':
+        return jsonify(fleet_music.status())
+    out, code = fleet_music.command(request.get_json(silent=True) or {}, f"http://{request.remote_addr}:5000")
+    return jsonify(out), code
+
+
 @app.route('/chirp')
 def chirp():
     # RIFT's fleet conversations: /chirp?u=<0-16> says that utterance (a

@@ -3,6 +3,9 @@
 # Everything in this module is pure drawing — no hardware calls,
 # no state mutations.  Pass in what you need, get pixels out.
 
+import math
+import time
+
 import pygame
 import state
 import mode_manager
@@ -68,6 +71,27 @@ def draw_camera_panel(surface: pygame.Surface, frame, rect: pygame.Rect,
     pygame.draw.rect(surface, (50, 72, 115), rect, 2)
     tag = label_font.render(_fit(label_font, label, rect.width - 12), True, (150, 185, 255))
     surface.blit(tag, (rect.x + 6, rect.y + 5))
+
+
+MUSIC_BAR_COLOUR = (223, 91, 163)   # her pink (colour_scheme.xml accent)
+
+
+def draw_music_bars(surface: pygame.Surface, rect: pygame.Rect, amplitudes) -> None:
+    """The music visualizer (music_viz.py): bars from the song itself, or animated ones while it's
+    still being read (amplitudes None). Drawn over the bottom of her face panel while music plays."""
+    bars = len(amplitudes) if amplitudes else 22
+    bw = max(rect.width // bars, 2)
+    t = time.time()
+    for i in range(bars):
+        if amplitudes:
+            h = max(int(amplitudes[i] * rect.height * 0.92), 3)
+            alpha = 190
+        else:
+            h = int((math.sin(t * 7.2 + i * 0.3) * 0.5 + 0.5) * rect.height * 0.85 + 3)
+            alpha = 140
+        bar = pygame.Surface((max(bw - 1, 1), h), pygame.SRCALPHA)
+        bar.fill((*MUSIC_BAR_COLOUR, alpha))
+        surface.blit(bar, (rect.x + i * bw, rect.bottom - h))
 
 
 def draw_static_panel(surface: pygame.Surface, image_surf, rect: pygame.Rect,
