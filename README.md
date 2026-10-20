@@ -68,6 +68,7 @@ Core Features
 - [x] Hybrid Dual-Vision: Simultaneous processing of Night Vision and 4K AI camera feeds for 24/7 situational awareness.
 - [x] Local LLM Integration: Privacy-focused voice interaction and logic processing running entirely on-device.
 - [x] Autonomous Navigation: Advanced SLAM and obstacle avoidance powered by high-speed Raspberry Pi 5 architecture.
+- [x] Two Screens: the full HUD (`ui.py`) on HDMI 0, the desktop screen, and a big-text status board (`small_screen.py`: her face, mode, wheel lock, battery, what she's doing) on a small touch screen in HDMI 1. They go by the physical port, so either works on its own; with only the small screen plugged in the HUD keeps running hidden. `config.json` `SmallScreen` (`Enabled`, `Port`).
 
 </details>
 
@@ -267,6 +268,7 @@ Self-test (fake LLM, scratch folder — never touches her real memories): `cd sc
 |-----------|---------|
 | Interface | PC, Android, iPhone |
 | Controller | Wireless Keyboard, IR remote |
+| Screens | Desktop screen on HDMI 0 (the HUD), small touch screen on HDMI 1 (`small_screen.py`) |
 
 ### Power System
 | **Component** | **Details** |
