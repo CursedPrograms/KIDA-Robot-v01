@@ -186,14 +186,30 @@ def _strip_wake_word(text: str) -> str:
     return t
 
 
+# Loudness gate: a wake scan only goes to the Hailo when the window is louder than the
+# room's quiet level. Running Whisper on every 5 s of silence kept the Hailo busy all day,
+# and its power draw is what made her battery give out after minutes. The quiet level is
+# learnt as she listens (her USB mic is quiet, so it's relative, not a fixed dB).
+WAKE_GATE_RATIO = 2.0      # louder than 2x the room's quiet level -> transcribe it
+WAKE_MIN_RMS    = 0.0005   # the quiet level never counts as lower than this
+
+
 def wait_for_wake_word() -> None:
     """Block until the wake word is heard, then return."""
     print("😴 Sleeping… say 'Hey KIDA' to wake me up.")
     tail = np.zeros(0, dtype="float32")
     overlap_samples = int(WAKE_OVERLAP * MIC_SAMPLE_RATE)
+    quiet = None   # the room's quiet level (RMS)
     while True:
         try:
             audio_data = record_audio(WAKE_DURATION, audio_path=AUDIO_PATH)
+            rms = float(np.sqrt(np.mean(np.square(audio_data)))) if audio_data.size else 0.0
+            quiet = max(WAKE_MIN_RMS, rms if quiet is None else min(quiet, rms))
+            if rms < quiet * WAKE_GATE_RATIO:
+                quiet = quiet * 0.9 + rms * 0.1   # follow the room as it gets quieter or louder
+                tail = audio_data[-overlap_samples:] if len(audio_data) > overlap_samples else audio_data
+                continue                          # silence: the Hailo rests
+            quiet = quiet * 0.95 + rms * 0.05   # a room that stays loud (a fan) becomes "quiet" in ~1 min
             # Prepend the tail of the previous window so a wake word spoken
             # across a scan-window boundary still appears whole in one transcription.
             combined = np.concatenate([tail, audio_data])
