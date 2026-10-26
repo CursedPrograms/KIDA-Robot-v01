@@ -51,6 +51,11 @@ KEYBOARD = [
         ("ESC", "close the window (on her: the UI restarts)"),
         ("Q", "quit (WASD scheme; on her: stops for good)"),
     ]),
+    ("PC controller only", [
+        ("Backspace", "STOP: motors off in any mode, back to KEYBOARD (as the STOP button)"),
+        ("Drive keys, pad", "in any mode: driving takes over (back to KEYBOARD, you drive)"),
+        ("STOP / EMULATE", "buttons: stop in any mode / her pretend self on this PC (fake_kida01.py)"),
+    ]),
 ]
 
 GAMEPAD = [

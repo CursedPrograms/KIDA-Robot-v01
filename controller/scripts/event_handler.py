@@ -57,12 +57,22 @@ def drive_heartbeat(pressed_keys, remote) -> None:
         _drive_now(pressed_keys, remote)
 
 
+# mode_N -> the name /status reports once she's in it
+MODE_NAMES = {1: "KEYBOARD", 2: "IR_REMOTE", 3: "AUTONOMOUS", 4: "IDLE", 5: "LINE_FOLLOWER",
+              6: "WATCHDOG", 7: "LANE_DETECT", 8: "PERSON_FOLLOW", 9: "MIND"}
+
+
 def handle_events(events, buttons: list, pressed_keys: set, remote,
-                  lock_prompt=None, chat_prompt=None) -> dict:
+                  lock_prompt=None, chat_prompt=None, want=None, stop_anywhere=None) -> dict:
     """lock_prompt is main.py's PasswordPrompt, so the 'U' key can open the
     same on-screen prompt the "Lock Motors" button uses (optional; 'U' is a
-    no-op without it)."""
+    no-op without it).
+    want(key, value, command): main.py's settings that stick (sent again until her /status
+    says key == value); without it the command goes once. stop_anywhere: Backspace."""
     signals = {"quit": False}
+    if want is None:
+        def want(key, value, command):
+            remote.send_action(command)
 
     for event in events:
 
@@ -74,24 +84,11 @@ def handle_events(events, buttons: list, pressed_keys: set, remote,
         if event.type == pygame.KEYDOWN:
             k = event.key
 
-            if k == pygame.K_1:
-                remote.send_action("mode_1")
-            elif k == pygame.K_2:
-                remote.send_action("mode_2")
-            elif k == pygame.K_3:
-                remote.send_action("mode_3")
-            elif k == pygame.K_4:
-                remote.send_action("mode_4")
-            elif k == pygame.K_5:
-                remote.send_action("mode_5")
-            elif k == pygame.K_6:
-                remote.send_action("mode_6")
-            elif k == pygame.K_7:
-                remote.send_action("mode_7")
-            elif k == pygame.K_8:
-                remote.send_action("mode_8")
-            elif k == pygame.K_9:
-                remote.send_action("mode_9")   # MIND
+            if pygame.K_1 <= k <= pygame.K_9:   # 9: MIND
+                n = k - pygame.K_0
+                want("mode", MODE_NAMES[n], f"mode_{n}")
+            elif k == pygame.K_BACKSPACE and stop_anywhere is not None:
+                stop_anywhere()
 
             # Quit — Q and ESC both just close this window. There's no
             # run.sh restart loop on this side to distinguish them; that
@@ -113,7 +110,7 @@ def handle_events(events, buttons: list, pressed_keys: set, remote,
                 if remote.status.get("music_on"):
                     remote.send_action("music_skip")
                 else:
-                    remote.send_action("music_play")
+                    want("music_on", True, "music_play")
 
             elif k == pygame.K_l:
                 remote.send_action("leds_toggle")
@@ -142,20 +139,22 @@ def handle_events(events, buttons: list, pressed_keys: set, remote,
             # Drive scheme toggle — ,/< = WASD (differential), ./> = QAWS
             # (tank, independent per-motor). Mirrors scripts/event_handler.py.
             elif event.unicode in ('<', ','):
-                remote.send_action("scheme_wasd")
+                want("drive_scheme", "WASD", "scheme_wasd")
             elif event.unicode in ('>', '.'):
-                remote.send_action("scheme_qaws")
+                want("drive_scheme", "QAWS", "scheme_qaws")
 
             # Movement — KEYBOARD mode only, mirroring the robot's own guard.
             # Which keys do what depends on state.drive_scheme (synced from
             # /status by remote_client.py).
-            # KEYBOARD mode only (a stray move_stop would cut a self-driving
-            # mode short) — plus IDLE, where a drive key is what wakes her.
+            # In any mode: driving takes over (back to KEYBOARD, you drive). Her /action only
+            # drives in KEYBOARD, so the held keys' heartbeat moves her once she's switched.
             elif ((state.drive_scheme == "QAWS" and k in _QAWS_CMD)
                   or (state.drive_scheme == "WASD" and k in _WASD)):
-                if mode_manager.is_keyboard() or mode_manager.is_idle():
-                    pressed_keys.add(k)
-                    _drive_now(pressed_keys, remote)   # W+A curves (see drive_mix.py)
+                if not mode_manager.is_keyboard():
+                    print(f"Driving takes over: {state.drive_mode.name} -> KEYBOARD")
+                    want("mode", "KEYBOARD", "mode_1")
+                pressed_keys.add(k)
+                _drive_now(pressed_keys, remote)   # W+A curves (see drive_mix.py)
 
         elif event.type == pygame.KEYUP:
             if event.key in pressed_keys:

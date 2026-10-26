@@ -13,8 +13,14 @@
 # made once — panel order, colors, fonts — applies to both HUDs together.
 #
 # Usage:
-#   python3 main.py <robot-ip-or-url> [--port 5004]
+#   python3 main.py <robot-ip-or-url> [--port 5004] [--emulate]
 #   ROBOT_URL=http://192.168.1.50:5004 python3 main.py
+#   python3 main.py                 no robot: EMULATE, her pretend self on this PC (fake_kida01.py)
+#
+# On top of her own window, the PC's (fleet TODO section 13): EMULATE and STOP buttons,
+# STOP / Backspace stop her in any mode (back to KEYBOARD), a drive key or the pad in any
+# mode takes over (back to KEYBOARD, you drive), and a mode, scheme or music change is sent
+# again until her /status says so.
 
 import argparse
 import os
@@ -31,6 +37,8 @@ sys.path.insert(0, _SCRIPTS_DIR)
 # the robot side implements with real hardware (mode_manager.py,
 # camera_actions.py, buttons.py) — this dir's shims win the lookup.
 sys.path.insert(0, _SHIMS_DIR)
+
+import threading
 
 import pygame
 
@@ -49,17 +57,22 @@ import keymap           # controller/scripts/keymap.py — the keys window (F1) 
 import mind_panel       # scripts/mind_panel.py: a MIND-mode mind's thinking, as in the other controllers
 from drive_mind import DriveMind      # her MIND mode: this PC drives her when it can think
 from options_link import OptionsLink  # her options (config.json): O / the Options button
+import controller_kit as kit          # controller/controller_kit.py: settings that stick (every robot's)
 
 APP_NAME = "KIDA — Remote Controller"
+FAKE_URL = "http://127.0.0.1:5004"     # EMULATE: fake_kida01.py
 
 
-def _resolve_robot_url() -> str:
+def _resolve_robot_url() -> tuple:
+    """(robot URL or None, emulate)."""
     parser = argparse.ArgumentParser(description="KIDA remote controller")
     parser.add_argument(
         "robot", nargs="?", default=os.environ.get("ROBOT_URL"),
         help="Robot IP or URL, e.g. 192.168.1.50 or http://192.168.1.50:5004",
     )
     parser.add_argument("--port", type=int, default=5004)
+    parser.add_argument("--emulate", action="store_true",
+                        help="start on her pretend self (fake_kida01.py); the default with no robot given")
     parser.add_argument("--ladder", action="store_true",
                     help="join / host the fleet's WiFi (fleet_ladder.py; FLEET_LADDER=1 does the same)")
     args = parser.parse_args()
@@ -67,12 +80,12 @@ def _resolve_robot_url() -> str:
     FleetLadder("KIDA01CTL", enabled=args.ladder or None).start()
 
     if not args.robot:
-        parser.error("robot IP/URL required (positional arg, or ROBOT_URL env var)")
+        return None, True
 
     robot = args.robot
     if not robot.startswith("http"):
         robot = f"http://{robot}:{args.port}"
-    return robot
+    return robot, args.emulate
 
 
 def _draw_disconnected_banner(screen, fonts, sw) -> None:
@@ -81,9 +94,34 @@ def _draw_disconnected_banner(screen, fonts, sw) -> None:
 
 
 def run_controller() -> None:
-    base_url = _resolve_robot_url()
-    print(f"▶ {APP_NAME} — connecting to {base_url}")
-    remote = RemoteClient(base_url)
+    real_url, emulate = _resolve_robot_url()
+    fake = {"robot": None}
+
+    def start_fake() -> None:
+        if fake["robot"] is None:
+            try:
+                import fake_kida01
+                fake["robot"] = fake_kida01.FakeKida01()
+                fake["robot"].quiet = True
+            except OSError:              # port 5004 taken: a fake_kida01.py already running? use that
+                print("EMULATE: port 5004 is taken; talking to whatever answers there")
+
+    if emulate:
+        start_fake()
+    base_url = FAKE_URL if emulate else real_url
+    print(f"▶ {APP_NAME} — connecting to {base_url}" + ("  (EMULATE: her pretend self)" if emulate else ""))
+    remote  = RemoteClient(base_url)
+    pending = kit.Pending()              # settings sent again until her /status says so
+
+    def want(key, value, command) -> None:
+        pending.want(key, value, lambda: threading.Thread(
+            target=remote.send_action, args=(command,), daemon=True).start())
+
+    def stop_anywhere() -> None:
+        """STOP: motors off in any mode, back to KEYBOARD (as the pad's B, without stopping the music)."""
+        if remote.status.get("mode", "KEYBOARD") != "KEYBOARD":
+            want("mode", "KEYBOARD", "mode_1")
+        threading.Thread(target=remote.send_action, args=("move_stop",), daemon=True).start()
 
     pygame.init()
     info   = pygame.display.Info()
@@ -119,7 +157,7 @@ def run_controller() -> None:
     btn_panel_rect = layout["btn_panel_rect"]
     MIND_RECT      = hud_draw.mind_panel_rect(SW, SH, hud_y, SEN_X2, btn_panel_x)
 
-    buttons      = create_buttons(remote)
+    buttons      = create_buttons(remote, want)
     lbl_surfaces = [
         fonts["xs"].render(f"{lbl}:", True, (100, 130, 185))
         for _, lbl in hud_layout.SENSOR_ROWS
@@ -169,11 +207,30 @@ def run_controller() -> None:
     options_btn = Button((0, 0, 160, 36), (200, 200, 160), "Options", options.open)
     buttons.extend([lock_btn, scheme_btn, chat_btn, options_btn])
 
+    # The PC's own: STOP (any mode) and EMULATE (her pretend self on this PC, or back)
+    def _emulate_click():
+        nonlocal emulate, char_image
+        if not emulate:
+            start_fake()
+        elif not real_url:
+            return                       # no robot to go back to: she stays emulated
+        emulate = not emulate
+        remote.retarget(FAKE_URL if emulate else real_url)
+        if not emulate and fake["robot"] is not None:
+            fake["robot"].stop()
+            fake["robot"] = None
+        char_image = None
+        print("EMULATE on: her pretend self" if emulate else f"EMULATE off: {real_url}")
+
+    stop_btn = Button((0, 0, 160, 36), (255, 120, 120), "STOP", stop_anywhere)
+    emulate_btn = Button((0, 0, 160, 36), (230, 200, 120), "EMULATE: ON" if emulate else "EMULATE: OFF", _emulate_click)
+    buttons.extend([stop_btn, emulate_btn])
+
+    char_image          = None
     # MIND mode (9): this PC's LLM drives her when it can think and her
     # config.json Mind/Where lets it; otherwise her own Pi might (shown the same)
     brain = DriveMind(remote)
 
-    char_image          = None
     last_photo_surf     = None
     last_photo_ts_seen  = None
     pressed_keys        = set()
@@ -217,7 +274,10 @@ def run_controller() -> None:
         hud_draw.draw_panel(screen, HUD_RECT, fill=(7, 11, 20), alpha=218,
                             border=(32, 52, 88), radius=0)
 
+        at     = remote.status_at   # first: the status read after it is at least that new
         status = remote.status
+        pending.check(status, at)
+        emulate_btn.text = emulate_btn.label = "EMULATE: ON" if emulate else "EMULATE: OFF"
         hud_draw.draw_status_strip(
             screen, fonts, hud_y, SEN_X1,
             status.get("motor_speed", "—"), status.get("cpu_temp", "N/A"),
@@ -247,6 +307,9 @@ def run_controller() -> None:
 
         if not remote.connected:
             _draw_disconnected_banner(screen, fonts, SW)
+        elif emulate:
+            note = fonts["xs"].render("EMULATE: her pretend self on this PC (fake_kida01.py)", True, (255, 190, 80))
+            screen.blit(note, (12, SH - note.get_height() - 6))
 
         lock_prompt.draw(screen, fonts)
         chat_prompt.draw(screen, fonts)
@@ -296,7 +359,14 @@ def run_controller() -> None:
             options.open()
 
         sigs = event_handler.handle_events(raw_events, buttons, pressed_keys, remote,
-                                           lock_prompt=lock_prompt, chat_prompt=chat_prompt)
+                                           lock_prompt=lock_prompt, chat_prompt=chat_prompt,
+                                           want=want, stop_anywhere=stop_anywhere)
+        # the pad drives in any mode too: it takes over (back to KEYBOARD, you drive)
+        with joystick._lock:
+            pad_driving = any(joystick._target)
+        if pad_driving and status.get("mode", "KEYBOARD") != "KEYBOARD" and pending.value("mode") != "KEYBOARD":
+            print(f"Driving takes over (pad): {status.get('mode')} -> KEYBOARD")
+            want("mode", "KEYBOARD", "mode_1")
         event_handler.drive_heartbeat(pressed_keys, remote)
         if sigs["quit"]:
             running = False
@@ -309,6 +379,8 @@ def run_controller() -> None:
         brain.mind.stop()
     joystick.stop()
     remote.stop()
+    if fake["robot"] is not None:
+        fake["robot"].stop()
     pygame.quit()
     print("✅ Controller closed")
 

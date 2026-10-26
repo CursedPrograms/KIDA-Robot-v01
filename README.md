@@ -99,6 +99,7 @@ Every key, gamepad button and IR remote button. The PC controller shows the same
 | <kbd>6</kbd> | WATCHDOG: person alarm |
 | <kbd>7</kbd> | LANE DETECT (Hailo) |
 | <kbd>8</kbd> | PERSON FOLLOW (cam 1) |
+| <kbd>9</kbd> | MIND: an LLM drives her (this PC's, or her own: Options, Mind) |
 
 **Drive (KEYBOARD mode)**
 
@@ -128,10 +129,19 @@ Every key, gamepad button and IR remote button. The PC controller shows the same
 | :--- | :--- |
 | <kbd>U</kbd> | lock the motors / unlock (asks for the password) |
 | <kbd>T</kbd> | type a message to her (PC controller) |
+| <kbd>O</kbd> | her options: config.json (PC controller) |
 | <kbd>H</kbd> | go home (PC controller) |
 | <kbd>F1</kbd> | this keys window (PC controller) |
 | <kbd>ESC</kbd> | close the window (on her: the UI restarts) |
 | <kbd>Q</kbd> | quit (WASD scheme; on her: stops for good) |
+
+**PC controller only**
+
+| Key | Does |
+| :--- | :--- |
+| <kbd>Backspace</kbd> | STOP: motors off in any mode, back to KEYBOARD (as the STOP button) |
+| <kbd>Drive keys, pad</kbd> | in any mode: driving takes over (back to KEYBOARD, you drive) |
+| <kbd>STOP / EMULATE</kbd> | buttons: stop in any mode / her pretend self on this PC (fake_kida01.py) |
 
 **Gamepad (on her or the PC)**
 
@@ -177,6 +187,7 @@ Every key, gamepad button and IR remote button. The PC controller shows the same
 | <kbd>Yellow</kbd> | speed down |
 | <kbd>Skip</kbd> | switch between IR REMOTE and KEYBOARD |
 | <kbd>Red / Green</kbd> | lock / unlock the motors (no password) |
+
 <!-- KEYMAP:END -->
 
 ### Talking (in Brainfuck)
@@ -520,6 +531,17 @@ SENSORS (DIGITAL):
 | :--- | :--- |
 | **SSID** | `NORA` |
 | **Password** | `12345678` |
+
+### PC controller
+
+`controller/run.bat <her-ip>` (or `run.ps1`; `run.sh` after `setup_venv.sh`): her own HUD on another PC, plus the PC's own:
+
+- **EMULATE** (a button): her pretend self on this PC (`controller/fake_kida01.py`: her Flask routes on `127.0.0.1:5004`, both cameras, her inner life, MIND), in a room to drive round, so every key and button can be tried with no robot. With no IP given, the controller starts on it.
+- **STOP** (a button, or Backspace): motors off in any mode, back to KEYBOARD.
+- **Driving takes over**: a drive key or the pad while she drives herself (AUTONOMOUS, LINE, FOLLOW, MIND...) puts her back in KEYBOARD, so letting go stops her.
+- **Settings stick**: a mode, the drive scheme or the music is sent again until her `/status` says so.
+- **Session test**: `controller/venv/Scripts/python controller/session_test.py` drives the controller on her pretend self like a person and checks every response.
+- No THEME yet: her HUD's colours are written into `scripts/hud_draw.py`, which her own screen shares.
 
 ### RIFT Integration
 To connect via [RIFT](https://github.com/CursedPrograms/RIFT), ensure KIDA01 is active on:

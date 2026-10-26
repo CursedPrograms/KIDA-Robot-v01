@@ -10,3 +10,7 @@
 
 # Shell scripts run on the Pi: always LF (a CR at a line end breaks bash)
 *.sh text eol=lf
+
+# Windows launchers: CRLF
+*.bat text eol=crlf
+*.ps1 text eol=crlf

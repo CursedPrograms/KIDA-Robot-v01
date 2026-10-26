@@ -235,3 +235,7 @@ captures/sweeps/
 # C++ controller build output + its saved robot address
 /controller/cpp/build/
 kida_controller.ini
+
+# The PC controller: this PC's settings, the session test's screenshot
+controller/controller_settings.json
+controller/session_test.png

@@ -31,6 +31,9 @@ lines are made with). windows_wav() makes a WAV for robots that play files (KIDA
 Memory: ~/.robot_minds/<NAME>.json keeps what it chose to remember and its last
 moves, so it picks up where it left off next time.
 
+Log: ~/.robot_minds/logs/<NAME>-<date>.log, one file a day, readable: every step's senses,
+its whole thinking, what it said, the move and how it went, errors, and on / off.
+
 Where a mind can run: can_think() says yes only on an x86 Windows / Linux PC with
 8 GB+ RAM and a GTX 1050 or better (or AMD RX 460 / 560 / Vega / RX 5000+), so a
 controller started on a Pi never offers MIND mode. The model is sized to the PC
@@ -56,6 +59,7 @@ if not OLLAMA_HOST.startswith("http"):
 MIND_MODEL = os.environ.get("MIND_MODEL", "")   # "" = pick_model() sizes it to this PC's GPU
 VOICE = "Microsoft Zira Desktop"     # same as make_voice.ps1
 MEMORY_DIR = os.path.join(os.path.expanduser("~"), ".robot_minds")
+LOG_DIR = os.path.join(MEMORY_DIR, "logs")
 MAX_NOTES = 40                        # things it chose to remember
 MAX_DIARY = 30                        # its last moves
 MAX_STEPS = 4
@@ -335,6 +339,16 @@ class Mind:
         except (OSError, ValueError):
             return {"notes": [], "diary": []}
 
+    def _log(self, text):
+        """One entry in today's log (LOG_DIR/<name>-<date>.log)."""
+        try:
+            os.makedirs(LOG_DIR, exist_ok=True)
+            path = os.path.join(LOG_DIR, f"{self.name}-{time.strftime('%Y-%m-%d')}.log")
+            with open(path, "a", encoding="utf-8") as f:
+                f.write(f"[{time.strftime('%H:%M:%S')}] {text.rstrip()}\n")
+        except OSError:
+            pass   # a log that can't be written never stops the mind
+
     def _save(self):
         os.makedirs(MEMORY_DIR, exist_ok=True)
         self.memory["notes"] = self.memory["notes"][-MAX_NOTES:]
@@ -350,12 +364,14 @@ class Mind:
             return
         self.goal = goal or "explore carefully and tell people what you notice"
         self.on, self.error = True, ""
+        self._log(f"=== MIND ON ({self.model or CHOSEN_MODEL})  goal: {self.goal}")
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
     def stop(self):
         self.on = False
         self.state = "off"
+        self._log("=== MIND OFF")
         try:
             self._act("stop", 1)
         except Exception:
@@ -378,6 +394,12 @@ class Mind:
                 self.state = "moving"
                 result = self._act(move, choice["steps"]) or {}
                 self.last = f"{move} x{choice['steps']}: {json.dumps(result)}"
+                thoughts = (self.thinking.strip() or "(none)").replace("\n", "\n    ")
+                self._log(f"sensed: {json.dumps(senses)}\n"
+                          f"thinking:\n    {thoughts}\n"
+                          f"said: {choice['say'] or '(nothing)'}\n"
+                          f"move: {move} x{choice['steps']} -> {json.dumps(result)}"
+                          + (f"\nremembers: {choice['remember']}" if choice["remember"] else ""))
                 self.memory["diary"].append({"t": time.strftime("%Y-%m-%d %H:%M"), "saw": senses, "move": move,
                                              "steps": choice["steps"], "result": result, "said": choice["say"]})
                 if choice["remember"]:
@@ -386,6 +408,7 @@ class Mind:
                 self.error = ""
             except Exception as e:   # no LLM, robot gone: say so, stand, try again
                 self.error = str(e)[:200]
+                self._log(f"! {e}")
                 try:
                     self._act("stop", 1)
                 except Exception:

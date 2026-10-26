@@ -34,6 +34,7 @@ class RemoteClient:
         self.mind             = None   # /mind (her inner life), None if the robot has none
         self.last_photo_ts    = None
         self.connected        = False
+        self.status_at        = 0.0    # time.monotonic() when the status above was asked for
         self.mind_host        = False  # drive_mind.py: this PC can drive her mind, so check in (ctl=1)
         self._running         = True
 
@@ -45,15 +46,25 @@ class RemoteClient:
     def stop(self) -> None:
         self._running = False
 
+    def retarget(self, base_url: str) -> None:
+        """Talk to another robot from now on (EMULATE: her pretend self on this PC, or back)."""
+        self.base_url  = base_url.rstrip('/')
+        self.connected = False
+        self.status, self.mind = {}, None
+        self.frame0 = self.frame1 = None
+        self.last_photo_ts = None
+
     # ── /status polling — mirrors sensor values + mode into state.py, the
     #    exact same module hud_draw.py reads on the robot ──
     def _poll_status(self) -> None:
         import camera_actions
         while self._running:
             try:
+                asked = time.monotonic()
                 r = requests.get(f"{self.base_url}/status" + ("?ctl=1" if self.mind_host else ""), timeout=1.5)
                 data = r.json()
                 self.status    = data
+                self.status_at = asked   # for settings that stick: an older status can't confirm one
                 self.connected = True
 
                 mode_name = data.get('mode')
@@ -82,14 +93,17 @@ class RemoteClient:
     # ── MJPEG stream reader — decode each frame the same RGB numpy array
     #    shape that Picamera2 hands to draw_camera_panel() on the robot ──
     def _stream_cam(self, cam_id: int) -> None:
-        url = f"{self.base_url}/video_feed/{cam_id}"
         while self._running:
             try:
-                resp = requests.get(url, stream=True, timeout=5)
+                base = self.base_url
+                resp = requests.get(f"{base}/video_feed/{cam_id}", stream=True, timeout=5)
                 buf  = b""
                 for chunk in resp.iter_content(chunk_size=4096):
                     if not self._running:
                         return
+                    if self.base_url != base:    # retargeted: this stream is the old robot's
+                        resp.close()
+                        break
                     buf  += chunk
                     start = buf.find(b'\xff\xd8')
                     end   = buf.find(b'\xff\xd9')
