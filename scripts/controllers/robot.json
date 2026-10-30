@@ -1,0 +1,83 @@
+{
+ "name": "KIDA-01",
+ "port": 5004,
+ "host": "",
+ "status": "/status",
+ "connect": [
+  "GET /unlock?pw=1234",
+  "POST /action|{\"command\":\"mode_1\"}",
+  "POST /action|{\"command\":\"scheme_wasd\"}"
+ ],
+ "stop": "POST /action|{\"command\":\"move_stop\"}",
+ "keys": {
+  "w": "POST /action|{\"command\":\"joy_drive\",\"left\":0.6,\"right\":0.6}",
+  "s": "POST /action|{\"command\":\"joy_drive\",\"left\":-0.6,\"right\":-0.6}",
+  "a": "POST /action|{\"command\":\"joy_drive\",\"left\":-0.6,\"right\":0.6}",
+  "d": "POST /action|{\"command\":\"joy_drive\",\"left\":0.6,\"right\":-0.6}"
+ },
+ "buttons": [
+  [
+   "DRIVE",
+   "POST /action|{\"command\":\"mode_1\"}"
+  ],
+  [
+   "HELLO",
+   "POST /action|{\"command\":\"hello\"}"
+  ],
+  [
+   "DANCE",
+   "POST /action|{\"command\":\"dance\"}"
+  ],
+  [
+   "PHOTO",
+   "POST /action|{\"command\":\"photo\"}"
+  ],
+  [
+   "MUSIC",
+   "POST /action|{\"command\":\"music_play\"}"
+  ],
+  [
+   "STOP MUSIC",
+   "POST /action|{\"command\":\"music_stop\"}"
+  ],
+  [
+   "LOCK",
+   "POST /action|{\"command\":\"motor_lock_on\"}"
+  ]
+ ],
+ "tiles": [
+  [
+   "Front",
+   "sensors.US0",
+   " cm"
+  ],
+  [
+   "Rear",
+   "sensors.US1",
+   " cm"
+  ],
+  [
+   "Battery",
+   "bat_pct",
+   "%"
+  ],
+  [
+   "Volts",
+   "bus_v",
+   ""
+  ],
+  [
+   "Mode",
+   "mode",
+   ""
+  ],
+  [
+   "CPU",
+   "cpu_temp",
+   " C"
+  ]
+ ],
+ "background": "#080A12",
+ "text": "#F2E9ED",
+ "accent": "#DF5BA3"
+}

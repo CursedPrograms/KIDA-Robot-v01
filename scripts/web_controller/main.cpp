@@ -282,6 +282,12 @@ static void find()
 }
 
 // ---- the window ----
+// The page takes the keyboard, or its keys do nothing until you click in it
+static void focusPage()
+{
+    if (controller) controller->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
+}
+
 static void fit()
 {
     if (!controller) return;
@@ -309,6 +315,7 @@ static void startPage()
                 BOOL ok = FALSE;
                 args->get_IsSuccess(&ok);
                 if (!ok && !showingConnect && !startingServer()) showConnect(L"No answer from " + host);
+                focusPage();
                 return S_OK;
             }).Get(), nullptr);
     web->add_WebMessageReceived(
@@ -398,6 +405,9 @@ static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wparam, LPARA
         return 0;
     case WM_SIZE:
         fit();
+        return 0;
+    case WM_SETFOCUS:
+        focusPage();
         return 0;
     case WM_DESTROY:
         PostQuitMessage(0);
