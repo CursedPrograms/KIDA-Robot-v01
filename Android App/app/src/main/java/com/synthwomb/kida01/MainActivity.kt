@@ -69,7 +69,10 @@ class WebLink : Http {
 }
 
 /** KIDA-01's controller: find, connect, hold the stick to drive, let go to stop. */
+private const val CAMERA_FEED = "/video_feed/0"
+
 class MainActivity : Activity() {
+    private lateinit var camera: CameraView
     private val link = WebLink()
     private val robot = Robot(link)
     private val driver = Driver(robot)
@@ -124,6 +127,7 @@ class MainActivity : Activity() {
                 setOnClickListener { sticks.release(); work.execute { driver.stopNow() } }
             })
         }
+        camera = CameraView(this) { say(it) }
         val row = LinearLayout(this)
         tiles = LinearLayout(this)
         robot.buttons.forEach { (name, act) -> row.addView(button(name, act)) }
@@ -133,6 +137,7 @@ class MainActivity : Activity() {
             addView(top)
             addView(HorizontalScrollView(context).apply { addView(row) })
             addView(HorizontalScrollView(context).apply { addView(tiles) })
+            addView(camera, LinearLayout.LayoutParams(-1, 0, 1f))
             addView(sticks, LinearLayout.LayoutParams(-1, 0, 1f))
         })
         showSplash()
@@ -164,6 +169,7 @@ class MainActivity : Activity() {
 
     private fun useAddress(ip: String) {
         link.base = "http://$ip:$PORT"
+        camera.show(link.base + CAMERA_FEED)
         getPreferences(Context.MODE_PRIVATE).edit().putString("ip", ip).putString("pin", pin.text.toString()).apply()
     }
 
@@ -197,6 +203,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        camera.start()
         val cm = getSystemService(ConnectivityManager::class.java)
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) { cm.bindProcessToNetwork(network) }
@@ -219,6 +226,7 @@ class MainActivity : Activity() {
 
     override fun onPause() {                  // a call, the home button, the screen going off: she stops
         running = false
+        camera.stop()
         sticks.release()
         work.execute { if (link.base.isNotEmpty()) driver.stopNow() }
         val cm = getSystemService(ConnectivityManager::class.java)
