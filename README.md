@@ -48,6 +48,8 @@
 
 ---
 
+**Camera:** her Android app shows her camera (`/video_feed/0`).
+
 ## Related Projects
 
 
