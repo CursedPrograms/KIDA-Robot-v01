@@ -135,6 +135,7 @@ class MainActivity : Activity() {
             addView(HorizontalScrollView(context).apply { addView(tiles) })
             addView(sticks, LinearLayout.LayoutParams(-1, 0, 1f))
         })
+        showSplash()
     }
 
     private fun say(text: String) = runOnUiThread { state.text = text }
