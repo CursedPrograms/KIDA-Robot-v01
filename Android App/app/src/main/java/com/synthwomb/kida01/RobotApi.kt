@@ -1,5 +1,7 @@
 package com.synthwomb.kida01
 
+import org.json.JSONObject
+
 /** How the app reaches the robot: swapped for a recorder in the tests. */
 interface Http {
     fun get(path: String): String?
@@ -12,6 +14,8 @@ interface RobotApi {
     fun drive(forward: Float, side: Float, turn: Float)
     fun stop()
     val buttons: List<Pair<String, () -> Unit>>
+    /** Its sensors, from its /status: (title, value) */
+    fun tiles(s: JSONObject): List<Pair<String, String>>
 }
 
 /**

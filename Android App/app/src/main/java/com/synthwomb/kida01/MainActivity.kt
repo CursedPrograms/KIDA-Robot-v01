@@ -78,6 +78,7 @@ class MainActivity : Activity() {
     private lateinit var state: TextView
     private lateinit var address: EditText
     private lateinit var pin: EditText
+    private lateinit var tiles: LinearLayout
     @Volatile private var running = false
     private var wifi: ConnectivityManager.NetworkCallback? = null
 
@@ -124,17 +125,41 @@ class MainActivity : Activity() {
             })
         }
         val row = LinearLayout(this)
+        tiles = LinearLayout(this)
         robot.buttons.forEach { (name, act) -> row.addView(button(name, act)) }
         setContentView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(BG)
             addView(top)
             addView(HorizontalScrollView(context).apply { addView(row) })
+            addView(HorizontalScrollView(context).apply { addView(tiles) })
             addView(sticks, LinearLayout.LayoutParams(-1, 0, 1f))
         })
     }
 
     private fun say(text: String) = runOnUiThread { state.text = text }
+
+    // Its sensors from /status, then whoever it can hear from /near. A robot with no /near just has no
+    // nearby tiles; a robot whose old firmware has no /status uses /sensors.
+    private fun refresh() {
+        val body = link.get("/status") ?: link.get("/sensors") ?: return
+        val sensors = try { robot.tiles(JSONObject(body)) } catch (_: Exception) { emptyList() }
+        val near = Tiles.near(link.get("/near"))
+        runOnUiThread { showTiles(sensors + near) }
+    }
+
+    private fun showTiles(list: List<Pair<String, String>>) {
+        tiles.removeAllViews()
+        for ((title, value) in list) {
+            tiles.addView(TextView(this).apply {
+                text = "$title\n$value"
+                gravity = Gravity.CENTER
+                setTextColor(TEXT)
+                setBackgroundColor(PANEL)
+                setPadding(22, 6, 22, 6)
+            }, LinearLayout.LayoutParams(-2, -2).apply { setMargins(4, 4, 4, 4) })
+        }
+    }
 
     private fun useAddress(ip: String) {
         link.base = "http://$ip:$PORT"
@@ -184,7 +209,7 @@ class MainActivity : Activity() {
                 if (link.base.isNotEmpty()) {
                     val s = sticks
                     work.execute { driver.tick(s.forward, s.side, s.turn) }
-                    if (++beats % 2 == 0) work.execute { link.get("/status") }   // MILA's bridge stops her if this goes quiet
+                    if (++beats % 2 == 0) work.execute { refresh() }   // MILA's bridge stops her if /status goes quiet
                 }
                 Thread.sleep(200)
             }

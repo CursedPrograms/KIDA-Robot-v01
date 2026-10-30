@@ -1,5 +1,6 @@
 package com.synthwomb.kida01
 
+import org.json.JSONObject
 import java.util.Locale
 
 // What KIDA-01 takes: the same calls as RITA and her PC controller.
@@ -20,6 +21,18 @@ class Robot(private val http: Http) : RobotApi {
         send("joy_drive", ",\"left\":${n(left)},\"right\":${n(right)}")
     }
     override fun stop() { send("move_stop") }
+    override fun tiles(s: JSONObject): List<Pair<String, String>> {
+        val sensors = s.optJSONObject("sensors")
+        return listOf(
+            "Front" to Tiles.cm(sensors?.opt("US0")),
+            "Rear" to Tiles.cm(sensors?.opt("US1")),
+            "Battery" to "${s.optInt("bat_pct")}%",
+            "Volts" to s.optString("bus_v", "--"),
+            "Mode" to s.optString("mode", "--"),
+            "CPU" to "${s.optString("cpu_temp", "--")}\u00b0C",
+        )
+    }
+
     override val buttons = listOf(
         "DRIVE" to { send("mode_1"); Unit },
         "HELLO" to { send("hello"); Unit },

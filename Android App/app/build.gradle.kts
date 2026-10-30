@@ -25,4 +25,5 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20231013")   // Android's org.json is a stub off-device
 }
