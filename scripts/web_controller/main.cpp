@@ -140,6 +140,33 @@ static void openRobot()
     web->Navigate(pageUrl().c_str());
 }
 
+// ---- a mind on this PC: if her server isn't up, start it and keep trying for a minute ----
+#ifdef ROBOT_START
+static const int START_TRIES = 20;
+static const UINT START_WAIT_MS = 3000;
+static int startTries = -1;
+
+static bool startingServer()
+{
+    if (host != L"127.0.0.1" || startTries == 0) return false;
+    if (startTries < 0) {
+        wchar_t exe[MAX_PATH];
+        GetModuleFileNameW(nullptr, exe, MAX_PATH);
+        std::wstring repo = exe;
+        repo = repo.substr(0, repo.find_last_of(L'\\'));     // builds
+        repo = repo.substr(0, repo.find_last_of(L'\\'));
+        ShellExecuteW(nullptr, L"open", (repo + L"\\run.bat").c_str(), nullptr, repo.c_str(), SW_SHOWMINNOACTIVE);
+        startTries = START_TRIES;
+    }
+    startTries--;
+    showConnect(L"Starting " + std::wstring(ROBOT_NAME) + L"...");
+    SetTimer(window, 1, START_WAIT_MS, nullptr);
+    return true;
+}
+#else
+static bool startingServer() { return false; }
+#endif
+
 // ---- FIND: the fleet list on whoever hosts this network, the same way the Android apps look ----
 static std::string httpGet(const std::wstring &server, int port, const std::wstring &path)
 {
@@ -251,7 +278,7 @@ static void startPage()
             [](ICoreWebView2 *, ICoreWebView2NavigationCompletedEventArgs *args) -> HRESULT {
                 BOOL ok = FALSE;
                 args->get_IsSuccess(&ok);
-                if (!ok && !showingConnect) showConnect(L"No answer from " + host);
+                if (!ok && !showingConnect && !startingServer()) showConnect(L"No answer from " + host);
                 return S_OK;
             }).Get(), nullptr);
     web->add_WebMessageReceived(
@@ -324,6 +351,10 @@ static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wparam, LPARA
         return 0;
     }
     switch (message) {
+    case WM_TIMER:
+        KillTimer(hwnd, wparam);
+        openRobot();
+        return 0;
     case WM_SIZE:
         fit();
         return 0;
