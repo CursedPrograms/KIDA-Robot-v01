@@ -1,33 +1,31 @@
 <p align="center"><img src="images/avatar_round.png" width="160" alt="KIDA-01"></p>
 
-[![Twitter: @NorowaretaGemu](https://img.shields.io/badge/X-@NorowaretaGemu-blue.svg?style=flat)](https://x.com/NorowaretaGemu)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<h1 align="center">KIDA-01</h1>
+<h3 align="center">Kinetic Interactive Drive Automaton</h3>
+<p align="center"><i>A DREAM Robotics Agent</i></p>
+
+<div align="center">
+
+[![Twitter: @NorowaretaGemu](https://img.shields.io/badge/X-@NorowaretaGemu-blue.svg?style=flat)](https://x.com/NorowaretaGemu) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+</div>
 
 <div align="center">
   <a href="https://ko-fi.com/cursedentertainment">
-    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi" style="width: 20%;"/>
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi" width="180"/>
   </a>
 </div>
+
 <div align="center">
   <img alt="Python" src="https://img.shields.io/badge/python%20-%23323330.svg?&style=for-the-badge&logo=python&logoColor=white"/>
   <img alt="C++" src="https://img.shields.io/badge/c++%20-%23323330.svg?&style=for-the-badge&logo=c%2B%2B&logoColor=white"/>
-</div>
-
-<div align="center">
   <img alt="Arduino" src="https://img.shields.io/badge/-Arduino-323330?style=for-the-badge&logo=arduino&logoColor=white"/>
   <img alt="Raspberry Pi" src="https://img.shields.io/badge/-Raspberry_Pi-323330?style=for-the-badge&logo=raspberry-pi&logoColor=white"/>
-</div>
-
-<div align="center">
   <img alt="Git" src="https://img.shields.io/badge/git%20-%23323330.svg?&style=for-the-badge&logo=git&logoColor=white"/>
   <img alt="Shell" src="https://img.shields.io/badge/Shell-%23323330.svg?&style=for-the-badge&logo=gnu-bash&logoColor=white"/>
 </div>
 
 ---
-
-# KIDA-01 
-## Kinetic Interactive Drive Automaton
-### A DREAM Robotics Agent
 
 - Robot Type: Tank
 
@@ -48,7 +46,10 @@
 
 **Windows controller:** [`builds/KIDA-01-Controller.exe`](builds/KIDA-01-Controller.exe) shows KIDA-01's own web page in a window, so it always matches the page. Source: `scripts/web_controller`.
 
-## Related Projects (DREAM Robotics Ecosystem)
+---
+
+## Related Projects
+
 
 <table>
   <tr>
@@ -72,7 +73,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 <details>
 <summary><b>Overview</b></summary>
@@ -305,6 +306,8 @@ Saving keeps the old file as `config.json.bak`. Most settings take effect when s
 - **Recommended:** Raspberry Pi OS (Bookworm)
 - **Kernel:** `6.12.62+rpt-rpi-2712`
 
+---
+
 ## Hardware
 
 ### Compute
@@ -376,7 +379,6 @@ This is how she's wired today, and it's the default in `config.json` `Cameras` (
 </details>
 
 ---
-
 
 <div align="center">
   <img src="kida.gif" alt="KIDA Robot" width="400"/>
@@ -634,7 +636,6 @@ python imx500_pose_estimation_higherhrnet_demo.py
 #### Documentation
 https://www.raspberrypi.com/documentation/accessories/ai-camera.html
 https://github.com/raspberrypi/picamera2/tree/main/examples/imx500
-
 
 </details>
 
@@ -1070,18 +1071,17 @@ A Pi can't speak ESP-NOW, so KIDA-01 uses the Pi's own **Bluetooth LE**: she bea
 
 ---
 
-<br>
-<div align="center">© Cursed Entertainment 2026</div>
-<br>
+<div align="center">&copy; Cursed Entertainment 2026</div>
+
 <div align="center">
-  <a href="https://cursed-entertainment.itch.io/" target="_blank">
-    <img src="https://github.com/CursedPrograms/cursedentertainment/raw/main/images/logos/logo-wide-grey.png" alt="CursedEntertainment Logo" style="width:250px;">
+  <a href="https://cursed-entertainment.itch.io/">
+    <img src="https://github.com/CursedPrograms/cursedentertainment/raw/main/images/logos/logo-wide-grey.png" alt="Cursed Entertainment" width="250"/>
   </a>
 </div>
-<br>
+
 <div align="center">
-  <a href="https://github.com/SynthWomb" target="_blank">
-    <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png" alt="SynthWomb" style="width:200px;"/>
+  <a href="https://github.com/SynthWomb">
+    <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png?raw=true" alt="SynthWomb" width="200"/>
   </a>
 </div>
 
