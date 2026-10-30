@@ -140,7 +140,7 @@ static void openRobot()
     web->Navigate(pageUrl().c_str());
 }
 
-// ---- a mind on this PC: if her server isn't up, start it and keep trying for a minute ----
+// ---- something on this PC: if its server isn't up, start it and keep trying for a minute ----
 #ifdef ROBOT_START
 static const int START_TRIES = 20;
 static const UINT START_WAIT_MS = 3000;
