@@ -228,7 +228,7 @@ class FakeKida01(kit.FakeRobot):
                 ["I'm only pretending to be me, but I heard you.", "Mm. Tell me more.",
                  "I'd answer properly if I were really here."])}
         elif command in ("go_home", "set_home", "nav_stop", "lidar_sweep", "calibrate_wheels", "trim_up",
-                         "trim_down", "voice_mode_wakeword", "voice_mode_always_on", "chirp",
+                         "trim_down", "voice_mode_wakeword", "voice_mode_always_on", "chirp", "hello", "dance",
                          "route_record_start", "route_record_stop", "route_play", "route_patrol",
                          "route_delete", "face_enroll", "face_forget"):
             self.log(f"{command}: pretend")

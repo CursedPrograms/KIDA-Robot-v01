@@ -35,6 +35,7 @@ KEYBOARD = [
         ("SPACE", "hard stop: motors and music"),
     ]),
     ("Camera, lights, music", [
+        ("J / N", "HELLO / DANCE, on the spot (PC controller; buttons on her dashboard)"),
         ("C", "photo"),
         ("V", "video"),
         ("I", "cam 0 inference (YOLO) on / off"),

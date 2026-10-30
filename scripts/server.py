@@ -2,6 +2,7 @@
 # Serves the HUD dashboard at http://<ip>:5004/
 # Provides MJPEG streams (/video_feed/0 and /video_feed/1) and a /status JSON endpoint.
 
+import zlib
 import os
 import socket
 import time
@@ -239,7 +240,12 @@ def status():
     cpu_temp    = get_cpu_temp()
     cpu, ram    = get_system_stats()
     _, last_photo_ts = camera_memory.get_last_photo()
+    # Her settings in one number (WHIP's rev): a page or program sees at once that something changed elsewhere
+    rev = zlib.crc32(repr([mode_manager.current_mode().name, state.voice_mode.name, getattr(state, 'motorSpeedValue', 0),
+                           getattr(state, 'drive_scheme', ''), getattr(state, 'inference_on', False),
+                           getattr(state, 'motor_lock', False)]).encode())
     return jsonify({
+        'rev':          rev,
         'name':         THIS_NAME,
         'ip':           get_local_ip(),
         'mode':         mode_manager.current_mode().name,

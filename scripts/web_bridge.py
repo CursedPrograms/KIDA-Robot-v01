@@ -86,6 +86,35 @@ def _user_took_over() -> None:
         pass
 
 
+_show_cancel = threading.Event()
+_show_on = threading.Event()
+
+
+def _run_show(kind: str) -> None:
+    """HELLO: she says it and shakes the servo mount. DANCE: left, right on the spot, the mount the
+    other way, and "yay" after (the Arduino's buzzer is quiet while she moves). A stop ends it, and
+    arduino.send_command drops everything while the wheels are locked."""
+    import mode_manager
+    from arduino import send_command
+    try:
+        if kind == "hello":
+            action('chirp', text='0')
+        for i in range(6 if kind == "hello" else 8):
+            if _show_cancel.is_set() or not mode_manager.is_keyboard():
+                break
+            left = i % 2 == 0
+            send_command("dev00", f"SERVO:{60 if left else 120}")
+            if kind == "dance":
+                send_command("dev00", _DRIVE_DIRECTIONS['move_left' if left else 'move_right'])
+            time.sleep(0.35)
+        send_command("dev00", "STOP")
+        send_command("dev00", "SERVO:90")
+        if kind == "dance":
+            action('chirp', text='2')
+    finally:
+        _show_on.clear()
+
+
 def is_driving() -> bool:
     """True while the web/remote/gamepad drive is holding the motors on."""
     return _web_driving
@@ -227,6 +256,17 @@ def action(command: str, password: str | None = None,
         if not 0 <= u <= 16:
             return False
         send_command("dev00", f"TALK:{u}")
+    elif command in ('hello', 'dance'):
+        # On the spot, from her dashboard or controller. KEYBOARD only: the other modes own the
+        # wheels and the servo (as servo_aim).
+        import mode_manager, lidar_sweep
+        from state import DriveMode
+        if (mode_manager.current_mode() not in (DriveMode.KEYBOARD, DriveMode.IDLE)
+                or lidar_sweep._running.is_set() or _show_on.is_set()):
+            return False
+        _show_cancel.clear()
+        _show_on.set()
+        threading.Thread(target=_run_show, args=(command,), daemon=True, name="show").start()
     elif command == 'save_inference':
         import camera_actions
         camera_actions.save_inference_photo()
@@ -240,6 +280,7 @@ def action(command: str, password: str | None = None,
             _last_web_drive_ts = time.time()
             _web_driving = True
     elif command in ('move_stop', 'hard_stop'):
+        _show_cancel.set()
         from arduino import send_command, set_stopped_lights
         send_command("dev00", "STOP")
         set_stopped_lights()

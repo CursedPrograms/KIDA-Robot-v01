@@ -131,6 +131,10 @@ def handle_events(events, buttons: list, pressed_keys: set, remote,
                 chat_prompt.open(lambda text: remote.send_action("chat", text=text))
             elif k == pygame.K_h:
                 remote.send_action("go_home")
+            elif k == pygame.K_j:
+                remote.send_action("hello")
+            elif k == pygame.K_n:
+                remote.send_action("dance")
             elif k == pygame.K_c:
                 remote.send_action("photo")
             elif k == pygame.K_v:
