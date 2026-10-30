@@ -239,3 +239,7 @@ kida_controller.ini
 # The PC controller: this PC's settings, the session test's screenshot
 controller/controller_settings.json
 controller/session_test.png
+
+# Controllers, built and kept
+!builds/
+!builds/*.exe
