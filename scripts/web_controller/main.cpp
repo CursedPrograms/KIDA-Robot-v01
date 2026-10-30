@@ -38,6 +38,7 @@ using Microsoft::WRL::ComPtr;
 
 static UINT foundMessage;      // registered: WebView2 uses the WM_APP range on this window itself
 static const DWORD HTTP_TIMEOUT_MS = 1500;
+static const DWORD PROBE_TIMEOUT_MS = 3000;
 
 static HWND window;
 static ComPtr<ICoreWebView2Controller> controller;
@@ -129,15 +130,23 @@ static void showConnect(const std::wstring &note)
     web->NavigateToString(widen(page).c_str());
 }
 
+static UINT answerMessage;     // wparam: which try; lparam: did it answer
+static unsigned probe = 0;
+static bool answers(const std::wstring &server, int port, const std::wstring &path);
+
 static void openRobot()
 {
     if (host.empty()) {
         showConnect(L"Type the address, or press FIND");
         return;
     }
-    showingConnect = false;
-    setTitle(host);
-    web->Navigate(pageUrl().c_str());
+    // Ask first: with no route to it the browser sits on an empty window for 20 s or more
+    showConnect(L"Connecting to " + host + L"...");
+    const unsigned mine = ++probe;
+    const std::wstring server = host;
+    std::thread([mine, server] {
+        PostMessageW(window, answerMessage, mine, answers(server, ROBOT_PORT, ROBOT_PATH));
+    }).detach();
 }
 
 // ---- something on this PC: if its server isn't up, start it and keep trying for a minute ----
@@ -159,7 +168,7 @@ static bool startingServer()
         startTries = START_TRIES;
     }
     startTries--;
-    showConnect(L"Starting " + std::wstring(ROBOT_NAME) + L"...");
+    showConnect(L"Starting " + std::wstring(ROBOT_NAME) + L" on this PC...");
     SetTimer(window, 1, START_WAIT_MS, nullptr);
     return true;
 }
@@ -168,6 +177,24 @@ static bool startingServer() { return false; }
 #endif
 
 // ---- FIND: the fleet list on whoever hosts this network, the same way the Android apps look ----
+// Its headers are enough: an ESP32 can take seconds to send a whole page
+static bool answers(const std::wstring &server, int port, const std::wstring &path)
+{
+    bool ok = false;
+    HINTERNET session = WinHttpOpen(L"DREAM controller", WINHTTP_ACCESS_TYPE_NO_PROXY, nullptr, nullptr, 0);
+    if (!session) return false;
+    WinHttpSetTimeouts(session, PROBE_TIMEOUT_MS, PROBE_TIMEOUT_MS, PROBE_TIMEOUT_MS, PROBE_TIMEOUT_MS);
+    HINTERNET connection = WinHttpConnect(session, server.c_str(), (INTERNET_PORT)port, 0);
+    HINTERNET request = connection ? WinHttpOpenRequest(connection, L"GET", path.c_str(), nullptr, nullptr, nullptr, 0) : nullptr;
+    if (request && WinHttpSendRequest(request, nullptr, 0, nullptr, 0, 0, 0)) {
+        ok = WinHttpReceiveResponse(request, nullptr) != FALSE;
+    }
+    if (request) WinHttpCloseHandle(request);
+    if (connection) WinHttpCloseHandle(connection);
+    WinHttpCloseHandle(session);
+    return ok;
+}
+
 static std::string httpGet(const std::wstring &server, int port, const std::wstring &path)
 {
     std::string body;
@@ -241,7 +268,10 @@ static void find()
 {
     std::thread([] {
         std::string ip;
-        for (const std::wstring &gateway : gateways()) {
+#ifdef ROBOT_START
+        if (!httpGet(L"127.0.0.1", ROBOT_PORT, ROBOT_PATH).empty()) ip = "127.0.0.1";   // it runs on this PC
+#endif
+        for (const std::wstring &gateway : ip.empty() ? gateways() : std::vector<std::wstring>()) {
             std::string list = httpGet(gateway, 5000, L"/fleet");
             if (list.empty()) list = httpGet(gateway, 5000, L"/robots");
             ip = robotIn(list);
@@ -338,6 +368,17 @@ static void startWebView()
 
 static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+    if (message == answerMessage) {
+        if ((unsigned)wparam != probe) return 0;      // an older try, for an address since changed
+        if (lparam) {
+            showingConnect = false;
+            setTitle(host);
+            web->Navigate(pageUrl().c_str());
+        } else if (!startingServer()) {
+            showConnect(L"No answer from " + host);
+        }
+        return 0;
+    }
     if (message == foundMessage) {
         std::wstring *ip = reinterpret_cast<std::wstring *>(lparam);
         if (ip->empty()) {
@@ -369,6 +410,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show)
 {
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     foundMessage = RegisterWindowMessageW(L"DreamControllerFound");
+    answerMessage = RegisterWindowMessageW(L"DreamControllerAnswer");
     host = loadHost();
     int argc = 0;
     LPWSTR *argv = CommandLineToArgvW(GetCommandLineW(), &argc);
