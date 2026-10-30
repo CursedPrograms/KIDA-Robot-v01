@@ -42,6 +42,10 @@
 
 ---
 
+<div align="center">
+  <img src="images/screenshots/controller.gif" alt="KIDA-01's Python controller, driving a pretend KIDA-01" width="420"/>
+</div>
+
 **Windows controller:** [`builds/KIDA-01-Controller.exe`](builds/KIDA-01-Controller.exe) shows KIDA-01's own web page in a window, so it always matches the page. Source: `scripts/web_controller`.
 
 ## Related Projects (DREAM Robotics Ecosystem)
