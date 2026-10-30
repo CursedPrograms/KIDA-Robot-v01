@@ -62,6 +62,20 @@ import controller_kit as kit          # controller/controller_kit.py: settings t
 APP_NAME = "KIDA — Remote Controller"
 FAKE_URL = "http://127.0.0.1:5004"     # EMULATE: fake_kida01.py
 
+_ORIGINAL = dict(hud_draw.C)           # DEFAULT: exactly her own HUD
+
+
+def apply_theme(name, custom=None):
+    """DEFAULT (her HUD's colours), LIGHT or CUSTOM (controller_settings.json), on this PC only."""
+    hud_draw.C.update(_ORIGINAL)
+    if name == "DEFAULT":
+        return
+    c = kit.theme_colours(name, custom)
+    hud_draw.C.update(background=c["background"], hud=c["background"], hud_border=c["border"], panel=c["panel"],
+                      panel_dark=c["background"], panel_btn=c["panel"], border=c["border"], border_cam=c["border"],
+                      border_btn=c["border"], label=c["text_sec"], label2=c["text_sec"], heading=c["accent"],
+                      text=c["text"], dim=c["text_dim"])
+
 
 def _resolve_robot_url() -> tuple:
     """(robot URL or None, emulate)."""
@@ -224,7 +238,16 @@ def run_controller() -> None:
 
     stop_btn = Button((0, 0, 160, 36), (255, 120, 120), "STOP", stop_anywhere)
     emulate_btn = Button((0, 0, 160, 36), (230, 200, 120), "EMULATE: ON" if emulate else "EMULATE: OFF", _emulate_click)
-    buttons.extend([stop_btn, emulate_btn])
+    settings = kit.Settings()              # controller_settings.json: the theme stays picked
+    apply_theme(settings.theme, settings.get("custom"))
+
+    def _theme_click():
+        settings.next_theme()
+        apply_theme(settings.theme, settings.get("custom"))
+        theme_btn.text = theme_btn.label = f"THEME: {settings.theme}"
+
+    theme_btn = Button((0, 0, 160, 36), (170, 220, 230), f"THEME: {settings.theme}", _theme_click)
+    buttons.extend([stop_btn, emulate_btn, theme_btn])
 
     char_image          = None
     # MIND mode (9): this PC's LLM drives her when it can think and her
@@ -260,7 +283,7 @@ def run_controller() -> None:
         # ════════════════════════════════
         #  RENDER — same draw calls as ui.py, fed from network data
         # ════════════════════════════════
-        screen.fill((7, 9, 16))
+        screen.fill(hud_draw.C["background"])
 
         hud_draw.draw_static_panel(screen, char_image, FACE_RECT,
                                    "KIDA", fonts["xs"], fonts["nosig"])
@@ -271,8 +294,8 @@ def run_controller() -> None:
         hud_draw.draw_static_panel(screen, last_photo_surf, PHOTO_RECT,
                                    "Last Photo Taken", fonts["xs"], fonts["nosig"])
 
-        hud_draw.draw_panel(screen, HUD_RECT, fill=(7, 11, 20), alpha=218,
-                            border=(32, 52, 88), radius=0)
+        hud_draw.draw_panel(screen, HUD_RECT, fill=hud_draw.C["hud"], alpha=218,
+                            border=hud_draw.C["hud_border"], radius=0)
 
         at     = remote.status_at   # first: the status read after it is at least that new
         status = remote.status

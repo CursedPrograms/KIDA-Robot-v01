@@ -26,6 +26,24 @@ _MODE_LABEL = {
     DriveMode.IDLE:          ("IDLE", (180,  80,  80)),
 }
 
+# ── Colours by name: as ever on her own screen; the PC controller's THEME changes them ──
+C = {
+    "background": (7, 9, 16),
+    "hud":        (7, 11, 20),
+    "hud_border": (32, 52, 88),
+    "panel":      (14, 18, 30),
+    "panel_dark": (8, 10, 18),
+    "panel_btn":  (10, 14, 26),
+    "border":     (50, 70, 110),
+    "border_cam": (50, 72, 115),
+    "border_btn": (42, 62, 100),
+    "label":      (150, 185, 255),
+    "label2":     (160, 190, 235),
+    "heading":    (100, 150, 210),
+    "text":       (215, 230, 255),
+    "dim":        (80, 100, 140),
+}
+
 # ── Panel surface cache (avoids per-frame allocation) ──
 _panel_cache: dict = {}
 
@@ -45,8 +63,10 @@ def _text_right(surface: pygame.Surface) -> int:
 
 
 def draw_panel(surface: pygame.Surface, rect: pygame.Rect,
-               fill=(14, 18, 30), alpha=210,
-               border=(50, 70, 110), radius=6) -> None:
+               fill=None, alpha=210,
+               border=None, radius=6) -> None:
+    fill = C["panel"] if fill is None else fill
+    border = C["border"] if border is None else border
     key = (rect.size, fill, alpha, border, radius)
     if key not in _panel_cache:
         s = pygame.Surface(rect.size, pygame.SRCALPHA)
@@ -66,11 +86,11 @@ def draw_camera_panel(surface: pygame.Surface, frame, rect: pygame.Rect,
         except Exception as e:
             print(f"[Draw {label}] {e}")
     else:
-        draw_panel(surface, rect, fill=(8, 10, 18), alpha=240)
+        draw_panel(surface, rect, fill=C["panel_dark"], alpha=240)
         sig = nosig_font.render(_fit(nosig_font, f"[ {label} — NO SIGNAL ]", rect.width - 12), True, (60, 75, 100))
         surface.blit(sig, sig.get_rect(center=rect.center))
-    pygame.draw.rect(surface, (50, 72, 115), rect, 2)
-    tag = label_font.render(_fit(label_font, label, rect.width - 12), True, (150, 185, 255))
+    pygame.draw.rect(surface, C["border_cam"], rect, 2)
+    tag = label_font.render(_fit(label_font, label, rect.width - 12), True, C["label"])
     surface.blit(tag, (rect.x + 6, rect.y + 5))
 
 
@@ -102,11 +122,11 @@ def draw_static_panel(surface: pygame.Surface, image_surf, rect: pygame.Rect,
     if image_surf is not None:
         surface.blit(image_surf, rect.topleft)
     else:
-        draw_panel(surface, rect, fill=(8, 10, 18), alpha=240)
+        draw_panel(surface, rect, fill=C["panel_dark"], alpha=240)
         sig = nosig_font.render(_fit(nosig_font, f"[ {label} — NO SIGNAL ]", rect.width - 12), True, (60, 75, 100))
         surface.blit(sig, sig.get_rect(center=rect.center))
-    pygame.draw.rect(surface, (50, 72, 115), rect, 2)
-    tag = label_font.render(_fit(label_font, label, rect.width - 12), True, (150, 185, 255))
+    pygame.draw.rect(surface, C["border_cam"], rect, 2)
+    tag = label_font.render(_fit(label_font, label, rect.width - 12), True, C["label"])
     surface.blit(tag, (rect.x + 6, rect.y + 5))
 
 
@@ -138,7 +158,7 @@ def draw_status_strip(surface: pygame.Surface, fonts: dict,
              f"RAM:{ram:.0f}%  IP:{local_ip}  "
              f"Inf:{'ON' if inference_on else 'off'}  Mus:{music_sym}  Mode:",
              right - sen_x1 - mode_surf.get_width()),
-        True, (160, 190, 235),
+        True, C["label2"],
     )
     surface.blit(st_base, (sen_x1, hud_y + 24))
 
@@ -146,7 +166,7 @@ def draw_status_strip(surface: pygame.Surface, fonts: dict,
 
     hint = fonts["xs"].render(
         _fit(fonts["xs"], "  1=KB  2=IR  3=AUTO  4=IDLE  5=LINE  6=WATCH  7=LANE  8=FOLLOW", right - sen_x1),
-        True, (80, 100, 140),
+        True, C["dim"],
     )
     surface.blit(hint, (sen_x1, hud_y + 42))
     x = sen_x1 + hint.get_width() + 12
@@ -184,7 +204,7 @@ def draw_sensor_grid(surface: pygame.Surface, fonts: dict,
         y   = sen_top + row * 19
         surface.blit(lbl_surf, (x, y))
         val_s = fonts["xs"].render(
-            _fit(fonts["xs"], str(getattr(state, attr, "—")), val_w), True, (215, 230, 255)
+            _fit(fonts["xs"], str(getattr(state, attr, "—")), val_w), True, C["text"]
         )
         surface.blit(val_s, (x + 88, y))
 
@@ -193,10 +213,10 @@ def draw_button_panel(surface: pygame.Surface, fonts: dict,
                       buttons: list, hud_y: int,
                       btn_panel_x: int, btn_panel_rect: pygame.Rect,
                       music_on: bool = False) -> None:
-    draw_panel(surface, btn_panel_rect, fill=(10, 14, 26), alpha=230,
-               border=(42, 62, 100), radius=6)
+    draw_panel(surface, btn_panel_rect, fill=C["panel_btn"], alpha=230,
+               border=C["border_btn"], radius=6)
     surface.blit(
-        fonts["hd"].render("CONTROLS", True, (100, 150, 210)),
+        fonts["hd"].render("CONTROLS", True, C["heading"]),
         (btn_panel_x, hud_y + 8),
     )
     btn_margin = 6

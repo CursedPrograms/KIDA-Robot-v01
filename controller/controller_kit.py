@@ -130,6 +130,57 @@ def fit(text, font, width):
 
 # ---- settings that stick ----
 
+# ---- a robot from above: its wheels or tracks turning, its sonar reaching out ----
+VIEW_RANGE_CM = 150          # a sonar line at the panel's edge
+_view_colours = {}
+
+
+def draw_top_view(surface, rect, theme, custom, font, kind, drives, sonar):
+    """kind "tank": drives = [left, right]; "mecanum": [front left, front right, back left, back right],
+    each -1..1. sonar: [(degrees anticlockwise from ahead, cm)]; a reading of 0 or less isn't drawn."""
+    import math
+    import time
+    import pygame
+    c = _view_colours.setdefault((theme, str(custom)), theme_colours(theme, custom))
+    pygame.draw.rect(surface, c["panel"], rect, border_radius=8)
+    pygame.draw.rect(surface, c["border"], rect, 1, border_radius=8)
+    cx, cy = rect.centerx, rect.centery
+    reach = min(rect.w, rect.h) / 2 - 8
+    old_clip = surface.get_clip()
+    surface.set_clip(rect)
+    for deg, cm in sonar:
+        if cm is None or cm <= 0:
+            continue
+        a = math.radians(deg)
+        d = min(cm, VIEW_RANGE_CM) / VIEW_RANGE_CM * reach
+        x, y = cx - d * math.sin(a), cy - d * math.cos(a)
+        pygame.draw.line(surface, c["border"], (cx, cy), (x, y), 1)
+        if cm < VIEW_RANGE_CM:      # a wall: a short bar across the end of the line
+            dx, dy = 12 * math.cos(a), -12 * math.sin(a)
+            pygame.draw.line(surface, c["accent"], (x - dx, y - dy), (x + dx, y + dy), 3)
+    surface.set_clip(old_clip)
+    body = pygame.Rect(0, 0, 44, 62)
+    body.center = (cx, cy)
+    pygame.draw.rect(surface, c["border"], body, border_radius=6)
+    pygame.draw.polygon(surface, c["accent"], [(cx, body.y + 4), (cx - 6, body.y + 14), (cx + 6, body.y + 14)])
+    if kind == "tank":
+        parts = [(pygame.Rect(body.x - 13, body.y - 2, 11, 66), drives[0]), (pygame.Rect(body.right + 2, body.y - 2, 11, 66), drives[1])]
+    else:
+        parts = [(pygame.Rect(x, y, 11, 24), d) for (x, y), d in zip(
+            ((body.x - 13, body.y - 2), (body.right + 2, body.y - 2), (body.x - 13, body.bottom - 22), (body.right + 2, body.bottom - 22)), drives)]
+    now = time.monotonic()
+    for r, d in parts:
+        pygame.draw.rect(surface, c["text_dim"], r, border_radius=3)
+        step = 8
+        off = (now * 40 * d) % step     # the treads run the way that side is driving
+        y = r.y - step + off
+        while y < r.bottom:
+            if y >= r.y:
+                pygame.draw.line(surface, c["accent"] if d else c["panel"], (r.x + 1, y), (r.right - 2, y), 2)
+            y += step
+    surface.blit(font.render("from above", True, c["text_sec"]), (rect.x + 8, rect.y + 6))
+
+
 class Pending:
     """Settings sent again until the robot's status confirms them: a robot busy mid-move can miss a
     one-shot request, and the controller then snapped back to the old value."""
