@@ -51,6 +51,11 @@ def click(label):
     results.append((False, f"no button {label!r}"))
 
 
+def lit(label):
+    """Clickable: Play Music stays grey until her status says the music has stopped."""
+    return any(b.label == label and b.enabled for b in seen["buttons"])
+
+
 def script(robot):
     def wait_for(what, cond, frames=90):          # 90 frames = 3 s at 30 fps
         for _ in range(frames):
@@ -127,6 +132,7 @@ def script(robot):
     yield from wait_for("M: music on", lambda: robot.music_on)
     tap(pygame.K_SPACE)
     yield from wait_for("Space: hard stop (music off too)", lambda: not robot.music_on)
+    yield from wait_for("Play Music lights up once her status says it's off", lambda: lit("Play Music"))
     click("Play Music")
     yield from wait_for("Play Music button", lambda: robot.music_on)
     click("Stop Music")
