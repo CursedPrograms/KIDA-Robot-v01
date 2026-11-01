@@ -21,10 +21,10 @@ NORA_PORT = 5000            # NORA's fleet-registry port
 HEARTBEAT_SECS = 10         # must stay under NORA's FLEET_TTL_MS (20s) or the entry flaps
 
 
-def _announce(host, port, name, capabilities):
+def _announce(url, name, capabilities):
     try:
         requests.post(
-            f"http://{host}:{port}/register",
+            f"{url}/register",
             data={
                 "name": name,
                 "type": "robot",
@@ -37,13 +37,14 @@ def _announce(host, port, name, capabilities):
         return False
 
 
-def start_fleet_heartbeat(name, capabilities=None,
-                           host=NORA_HOST, port=NORA_PORT,
+def start_fleet_heartbeat(name, capabilities=None, targets=None,
                            interval=HEARTBEAT_SECS):
     """
     Start a background heartbeat thread that repeatedly registers this
-    KIDA instance with NORA's fleet registry. Returns the daemon thread;
-    it never returns on its own so there's normally no need to join() it.
+    KIDA instance with the fleet's registries. targets() gives their base
+    URLs and is asked on every beat, as the ladder moves her between networks
+    (default: NORA). Returns the daemon thread; it never returns on its own
+    so there's normally no need to join() it.
     """
     capabilities = capabilities or [
         "camera", "object_detection", "voice_assistant",
@@ -55,7 +56,12 @@ def start_fleet_heartbeat(name, capabilities=None,
 
     def _loop():
         while True:
-            _announce(host, port, name, capabilities)
+            try:
+                urls = targets() if targets else [f"http://{NORA_HOST}:{NORA_PORT}"]
+            except Exception:
+                urls = []   # try again next beat: the heartbeat must outlive anything
+            for url in urls:
+                _announce(url, name, capabilities)
             time.sleep(interval)
 
     t = threading.Thread(target=_loop, daemon=True, name="fleet-heartbeat")

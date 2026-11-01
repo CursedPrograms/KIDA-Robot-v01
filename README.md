@@ -956,6 +956,10 @@ WiFi (`ladder_setup.sh`), and restarts her if she crashes, but not when you quit
 desktop auto-login first (`sudo raspi-config` → System Options → Boot / Auto Login → Desktop Autologin),
 and reboot once after the first install.
 
+The ladder is on by default: she joins the highest fleet network she can see, and with none in sight she
+leaves your home WiFi and hosts `KIDA01` herself. To keep her on your WiFi, set `"FleetLadder": false` in
+`config.json`, or `FLEET_LADDER=0` for one run.
+
 ```bash
 sudo systemctl status kida      # running?
 journalctl -u kida -f           # live log (also logs/kida_run.log)

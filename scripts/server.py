@@ -2,6 +2,7 @@
 # Serves the HUD dashboard at http://<ip>:5004/
 # Provides MJPEG streams (/video_feed/0 and /video_feed/1) and a /status JSON endpoint.
 
+import json
 import zlib
 import os
 import socket
@@ -12,6 +13,7 @@ from flask import Flask, render_template, Response, jsonify, request, send_file
 from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser
 
 import fleet_register
+from fleet_ladder import FleetLadder, REGISTRY_PORT
 from fleet_near import FleetNear
 
 _here = os.path.dirname(os.path.abspath(__file__))
@@ -258,6 +260,7 @@ def status():
         'inference_on': getattr(state, 'inference_on', False),
         'motor_lock':   getattr(state, 'motor_lock', False),
         'tipped':       getattr(state, 'tipped', False),
+        'ladder':       LADDER.status() if LADDER else None,
         'drive_scheme': getattr(state, 'drive_scheme', 'WASD'),
         'active_cam_id': camera_actions.active_cam_id,
         'last_photo_ts': last_photo_ts,
@@ -531,11 +534,56 @@ def options_json():
     return jsonify({'ok': True})
 
 
+# ── The fleet's WiFi ladder (fleet_ladder.py, fleet TODO section 2) ──────────────
+LADDER = None
+
+
+def _ladder_on() -> bool:
+    """On unless Config.FleetLadder is false. FLEET_LADDER=0 turns it off for a run."""
+    if os.environ.get("FLEET_LADDER") in ("0", "false", "no"):
+        return False
+    try:
+        with open(os.path.join(_here, '..', 'config.json'), encoding='utf-8') as f:
+            return bool(json.load(f)["Config"].get("FleetLadder", True))
+    except (OSError, ValueError, KeyError):
+        return True
+
+
+def _follow_ip() -> None:
+    """The ladder moves her between networks: tell Zeroconf her new address."""
+    global my_ip
+    ip = _get_ip()
+    if ip in (my_ip, '127.0.0.1'):
+        return
+    my_ip = ip
+    zc_info.addresses = [socket.inet_aton(ip)]
+    zeroconf.update_service(zc_info)
+    print(f"[{THIS_NAME}] Now on {ip}")
+
+
+def _fleet_targets() -> list:
+    """The base url of every fleet registry to heartbeat right now."""
+    import nina_report
+    _follow_ip()
+    host = LADDER.registry_host() if LADDER else None
+    if host:                                               # the ladder knows who hosts (herself: 127.0.0.1)
+        urls = [f"http://{host}:{REGISTRY_PORT}"]
+    elif my_ip != fleet_register.NORA_HOST:                # KIDA as her own hotspot is 192.168.4.1 too
+        urls = [f"http://{fleet_register.NORA_HOST}:{fleet_register.NORA_PORT}"]
+    else:
+        urls = []
+    return list(dict.fromkeys(urls + list(nina_report.rift_servers.values())))
+
+
 # ── Entry point ──────────────────────────────────────────────────────────────────
 def run_flask_server():
-    fleet_register.start_fleet_heartbeat(THIS_NAME)
+    global LADDER
     import nina_report
     nina_report.start(zeroconf)   # her state and distances to NINA every 15 s, once RIFT is found
+    # She joins the highest fleet network she sees (RIFT > ... > WHIP), checks every 15 s that it's
+    # still there and moves up when a higher one appears; with none she hosts "KIDA01" + the fleet list.
+    LADDER = FleetLadder(THIS_NAME, enabled=_ladder_on()).start()
+    fleet_register.start_fleet_heartbeat(THIS_NAME, targets=_fleet_targets)
     try:
         app.run(host='0.0.0.0', port=THIS_PORT, debug=False, threaded=True)
     finally:

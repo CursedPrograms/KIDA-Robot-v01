@@ -17,4 +17,4 @@ polkit.addRule(function(action, subject) {
 RULE_EOF
 chmod 644 "$RULE"
 systemctl restart polkit 2>/dev/null || true
-echo "Done: $RUN_USER can change the WiFi. Try it: python3 scripts/fleet_ladder.py KIDA00 (a look, changes nothing)"
+echo "Done: $RUN_USER can change the WiFi. Try it: python3 scripts/fleet_ladder.py KIDA01 (a look, changes nothing)"
