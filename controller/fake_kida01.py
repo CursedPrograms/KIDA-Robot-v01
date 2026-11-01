@@ -134,7 +134,7 @@ class FakeKida01(kit.FakeRobot):
         now = time.monotonic()
         drive_cmds = {"move_forward", "move_backward", "move_left", "move_right", "move_curve", "joy_drive",
                       "left_forward", "left_backward", "right_forward", "right_backward", "left_stop",
-                      "right_stop", "move_stop", "hard_stop", "servo_aim"}
+                      "right_stop", "move_stop", "hard_stop", "stop_anywhere", "servo_aim"}
         if self.drop > 0 and command not in drive_cmds:
             self.drop -= 1
             self.log(f"(lost {command}, on purpose)")
@@ -185,8 +185,10 @@ class FakeKida01(kit.FakeRobot):
                 self.drive_until = now + HEARTBEAT_S
         elif command == "left_stop":      self.tracks[0] = 0.0
         elif command == "right_stop":     self.tracks[1] = 0.0
-        elif command in ("move_stop", "hard_stop"):
+        elif command in ("move_stop", "hard_stop", "stop_anywhere"):
             self.tracks, self.drive_until = [0.0, 0.0], 0.0
+            if command != "move_stop" and self.mode != "IDLE":
+                self.mode, self.mind_move["steps"] = "KEYBOARD", 0
             if command == "hard_stop":
                 self.music_on = False
         elif command == "scheme_wasd":    self.scheme = "WASD"

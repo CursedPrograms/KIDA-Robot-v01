@@ -65,7 +65,7 @@ def _mind_activity(command: str, left=None, right=None) -> None:
             return   # heartbeats/zeros and aiming aren't "someone's here" on their own
     else:
         moving = command in _DRIVE_DIRECTIONS or command in _MOVING_COMMANDS
-    if moving or command in ('hard_stop', 'move_stop'):
+    if moving or command in ('hard_stop', 'move_stop', 'stop_anywhere'):
         _user_took_over()
     try:
         import kida_mind_host
@@ -279,8 +279,13 @@ def action(command: str, password: str | None = None,
             set_driving_lights()
             _last_web_drive_ts = time.time()
             _web_driving = True
-    elif command in ('move_stop', 'hard_stop'):
+    elif command in ('move_stop', 'hard_stop', 'stop_anywhere'):
         _show_cancel.set()
+        if command != 'move_stop':     # move_stop doesn't reach a mode that drives her itself
+            import mode_manager
+            from state import DriveMode
+            if mode_manager.current_mode() not in (DriveMode.KEYBOARD, DriveMode.IDLE):
+                switch_mode(1)     # only then: a switch announces itself, and this comes on every key release
         from arduino import send_command, set_stopped_lights
         send_command("dev00", "STOP")
         set_stopped_lights()

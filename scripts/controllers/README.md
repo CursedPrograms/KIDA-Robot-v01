@@ -2,7 +2,7 @@
 
 Python and the Windows exe are KIDA-01's main controllers. These are the same small controller in five languages, all reading `robot.json`, which holds KIDA-01's commands, buttons and sensors. Change it there and they all change.
 
-Hold W A S D to drive, Space stops. Pass the address as the first argument, or type it in.
+Hold W / S to drive forward and back, A / D to turn. Space or STOP stops it in any mode. These have no keys, click them in the window: DRIVE, HELLO, DANCE, PHOTO, MUSIC, STOP MUSIC, LOCK. Pass the address as the first argument, or type it in.
 
 | Language | UI | Run |
 |---|---|---|
