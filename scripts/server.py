@@ -13,6 +13,7 @@ from flask import Flask, render_template, Response, jsonify, request, send_file
 from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser
 
 import fleet_register
+import fleet_bt                       # Bluetooth as equal as WiFi (RIFT/Fleet master)
 from fleet_ladder import FleetLadder, REGISTRY_PORT
 from fleet_near import FleetNear
 
@@ -253,6 +254,7 @@ def status():
     return jsonify({
         'rev':          rev,
         'name':         THIS_NAME,
+        'wifi_rssi':    fleet_bt.wifi_rssi(),     # her WiFi signal (dBm), for RITA's STATS
         'ip':           get_local_ip(),
         'mode':         mode_manager.current_mode().name,
         'voice_mode':   state.voice_mode.name,
@@ -589,6 +591,8 @@ def run_flask_server():
     LADDER = FleetLadder(THIS_NAME, enabled=_ladder_on()).start()
     fleet_register.start_fleet_heartbeat(THIS_NAME, targets=_fleet_targets)
     try:
+        fleet_bt.make_pairable("KIDA01")     # her Bluetooth: pair once from the controller's PC
+        fleet_bt.serve_rfcomm(THIS_PORT)      # her whole web API over Bluetooth serial too (fleet_bt.py)
         app.run(host='0.0.0.0', port=THIS_PORT, debug=False, threaded=True)
     finally:
         print(f"[{THIS_NAME}] Shutting down Zeroconf...")

@@ -11,6 +11,7 @@ still connected? Is the host still answering? Is a higher one back? It moves up 
     RIFT                                                   the hub
     > DREAM > NINA > TINA                                  the virtual bots
     > NORACTL > WHIPCTL > KIDA01CTL > KIDA00CTL > ARMCTL   the PC controllers, in their bots' order
+    > RITA                                                 the handheld remote (an ESP32): hosts for the robots
     > NORA > WHIP > KIDA01 > KIDA00 > ARM > MILA           the real bots
 
 Several programs on one computer share one WiFi card, so only the highest one running there
@@ -43,6 +44,7 @@ from urllib.request import urlopen
 LADDER = ["RIFT",
           "DREAM", "NINA", "TINA",
           "NORACTL", "WHIPCTL", "KIDA01CTL", "KIDA00CTL", "ARMCTL",
+          "RITA",
           "NORA", "WHIP", "KIDA01", "KIDA00", "ARM", "MILA", "NIKA"]
 FLEET_PASSWORD = "mmvbkbak"        # the fleet's, the same as every robot's secrets.h
 REGISTRY_PORT = 5000

@@ -102,6 +102,22 @@ def _resolve_robot_url() -> tuple:
     return robot, args.emulate
 
 
+def bluetooth_target():
+    """WiFi or Bluetooth (config.json Config/Controller: Link, BluetoothTarget), or KIDA01_BT=<target>.
+    The target: her Bluetooth address (a Pi gives a paired PC no COM port: the address is the way), or a
+    COM port / /dev/rfcommN. "" = WiFi."""
+    env = os.environ.get("KIDA01_BT", "").strip()
+    if env:
+        return env
+    try:
+        import json as _json
+        with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json"), encoding="utf-8") as f:
+            c = _json.load(f)["Config"].get("Controller", {})
+    except (OSError, ValueError, KeyError):
+        return ""
+    return c.get("BluetoothTarget", "").strip() if c.get("Link", "wifi").lower() == "bluetooth" else ""
+
+
 def _draw_disconnected_banner(screen, fonts, sw) -> None:
     msg = fonts["hd"].render("[ NO CONNECTION TO ROBOT ]", True, (255, 90, 90))
     screen.blit(msg, msg.get_rect(center=(sw // 2, 24)))
@@ -124,6 +140,12 @@ def run_controller() -> None:
         start_fake()
     base_url = FAKE_URL if emulate else real_url
     print(f"▶ {APP_NAME} — connecting to {base_url}" + ("  (EMULATE: her pretend self)" if emulate else ""))
+    bt = None if emulate else bluetooth_target()
+    if bt:                                  # Bluetooth: the same requests, over her Bluetooth serial
+        import remote_client as _rc
+        _rc.use_bluetooth(bt)
+        base_url = "bt://KIDA01"
+        print(f"{APP_NAME} - over Bluetooth ({bt}); the camera needs WiFi")
     remote  = RemoteClient(base_url)
     pending = kit.Pending()              # settings sent again until her /status says so
 

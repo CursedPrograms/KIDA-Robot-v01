@@ -26,6 +26,7 @@
       "SelfModel": "qwen2.5:0.5b",
       "SelfThink": false,
       "Goal": "explore the room, say what you notice, and don't bump into anything"
-    }
+    },
+    "Controller": {"Link": "wifi", "BluetoothTarget": ""}
   }
 }

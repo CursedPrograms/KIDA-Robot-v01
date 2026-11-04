@@ -12,5 +12,9 @@
     "pc",
     "self",
     "off"
+  ],
+  "Config/Controller/Link": [
+    "wifi",
+    "bluetooth"
   ]
 }

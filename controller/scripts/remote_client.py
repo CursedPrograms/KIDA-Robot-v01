@@ -17,6 +17,21 @@ import numpy as np
 import pygame
 import requests
 
+import fleet_bt   # her web API over Bluetooth serial (RIFT/Fleet master)
+
+# WiFi or Bluetooth: main.py calls use_bluetooth(target) for Bluetooth. Every request then goes over it,
+# the same requests; only the camera's live video can't (Bluetooth serial is far too slow for it).
+BT = None
+
+
+def use_bluetooth(target):
+    global BT
+    BT = fleet_bt.BtSession(target)
+
+
+def _web():
+    return BT or requests
+
 import state
 from state import DriveMode
 from hud_layout import SENSOR_ROWS
@@ -61,7 +76,7 @@ class RemoteClient:
         while self._running:
             try:
                 asked = time.monotonic()
-                r = requests.get(f"{self.base_url}/status" + ("?ctl=1" if self.mind_host else ""), timeout=1.5)
+                r = _web().get(f"{self.base_url}/status" + ("?ctl=1" if self.mind_host else ""), timeout=1.5)
                 data = r.json()
                 self.status    = data
                 self.status_at = asked   # for settings that stick: an older status can't confirm one
@@ -93,6 +108,8 @@ class RemoteClient:
     # ── MJPEG stream reader — decode each frame the same RGB numpy array
     #    shape that Picamera2 hands to draw_camera_panel() on the robot ──
     def _stream_cam(self, cam_id: int) -> None:
+        if BT:              # live video can't go over Bluetooth serial: the camera needs WiFi
+            return
         while self._running:
             try:
                 base = self.base_url
@@ -128,7 +145,7 @@ class RemoteClient:
     def fetch_image(self, path: str):
         """GET an image endpoint and return a pygame Surface, or None."""
         try:
-            r = requests.get(f"{self.base_url}{path}", timeout=3)
+            r = _web().get(f"{self.base_url}{path}", timeout=3)
             if r.status_code != 200 or not r.content:
                 return None
             return pygame.image.load(io.BytesIO(r.content))
@@ -138,7 +155,7 @@ class RemoteClient:
     def _poll_mind(self) -> None:
         while self._running:
             try:
-                r = requests.get(f"{self.base_url}/mind", timeout=2)
+                r = _web().get(f"{self.base_url}/mind", timeout=2)
                 self.mind = r.json() if r.status_code == 200 else None
             except Exception:
                 self.mind = None
@@ -158,7 +175,7 @@ class RemoteClient:
         if password is not None:
             payload["password"] = password
         try:
-            r = requests.post(f"{self.base_url}/action", json=payload, timeout=2)
+            r = _web().post(f"{self.base_url}/action", json=payload, timeout=2)
             if not r.ok:
                 return False
             return bool(r.json().get("ok", False))
