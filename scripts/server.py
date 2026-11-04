@@ -77,7 +77,9 @@ ServiceBrowser(zeroconf, TYPE, _Listener())
 
 
 # ── MJPEG stream helper ─────────────────────────────────────────────────────────
-def _gen_frames(queue):
+def _gen_frames(queue, width=0):
+    """MJPEG from a frame queue. width > 0: scaled down to it (RITA asks for ?w=320: an ESP32 decodes
+    a small JPEG several times faster). Without it, the frames as they are."""
     last_frame = None
     while True:
         try:
@@ -90,6 +92,8 @@ def _gen_frames(queue):
                 continue
             frame = last_frame
         bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        if width and bgr.shape[1] > width:
+            bgr = cv2.resize(bgr, (width, bgr.shape[0] * width // bgr.shape[1]), interpolation=cv2.INTER_AREA)
         ok, buf = cv2.imencode('.jpg', bgr, [cv2.IMWRITE_JPEG_QUALITY, 75])
         if not ok:
             continue
@@ -131,14 +135,14 @@ def ping():
 @app.route('/video_feed/0')
 def video_feed_cam0():
     from camera_threads import frame_queue_web
-    return Response(_gen_frames(frame_queue_web),
+    return Response(_gen_frames(frame_queue_web, request.args.get('w', 0, type=int)),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/video_feed/1')
 def video_feed_cam1():
     from camera_threads import frame_queue2_web
-    return Response(_gen_frames(frame_queue2_web),
+    return Response(_gen_frames(frame_queue2_web, request.args.get('w', 0, type=int)),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
