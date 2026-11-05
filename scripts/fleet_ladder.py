@@ -9,7 +9,7 @@ with none, it hosts its own, named after itself, plus the fleet list on :5000 (/
 still connected? Is the host still answering? Is a higher one back? It moves up when one is.
 
     RIFT                                                   the hub
-    > DREAM > NINA > TINA                                  the virtual bots
+    > DREAM > NINA > TINA > AURA                           the virtual bots (AURA: the weather station)
     > NORACTL > WHIPCTL > KIDA01CTL > KIDA00CTL > ARMCTL   the PC controllers, in their bots' order
     > RITA                                                 the handheld remote (an ESP32): hosts for the robots
     > NORA > WHIP > KIDA01 > KIDA00 > ARM > MILA           the real bots
@@ -42,7 +42,7 @@ from urllib.parse import parse_qs
 from urllib.request import urlopen
 
 LADDER = ["RIFT",
-          "DREAM", "NINA", "TINA",
+          "DREAM", "NINA", "TINA", "AURA",
           "NORACTL", "WHIPCTL", "KIDA01CTL", "KIDA00CTL", "ARMCTL",
           "RITA",
           "NORA", "WHIP", "KIDA01", "KIDA00", "ARM", "MILA", "NIKA"]
