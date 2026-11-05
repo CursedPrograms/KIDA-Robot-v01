@@ -158,6 +158,50 @@ static const int START_TRIES = 20;
 static const UINT START_WAIT_MS = 3000;
 static int startTries = -1;
 
+// The server this window started lives and dies with it. Its run.bat (and everything that starts:
+// python, DREAM's memory window) is in a job that Windows ends when this exe ends, however it ends.
+// The other way round too: close its black window and this one closes, once the server has stopped
+// answering (a run.bat that only starts something and returns doesn't count).
+static HANDLE serverJob = nullptr;
+
+static void watchServer(HANDLE process)
+{
+    std::thread([process] {
+        WaitForSingleObject(process, INFINITE);
+        CloseHandle(process);
+        for (;;) {
+            Sleep(1500);
+            JOBOBJECT_BASIC_ACCOUNTING_INFORMATION jobInfo = {};
+            QueryInformationJobObject(serverJob, JobObjectBasicAccountingInformation, &jobInfo, sizeof(jobInfo), nullptr);
+            if (jobInfo.ActiveProcesses == 0 || !answers(L"127.0.0.1", ROBOT_PORT, ROBOT_PATH)) break;
+        }
+        TerminateJobObject(serverJob, 0);   // whatever's left of it (DREAM's memory window)
+        PostMessageW(window, WM_CLOSE, 0, 0);
+    }).detach();
+}
+
+static void startServer(const std::wstring &repo)
+{
+    serverJob = CreateJobObjectW(nullptr, nullptr);
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits = {};
+    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    SetInformationJobObject(serverJob, JobObjectExtendedLimitInformation, &limits, sizeof(limits));
+    const wchar_t *args = ROBOT_START_ARGS;
+    std::wstring command = L"cmd.exe /c \"\"" + repo + L"\\run.bat\"" + (args ? std::wstring(L" ") + args : L"") + L"\"";
+    STARTUPINFOW startup = { sizeof(startup) };
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWMINNOACTIVE;
+    PROCESS_INFORMATION started = {};
+    if (!CreateProcessW(nullptr, &command[0], nullptr, nullptr, FALSE, CREATE_NEW_CONSOLE | CREATE_SUSPENDED,
+                        nullptr, repo.c_str(), &startup, &started)) {
+        return;
+    }
+    AssignProcessToJobObject(serverJob, started.hProcess);
+    ResumeThread(started.hThread);
+    CloseHandle(started.hThread);
+    watchServer(started.hProcess);
+}
+
 static bool startingServer()
 {
     if (host != L"127.0.0.1" || startTries == 0) return false;
@@ -167,7 +211,7 @@ static bool startingServer()
         std::wstring repo = exe;
         repo = repo.substr(0, repo.find_last_of(L'\\'));     // builds
         repo = repo.substr(0, repo.find_last_of(L'\\'));
-        ShellExecuteW(nullptr, L"open", (repo + L"\\run.bat").c_str(), ROBOT_START_ARGS, repo.c_str(), SW_SHOWMINNOACTIVE);
+        startServer(repo);
         startTries = START_TRIES;
     }
     startTries--;
