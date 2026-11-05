@@ -4,7 +4,7 @@
 //   NAME-Controller.exe                      the last address, or the one in robot.h
 //   NAME-Controller.exe --host 192.168.4.1
 //
-//   F5   reload        F6   change the address
+//   F5   reload        F6   change the address    (other keys go to the page: Space, T ...)
 //
 // Build with build.bat (Visual Studio 2022). The WebView2 runtime comes with Windows 11.
 #include <windows.h>
@@ -151,6 +151,9 @@ static void openRobot()
 
 // ---- something on this PC: if its server isn't up, start it and keep trying for a minute ----
 #ifdef ROBOT_START
+#ifndef ROBOT_START_ARGS
+#define ROBOT_START_ARGS nullptr   // robot.h may pass run.bat something (DREAM: "--server", no desktop window of her own)
+#endif
 static const int START_TRIES = 20;
 static const UINT START_WAIT_MS = 3000;
 static int startTries = -1;
@@ -164,7 +167,7 @@ static bool startingServer()
         std::wstring repo = exe;
         repo = repo.substr(0, repo.find_last_of(L'\\'));     // builds
         repo = repo.substr(0, repo.find_last_of(L'\\'));
-        ShellExecuteW(nullptr, L"open", (repo + L"\\run.bat").c_str(), nullptr, repo.c_str(), SW_SHOWMINNOACTIVE);
+        ShellExecuteW(nullptr, L"open", (repo + L"\\run.bat").c_str(), ROBOT_START_ARGS, repo.c_str(), SW_SHOWMINNOACTIVE);
         startTries = START_TRIES;
     }
     startTries--;
@@ -307,13 +310,30 @@ static void messageFromPage(const std::wstring &text)
     }
 }
 
+static UINT64 pageNavigation = 0;   // the robot's page load (not the connect screen's)
+
 static void startPage()
 {
+    // Which load is the robot's page: a robot that answers fast gets its page requested before the connect
+    // screen has finished loading, and that screen's load then ends "aborted". That isn't the page failing.
+    web->add_NavigationStarting(
+        Callback<ICoreWebView2NavigationStartingEventHandler>(
+            [](ICoreWebView2 *, ICoreWebView2NavigationStartingEventArgs *args) -> HRESULT {
+                LPWSTR uri = nullptr;
+                if (SUCCEEDED(args->get_Uri(&uri)) && uri) {
+                    if (std::wstring(uri).rfind(L"http", 0) == 0) args->get_NavigationId(&pageNavigation);
+                    CoTaskMemFree(uri);
+                }
+                return S_OK;
+            }).Get(), nullptr);
     web->add_NavigationCompleted(
         Callback<ICoreWebView2NavigationCompletedEventHandler>(
             [](ICoreWebView2 *, ICoreWebView2NavigationCompletedEventArgs *args) -> HRESULT {
                 BOOL ok = FALSE;
+                UINT64 id = 0;
                 args->get_IsSuccess(&ok);
+                args->get_NavigationId(&id);
+                if (id != pageNavigation) { focusPage(); return S_OK; }   // the connect screen's own load
                 if (!ok && !showingConnect && !startingServer()) showConnect(L"No answer from " + host);
                 focusPage();
                 return S_OK;
