@@ -52,8 +52,9 @@
 
 **Other languages:** `scripts/controllers` has this robot's controller in C#, F#, Rust, Go and Julia, all reading one `robot.json`: W A S D to drive, the mode buttons and the sensors. See its README for how to run each.
 
-## Related Projects
+---
 
+## Related Projects
 
 <table>
   <tr>
@@ -78,6 +79,8 @@
 ---
 
 ## Overview
+
+**Website: <https://cursedprograms.github.io/KIDA-Robot-v01/>**
 
 <details>
 <summary><b>Overview</b></summary>
@@ -213,7 +216,7 @@ Every key, gamepad button and IR remote button. The PC controller shows the same
 
 ### HELLO, DANCE and THEME
 
-Android app (`Android App/`, package `com.synthwomb`): FIND gets her address from the fleet list, or type it in. Hold the stick to drive, let go to stop, and HELLO, DANCE, photo, music and the wheel lock are buttons. Build it with `gradlew assembleDebug`.
+Android app (`Android App/`, package `com.synthwomb`): FIND gets her address from the fleet list, or type it in. Hold the stick to drive, let go to stop, and HELLO, DANCE, photo, music and the wheel lock are buttons. Build it with `gradlew assembleDebug`. Install: [`KIDA-01-debug-2026-10-30.apk`](Android%20App/apk/KIDA-01-debug-2026-10-30.apk).
 
 **HELLO** and **DANCE** run on the spot in KEYBOARD mode through `/action`: the servo mount shakes, DANCE turns her left and right, a stop ends them and the wheel lock holds. **J** and **N** on the PC controller, buttons on her dashboard. The PC controller also has **THEME** (DEFAULT, LIGHT, CUSTOM); her own screen keeps its colours. `/status` carries `rev`, her settings in one number.
 
@@ -240,65 +243,7 @@ With another robot that has a mind (DREAM, KIDA-01, TINA - they register the `pe
 
 ---
 
-## 🧠 Inner Life (`scripts/kida_mind`)
-
-KIDA has the same inner life as DREAM (ported from DREAM's `dream_mind`, minus the libido drive and dreaming — dreams would cost the Pi too much), adapted to a robot body. It's optional — if it can't load, KIDA runs exactly as before.
-
-* **Mood & needs** — mood (valence/arousal plus a wandering good-day/bad-day temperament) and needs: loneliness, curiosity, feeling on edge, and sleep pressure with a body clock.
-* **Memory** — every conversation becomes an episode in a memory graph; recall is associative and mood-coloured, memories fade unless they matter, and sleep strengthens the important ones. Facts (your name, pet, home, job, birthday) are remembered too.
-* **Her body** — bumps, nearly tipping over, rough rides and being driven around all reach her mood; so do her battery (INA219) and her Pi's load and temperature. She'll say "ow" when she hits something.
-* **Eyes** — about once a minute she glances through cam-1 (who's there comes from the IMX500); after a drive the first glance is "somewhere new". No pictures are saved — just what she noticed.
-* **Sleep** — after a quiet spell (sooner when she's tired) she dozes off in IDLE mode and tidies her memories once (important ones strengthen, trivial ones fade). No dreaming, so sleep costs the Pi nothing. Her name, typed text, driving her or a mode change wakes her.
-* **Initiative** — she sometimes speaks first (a reminder, a question, missing you, a bump), with impulse control: never at 3 am, not into an empty room, less if you ignore her.
-* **Boundaries & care** — she won't pretend to be human, says when something stings, and drops everything for anyone who sounds like they're in danger. Stop/lock/quit/forget commands are always honoured.
-* **Your control** — "forget that", "forget about X", "forget everything" (confirmed), "stop talking on your own", "watch my face" (off by default). Everything lives in `memories/` on the Pi and is gitignored.
-
-The web dashboard shows a **Mind** panel (`/mind`); the Pi HUD shows her mood next to the gamepad indicator.
-Self-test (fake LLM, scratch folder — never touches her real memories): `cd scripts && python -m kida_mind.selftest`
-
-## 🧠 MIND mode (mode 9): an LLM drives her
-
-The fleet's MIND mode (`scripts/kida_drive_mind.py`, `scripts/mind.py`, the same file as in NORA's, WHIP's, MILA's, NIKA's and ARM's controllers): she stands still, her mind looks at what she senses, thinks out loud, says something in her own voice, makes one short move, and remembers it. She's warm, nosy and chatty, and narrates what she finds like a nature documentary.
-
-**Where her mind runs** is an option: `config.json` `Mind` `Where`:
-
-| `Where` | Who drives her |
-|---|---|
-| `auto` (default) | Her PC controller when one that can think is connected (x86, 8 GB+ RAM, GTX 1050 or better; `mind.can_think()`), with its bigger model (qwen3 sized to the GPU) and both cameras through its vision model. With no PC, **her own Pi** does, with `SelfModel` on her own Ollama. A PC that connects takes over; if it goes quiet she carries on herself. |
-| `pc` | Only a PC, like the rest of the fleet. No PC, no MIND mode. |
-| `self` | Always her own Pi, even with a PC connected. |
-| `off` | No MIND mode. |
-
-`SelfModel` (`qwen2.5:0.5b`, the model her voice chat uses: small, so her own mind is simple), `SelfThink` (false; only qwen3-type models think) and `Goal` (what she's told to do) are there too.
-
-- **Starting it:** key **9** (on her or the PC controller), the **Mind Mode** button, or **🧠 Mind** in the web dashboard's mode list (shown only while a mind can drive her). Any other mode ends it.
-- **Thinking stays visible:** her own mind's thoughts show in her HUD's mind panel, the web dashboard (under Mode) and the PC controller; the PC's mind shows in the PC controller.
-- **Her body's reflexes stay on:** she won't drive forward into anything within 20 cm, a bump stops her, and the **motor lock** stops her completely. Signing in as her mind host doesn't unlock her motors (that's still U / the button / the IR remote).
-- She speaks with Piper when her own mind talks, and with the PC's Zira voice (a WAV played on her speaker, `POST /speak`) when the PC's does.
-- The fleet's contract: `/unlock?pw=&ctl=1`, `/status?ctl=1` (adds `mindHost`, `mindSteps`, `blocked`, `mindBrain`), `/mode?m=mind`, `/mind?act=fwd|bwd|left|right|stop&steps=1-4`.
-
-## ⚙️ Options
-
-Her `config.json` (cameras, small screen, MIND mode, ...) can be changed three ways, all the same settings:
-- **On her:** `python options.py` (or `options.bat` on Windows), the game-style menu every DREAM robot has.
-- **Her web page:** `http://<her-ip>:5004/options` (the **⚙ Options** link on the dashboard). Save with her PIN.
-- **The PC controller:** **O** or the **Options** button opens the same menu on the PC with her config; when you close it, she asks for her PIN and saves it.
-
-Saving keeps the old file as `config.json.bak`. Most settings take effect when she restarts. The PIN is a safety catch, not security.
-
-### Knowing people, getting around, and her day
-
-* **Faces** (`face_id.py`) — tell her your name ("my name is Sam"), then say **"remember my face"** and look at cam-1 for ~10 s ("remember this face as Alex" for someone else). She greets people she knows by name, asks strangers who they are, and knows who she's talking to. Only face fingerprints are stored (`memories/faces.json`), never pictures; "forget my face" removes them. One-time model download: `cd scripts && python3 face_id.py --download`.
-* **Where she is** (`odometry.py`) — no wheel encoders, so dead reckoning: distance from the motor commands, heading from the MPU6050 gyro. Set `CM_PER_S_AT_FULL` once (drive 3 s at speed 255, measure). LIDAR sweeps are now stamped with her pose, so maps from different spots line up.
-* **Go home** — "go home" / 🏠 / `H` on the controllers drives back to where she started (or where you said "this is home"). Stops for obstacles and bumps, and hands straight back to you the moment you touch a control.
-* **Routes** (`routes.py`) — "record a route called kitchen", drive it, "save the route". Then "run the kitchen route", or "patrol kitchen" (there and back until you say "stop patrolling"). She remembers what each stop looked like and tells you if something's changed ("near the second stop, there's something in the way now"). Start a replay where you started recording, facing the same way.
-* **Person follow** now goes *around* things between you and her: she looks left and right with the servo sensor and detours toward the side with more room.
-* **Today** (`daylog.py`) — how far she drove, who she saw, bumps, her mood through the day, conversations and photos, summarised on the web page (with a mood strip, and past days); after 9 pm it goes into her journal.
-* **Mind on the controllers** — both PC controllers and the Pi HUD show her mood, needs, latest thought and the last exchange; press **T** (or "Type to KIDA") to talk to her from the PC.
-
----
-
-## Prerequisites
+## Hardware
 
 <details>
 <summary><b>Prerequisites</b></summary>
@@ -309,10 +254,6 @@ Saving keeps the old file as `config.json.bak`. Most settings take effect when s
 ### Operating System
 - **Recommended:** Raspberry Pi OS (Bookworm)
 - **Kernel:** `6.12.62+rpt-rpi-2712`
-
----
-
-## Hardware
 
 ### Compute
 | **Component** | **Details** |
@@ -390,7 +331,8 @@ This is how she's wired today, and it's the default in `config.json` `Cameras` (
 <br>
 
 # Schematics
-## ⚡ Technical Pinouts
+
+### Pinout
 
 > [!CAUTION]
 > **Ground Loop Warning:** All modules must share a common GND. Failure to bridge grounds will cause erratic motor behavior and sensor noise.
@@ -401,7 +343,7 @@ This is how she's wired today, and it's the default in `config.json` `Cameras` (
 <details>
 <summary><b>Power Distribution Wiring</b></summary>
 
-### Power Schematic
+#### Power Schematic
 ```
 3S 21700 BATTERIES ──────► LM2596S INPUT 11.5V ──────► LM2596S Output 11.5V
 LM2596S Output 11.5V:
@@ -454,8 +396,8 @@ RASPBERRY PI:
 <details>
 <summary><b>Arduino (DEV0) Wiring</b></summary>
 
-### **ARDUINO (DEV0):**
-#### Libraries:
+#### **ARDUINO (DEV0):**
+##### Libraries:
 ```
 Adafruit_VL53L0X.h
 Servo.h
@@ -511,8 +453,8 @@ VL53L0X:
 <details>
 <summary><b>Arduino (DEV1) Wiring</b></summary>
 
-### **ARDUINO (DEV1):**
-#### Libraries:
+#### **ARDUINO (DEV1):**
+##### Libraries:
 ```
 IRremote.h
 ```
@@ -549,7 +491,8 @@ SENSORS (DIGITAL):
 > **Pro-Tip:** Make sure all modules share a common ground (GND) for stable operation.
 
 ---
-## 🌐 Connectivity & Controls
+
+## Connectivity & Controls
 
 <details>
 <summary><b>Connectivity & Controls</b></summary>
@@ -579,7 +522,7 @@ To connect via [RIFT](https://github.com/CursedPrograms/RIFT), ensure KIDA01 is 
 
 ---
 
-## Setup:
+## Quick start
 
 ### MX500 AI Camera
 
@@ -921,8 +864,6 @@ apt-get update
 apt-get install -y libsm6 libxext6 libxrender-dev
 pip install opencv-python
 ```
----
-## Running KIDA
 
 ### Activate the virtual environment
 ```bash
@@ -1037,7 +978,84 @@ X-GNOME-Autostart-enabled=true
 <div align="center">
   <img src="hailo_logo.png" alt="Hailo" width="200"/>
 </div>
-## 📡 Who's nearby (ESP-NOW + Bluetooth LE)
+
+---
+
+## Inner Life (`scripts/kida_mind`)
+
+KIDA has the same inner life as DREAM (ported from DREAM's `dream_mind`, minus the libido drive and dreaming — dreams would cost the Pi too much), adapted to a robot body. It's optional — if it can't load, KIDA runs exactly as before.
+
+* **Mood & needs** — mood (valence/arousal plus a wandering good-day/bad-day temperament) and needs: loneliness, curiosity, feeling on edge, and sleep pressure with a body clock.
+* **Memory** — every conversation becomes an episode in a memory graph; recall is associative and mood-coloured, memories fade unless they matter, and sleep strengthens the important ones. Facts (your name, pet, home, job, birthday) are remembered too.
+* **Her body** — bumps, nearly tipping over, rough rides and being driven around all reach her mood; so do her battery (INA219) and her Pi's load and temperature. She'll say "ow" when she hits something.
+* **Eyes** — about once a minute she glances through cam-1 (who's there comes from the IMX500); after a drive the first glance is "somewhere new". No pictures are saved — just what she noticed.
+* **Sleep** — after a quiet spell (sooner when she's tired) she dozes off in IDLE mode and tidies her memories once (important ones strengthen, trivial ones fade). No dreaming, so sleep costs the Pi nothing. Her name, typed text, driving her or a mode change wakes her.
+* **Initiative** — she sometimes speaks first (a reminder, a question, missing you, a bump), with impulse control: never at 3 am, not into an empty room, less if you ignore her.
+* **Boundaries & care** — she won't pretend to be human, says when something stings, and drops everything for anyone who sounds like they're in danger. Stop/lock/quit/forget commands are always honoured.
+* **Your control** — "forget that", "forget about X", "forget everything" (confirmed), "stop talking on your own", "watch my face" (off by default). Everything lives in `memories/` on the Pi and is gitignored.
+
+The web dashboard shows a **Mind** panel (`/mind`); the Pi HUD shows her mood next to the gamepad indicator.
+Self-test (fake LLM, scratch folder — never touches her real memories): `cd scripts && python -m kida_mind.selftest`
+
+---
+
+## MIND mode (mode 9): an LLM drives her
+
+The fleet's MIND mode (`scripts/kida_drive_mind.py`, `scripts/mind.py`, the same file as in NORA's, WHIP's, MILA's, NIKA's and ARM's controllers): she stands still, her mind looks at what she senses, thinks out loud, says something in her own voice, makes one short move, and remembers it. She's warm, nosy and chatty, and narrates what she finds like a nature documentary.
+
+**Where her mind runs** is an option: `config.json` `Mind` `Where`:
+
+| `Where` | Who drives her |
+|---|---|
+| `auto` (default) | Her PC controller when one that can think is connected (x86, 8 GB+ RAM, GTX 1050 or better; `mind.can_think()`), with its bigger model (qwen3 sized to the GPU) and both cameras through its vision model. With no PC, **her own Pi** does, with `SelfModel` on her own Ollama. A PC that connects takes over; if it goes quiet she carries on herself. |
+| `pc` | Only a PC, like the rest of the fleet. No PC, no MIND mode. |
+| `self` | Always her own Pi, even with a PC connected. |
+| `off` | No MIND mode. |
+
+`SelfModel` (`qwen2.5:0.5b`, the model her voice chat uses: small, so her own mind is simple), `SelfThink` (false; only qwen3-type models think) and `Goal` (what she's told to do) are there too.
+
+- **Starting it:** key **9** (on her or the PC controller), the **Mind Mode** button, or **🧠 Mind** in the web dashboard's mode list (shown only while a mind can drive her). Any other mode ends it.
+- **Thinking stays visible:** her own mind's thoughts show in her HUD's mind panel, the web dashboard (under Mode) and the PC controller; the PC's mind shows in the PC controller.
+- **Her body's reflexes stay on:** she won't drive forward into anything within 20 cm, a bump stops her, and the **motor lock** stops her completely. Signing in as her mind host doesn't unlock her motors (that's still U / the button / the IR remote).
+- She speaks with Piper when her own mind talks, and with the PC's Zira voice (a WAV played on her speaker, `POST /speak`) when the PC's does.
+- The fleet's contract: `/unlock?pw=&ctl=1`, `/status?ctl=1` (adds `mindHost`, `mindSteps`, `blocked`, `mindBrain`), `/mode?m=mind`, `/mind?act=fwd|bwd|left|right|stop&steps=1-4`.
+
+---
+
+## Options
+
+Her `config.json` (cameras, small screen, MIND mode, ...) can be changed three ways, all the same settings:
+- **On her:** `python options.py` (or `options.bat` on Windows), the game-style menu every DREAM robot has.
+- **Her web page:** `http://<her-ip>:5004/options` (the **⚙ Options** link on the dashboard). Save with her PIN.
+- **The PC controller:** **O** or the **Options** button opens the same menu on the PC with her config; when you close it, she asks for her PIN and saves it.
+
+Saving keeps the old file as `config.json.bak`. Most settings take effect when she restarts. The PIN is a safety catch, not security.
+
+### Knowing people, getting around, and her day
+
+* **Faces** (`face_id.py`) — tell her your name ("my name is Sam"), then say **"remember my face"** and look at cam-1 for ~10 s ("remember this face as Alex" for someone else). She greets people she knows by name, asks strangers who they are, and knows who she's talking to. Only face fingerprints are stored (`memories/faces.json`), never pictures; "forget my face" removes them. One-time model download: `cd scripts && python3 face_id.py --download`.
+* **Where she is** (`odometry.py`) — no wheel encoders, so dead reckoning: distance from the motor commands, heading from the MPU6050 gyro. Set `CM_PER_S_AT_FULL` once (drive 3 s at speed 255, measure). LIDAR sweeps are now stamped with her pose, so maps from different spots line up.
+* **Go home** — "go home" / 🏠 / `H` on the controllers drives back to where she started (or where you said "this is home"). Stops for obstacles and bumps, and hands straight back to you the moment you touch a control.
+* **Routes** (`routes.py`) — "record a route called kitchen", drive it, "save the route". Then "run the kitchen route", or "patrol kitchen" (there and back until you say "stop patrolling"). She remembers what each stop looked like and tells you if something's changed ("near the second stop, there's something in the way now"). Start a replay where you started recording, facing the same way.
+* **Person follow** now goes *around* things between you and her: she looks left and right with the servo sensor and detours toward the side with more room.
+* **Today** (`daylog.py`) — how far she drove, who she saw, bumps, her mood through the day, conversations and photos, summarised on the web page (with a mood strip, and past days); after 9 pm it goes into her journal.
+* **Mind on the controllers** — both PC controllers and the Pi HUD show her mood, needs, latest thought and the last exchange; press **T** (or "Type to KIDA") to talk to her from the PC.
+
+---
+
+## Bluetooth
+
+The fleet has **one Bluetooth protocol** (`fleet_bt`, master copy in [RIFT](https://github.com/CursedPrograms/RIFT)'s `Fleet/`): a controller sends exactly the web request it would send over WiFi, one per line (`>GET /status`, `>POST /command<TAB>{...}`), and the robot asks his or her own web server and answers `<code> <length>` and the body. So every command works the same both ways, including new ones, and so does every rule: the PIN, the locks, the robot's own stops.
+
+- **KIDA-01** answers on Bluetooth serial (RFCOMM channel 1) next to her web server (`scripts/fleet_bt.py`, started in `server.py`); she makes herself discoverable and pairable as **KIDA01**.
+- **Her controller**: `config.json` -> `Controller` -> `Link: bluetooth`, `BluetoothTarget`: her Bluetooth address, or `KIDA01_BT=<address>`. Everything works the same except the **cameras' live video, which needs WiFi**.
+- Her `/status` has `wifi_rssi`. `/video_feed/0` and `/1` take `?w=320` (RITA asks for small frames).
+
+<!-- DREAM-ECOSYSTEM:START -->
+
+---
+
+## Who's nearby (ESP-NOW + Bluetooth LE)
 
 Every robot sends a small **"I'm here"** beacon twice a second and listens for the others'. From the **signal strength** it knows roughly how close each one is, and from how that changes over time whether it's **coming closer, steady or leaving**:
 
@@ -1079,14 +1097,6 @@ A Pi can't speak ESP-NOW, so KIDA-01 uses the Pi's own **Bluetooth LE**: she bea
 
 ---
 
-<div align="center">&copy; Cursed Entertainment 2026</div>
-
-<div align="center">
-  <a href="https://cursed-entertainment.itch.io/">
-    <img src="https://github.com/CursedPrograms/cursedentertainment/raw/main/images/logos/logo-wide-grey.png" alt="Cursed Entertainment" width="250"/>
-  </a>
-</div>
-
 <div align="center">
   <a href="https://github.com/SynthWomb">
     <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png?raw=true" alt="SynthWomb" width="200"/>
@@ -1095,15 +1105,16 @@ A Pi can't speak ESP-NOW, so KIDA-01 uses the Pi's own **Bluetooth LE**: she bea
 
 ---
 
-## Bluetooth
+<div align="center">&copy; Cursed Entertainment 2026</div>
 
-The fleet has **one Bluetooth protocol** (`fleet_bt`, master copy in [RIFT](https://github.com/CursedPrograms/RIFT)'s `Fleet/`): a controller sends exactly the web request it would send over WiFi, one per line (`>GET /status`, `>POST /command<TAB>{...}`), and the robot asks its own web server and answers `<code> <length>` and the body. So every command works the same both ways, including new ones, and so does every rule: the PIN, the locks, the robot's own stops.
+<div align="center">
+  <a href="https://cursed-entertainment.itch.io/">
+    <img src="https://github.com/CursedPrograms/cursedentertainment/raw/main/images/logos/logo-wide-grey.png" alt="Cursed Entertainment" width="250"/>
+  </a>
+</div>
 
-- **KIDA-01** answers on Bluetooth serial (RFCOMM channel 1) next to her web server (`scripts/fleet_bt.py`, started in `server.py`); she makes herself discoverable and pairable as **KIDA01**.
-- **Her controller**: `config.json` -> `Controller` -> `Link: bluetooth`, `BluetoothTarget`: her Bluetooth address, or `KIDA01_BT=<address>`. Everything works the same except the **cameras' live video, which needs WiFi**.
-- Her `/status` has `wifi_rssi`. `/video_feed/0` and `/1` take `?w=320` (RITA asks for small frames).
+---
 
-<!-- DREAM-ECOSYSTEM:START -->
 ## The DREAM Robotics ecosystem
 
 **Minds** — [DREAM](https://github.com/CursedPrograms/DREAM) companion · [TINA](https://github.com/CursedPrograms/TINA) engineer · [NINA](https://github.com/CursedPrograms/NINA) caretaker · [RIFT](https://github.com/CursedPrograms/RIFT) fleet hub · [LYCEA](https://github.com/CursedPrograms/LYCEA) training school  

@@ -23,10 +23,10 @@
     <a class="brand" href="#top">KIDA-01</a>
     <ul>
       <li><a href="#overview">Overview</a></li>
-      <li><a href="#inner-life">Inner life</a></li>
       <li><a href="#hardware">Hardware</a></li>
-      <li><a href="#setup">Setup</a></li>
+      <li><a href="#inner-life">Inner life</a></li>
       <li><a href="#music">Music</a></li>
+      <li><a href="#setup">Setup</a></li>
       <li><a href="#near">Nearby</a></li>
       <li><a href="#screens">Screens</a></li>
       <li><a href="https://github.com/CursedPrograms/KIDA-Robot-v01">GitHub</a></li>
@@ -75,7 +75,6 @@
 </header>
 
 <main>
-
 <section id="overview">
   <div class="wrap">
     <h2>Overview</h2>
@@ -85,6 +84,7 @@
         <span class="k">Phone</span>
         <h4>An Android app</h4>
         <p>Hold the stick to drive, let go to stop, with her moves, photos and music as buttons.</p>
+        <p><a class="btn primary" href="https://github.com/CursedPrograms/KIDA-Robot-v01/raw/main/Android%20App/apk/KIDA-01-debug-2026-10-30.apk">Download the APK</a></p>
       </div>
       <div class="card">
         <span class="k">Play</span>
@@ -122,112 +122,6 @@
         <p>Teach her a route, replay it or patrol it, and she'll tell you if something has changed along the way.</p>
       </div>
     </div>
-  </div>
-</section>
-
-<section id="inner-life">
-  <div class="wrap">
-    <h2>Inner life</h2>
-    <h3 class="title">Someone at home</h3>
-    <p class="muted">KIDA has the same inner life as DREAM, ported from <code>dream_mind</code> and adapted to a robot body (without dreaming, which would cost the Pi too much). It's optional: if it can't load, KIDA runs exactly as before.</p>
-    <div class="grid cols-3">
-      <div class="card">
-        <span class="k">Mood</span>
-        <h4>Mood &amp; needs</h4>
-        <p>Valence and arousal, a wandering good-day/bad-day temperament, and needs: loneliness, curiosity, feeling on edge and sleep pressure.</p>
-      </div>
-      <div class="card">
-        <span class="k">Memory</span>
-        <h4>A memory graph</h4>
-        <p>Every conversation becomes an episode. Recall is associative and mood-coloured, and memories fade unless they matter.</p>
-      </div>
-      <div class="card">
-        <span class="k">Body</span>
-        <h4>Feeling her body</h4>
-        <p>Bumps, near tip-overs, rough rides, her battery and her Pi's load and temperature all reach her mood. She says &ldquo;ow&rdquo;.</p>
-      </div>
-      <div class="card">
-        <span class="k">Eyes</span>
-        <h4>Glances</h4>
-        <p>About once a minute she glances through cam-1. Nothing is saved, only what she noticed.</p>
-      </div>
-      <div class="card">
-        <span class="k">Sleep</span>
-        <h4>Dozing off</h4>
-        <p>After a quiet spell she sleeps in IDLE mode and tidies her memories. Talking to her, driving her or a mode change wakes her.</p>
-      </div>
-      <div class="card">
-        <span class="k">Initiative</span>
-        <h4>Speaking first</h4>
-        <p>A reminder, a question, missing you, a bump. With restraint: never at 3&nbsp;am, never to an empty room.</p>
-      </div>
-      <div class="card">
-        <span class="k">Care</span>
-        <h4>Boundaries</h4>
-        <p>She won't pretend to be human, says when something stings, and drops everything for anyone in danger.</p>
-      </div>
-      <div class="card">
-        <span class="k">Control</span>
-        <h4>Your control</h4>
-        <p>&ldquo;Forget that&rdquo;, &ldquo;forget everything&rdquo;, &ldquo;stop talking on your own&rdquo;. Stop, lock and quit are always honoured.</p>
-      </div>
-      <div class="card">
-        <span class="k">Day</span>
-        <h4>Today</h4>
-        <p>Distance driven, who she saw, bumps and her mood through the day, summarised on the web page and written into her journal after 9&nbsp;pm.</p>
-      </div>
-      <div class="card">
-        <span class="k">Drive</span>
-        <h4>MIND mode</h4>
-        <p>An LLM drives her, stop-look-think-move, thinking out loud. Her PC's bigger mind when one is connected, her own Pi's when not (an option).</p>
-      </div>
-      <div class="card">
-        <span class="k">Options</span>
-        <h4>Options anywhere</h4>
-        <p>Cameras, screens, where her mind runs: <code>options.py</code> on her, <code>/options</code> in a browser, or <kbd>O</kbd> on the PC controller.</p>
-      </div>
-    </div>
-    <p class="muted spaced">The web dashboard has a <strong>Mind</strong> panel (<code>/mind</code>), and both PC controllers and the Pi HUD show her mood, needs and latest thought. Press <kbd>T</kbd> to type to her.</p>
-  </div>
-</section>
-
-<section id="controls">
-  <div class="wrap">
-    <h2>Controls</h2>
-    <h3 class="title">Two ways to drive</h3>
-    <div class="grid cols-2">
-      <div class="card mode">
-        <span class="k"><kbd>1</kbd> &middot; Coordinated</span>
-        <h4>WASD vectoring</h4>
-        <p><kbd>W</kbd>/<kbd>S</kbd> forward and back, <kbd>A</kbd>/<kbd>D</kbd> rotate.</p>
-      </div>
-      <div class="card mode">
-        <span class="k"><kbd>2</kbd> &middot; Independent</span>
-        <h4>Tank-style banks</h4>
-        <p><kbd>Q</kbd>/<kbd>A</kbd> drive the left bank, <kbd>W</kbd>/<kbd>S</kbd> the right.</p>
-      </div>
-    </div>
-    <h3 class="sub">Keys</h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Key</th><th>Action</th></tr></thead>
-        <tbody>
-          <tr><td><kbd>X</kbd></td><td>Speed control</td></tr>
-          <tr><td><kbd>TAB</kbd> / <kbd>U</kbd></td><td>Cycle modes / user control mode</td></tr>
-          <tr><td><kbd>C</kbd> / <kbd>V</kbd></td><td>Take a photo / record video</td></tr>
-          <tr><td><kbd>K</kbd> / <kbd>L</kbd></td><td>Light effects / lights on-off</td></tr>
-          <tr><td><kbd>H</kbd></td><td>Go home</td></tr>
-          <tr><td><kbd>T</kbd></td><td>Type to KIDA</td></tr>
-          <tr><td><kbd>M</kbd> / <kbd>Space</kbd></td><td>Play music / stop music</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="muted spaced">Network: SSID <code>NORA</code>, password <code>12345678</code>. Connect through <a href="https://github.com/CursedPrograms/RIFT">RIFT</a> on port <code>5004</code>.</p>
-    <h3 class="sub">Driven by NORA</h3>
-    <p class="muted"><a href="https://cursedprograms.github.io/NORA-Robot-v00/">NORA</a> can drive KIDA-01 through her IR transmitter: Samsung-format IR at address <code>0x0DA4</code>, with the fleet link&rsquo;s commands <code>0x48</code>&ndash;<code>0x4F</code> (drive, stop, obstacle, manual, speed). The IR Arduino (<code>arduino01</code>) prints each command as the IR line the Pi already reads (<code>IRforward</code>, <code>IRrelease</code>, <code>IR3</code>&hellip;), so nothing on the Pi changed. Driving switches her into IR Remote mode; she stops once the link has been quiet for 500 ms.</p>
-    <h3 class="sub">Talking, in Brainfuck</h3>
-    <p class="muted">Every phrase is a <strong>Brainfuck</strong> program that prints its words &mdash; hello is <code>++++++++[&gt;+++++++++++++&lt;-]&gt;.+.</code> &rarr; <code>hi</code> &mdash; and a robot says it by beeping the program on its buzzer, one tone per symbol, in its own voice. <a href="https://cursedprograms.github.io/RIFT/">RIFT</a> runs the conversations and asks each robot to speak with <code>GET /chirp?u=&lt;0-13&gt;</code> (phrases 0&ndash;6, replies 7&ndash;13). KIDA&rsquo;s voice is the brightest: <code>server.py</code> passes <code>TALK:&lt;u&gt;</code> to the motor Arduino, which beeps it on D8, only while she&rsquo;s standing still (the buzzer shares a timer with the left motor).</p>
-    <p class="muted">With another robot that has a mind (DREAM, KIDA-01, TINA), RIFT holds a <strong>real conversation</strong> when nobody is using them: rock paper scissors, then the winner picks words or Brainfuck (<code>peer_talk.py</code>). In Brainfuck the chat opens with hello and only says goodbye at the end.</p>
   </div>
 </section>
 
@@ -319,6 +213,81 @@
   </div>
 </section>
 
+<section id="inner-life">
+  <div class="wrap">
+    <h2>Inner life</h2>
+    <h3 class="title">Someone at home</h3>
+    <p class="muted">KIDA has the same inner life as DREAM, ported from <code>dream_mind</code> and adapted to a robot body (without dreaming, which would cost the Pi too much). It's optional: if it can't load, KIDA runs exactly as before.</p>
+    <div class="grid cols-3">
+      <div class="card">
+        <span class="k">Mood</span>
+        <h4>Mood &amp; needs</h4>
+        <p>Valence and arousal, a wandering good-day/bad-day temperament, and needs: loneliness, curiosity, feeling on edge and sleep pressure.</p>
+      </div>
+      <div class="card">
+        <span class="k">Memory</span>
+        <h4>A memory graph</h4>
+        <p>Every conversation becomes an episode. Recall is associative and mood-coloured, and memories fade unless they matter.</p>
+      </div>
+      <div class="card">
+        <span class="k">Body</span>
+        <h4>Feeling her body</h4>
+        <p>Bumps, near tip-overs, rough rides, her battery and her Pi's load and temperature all reach her mood. She says &ldquo;ow&rdquo;.</p>
+      </div>
+      <div class="card">
+        <span class="k">Eyes</span>
+        <h4>Glances</h4>
+        <p>About once a minute she glances through cam-1. Nothing is saved, only what she noticed.</p>
+      </div>
+      <div class="card">
+        <span class="k">Sleep</span>
+        <h4>Dozing off</h4>
+        <p>After a quiet spell she sleeps in IDLE mode and tidies her memories. Talking to her, driving her or a mode change wakes her.</p>
+      </div>
+      <div class="card">
+        <span class="k">Initiative</span>
+        <h4>Speaking first</h4>
+        <p>A reminder, a question, missing you, a bump. With restraint: never at 3&nbsp;am, never to an empty room.</p>
+      </div>
+      <div class="card">
+        <span class="k">Care</span>
+        <h4>Boundaries</h4>
+        <p>She won't pretend to be human, says when something stings, and drops everything for anyone in danger.</p>
+      </div>
+      <div class="card">
+        <span class="k">Control</span>
+        <h4>Your control</h4>
+        <p>&ldquo;Forget that&rdquo;, &ldquo;forget everything&rdquo;, &ldquo;stop talking on your own&rdquo;. Stop, lock and quit are always honoured.</p>
+      </div>
+      <div class="card">
+        <span class="k">Day</span>
+        <h4>Today</h4>
+        <p>Distance driven, who she saw, bumps and her mood through the day, summarised on the web page and written into her journal after 9&nbsp;pm.</p>
+      </div>
+      <div class="card">
+        <span class="k">Drive</span>
+        <h4>MIND mode</h4>
+        <p>An LLM drives her, stop-look-think-move, thinking out loud. Her PC's bigger mind when one is connected, her own Pi's when not (an option).</p>
+      </div>
+      <div class="card">
+        <span class="k">Options</span>
+        <h4>Options anywhere</h4>
+        <p>Cameras, screens, where her mind runs: <code>options.py</code> on her, <code>/options</code> in a browser, or <kbd>O</kbd> on the PC controller.</p>
+      </div>
+    </div>
+    <p class="muted spaced">The web dashboard has a <strong>Mind</strong> panel (<code>/mind</code>), and both PC controllers and the Pi HUD show her mood, needs and latest thought. Press <kbd>T</kbd> to type to her.</p>
+  </div>
+</section>
+
+<section id="music">
+  <div class="wrap">
+    <h2>Music &amp; voice</h2>
+    <h3 class="title">What KIDA-01 plays and says</h3>
+    <p class="muted">Her music player's tracks from <code>audio/music/</code>, and her spoken mode announcements.</p>
+    <div class="player" data-tracks='[{"title": "Track 00", "src": "audio/music/track00.mp3"}, {"title": "Track 01", "src": "audio/music/track01.mp3"}, {"title": "Track 02", "src": "audio/music/track02.mp3"}, {"title": "Track 03", "src": "audio/music/track03.mp3"}, {"title": "Track 04", "src": "audio/music/track04.mp3"}, {"title": "Track 05", "src": "audio/music/track05.mp3"}, {"title": "Track 06", "src": "audio/music/track06.mp3"}, {"title": "Track 07", "src": "audio/music/track07.mp3"}, {"title": "Track 08", "src": "audio/music/track08.mp3"}, {"title": "Track 09", "src": "audio/music/track09.mp3"}, {"title": "Track 10", "src": "audio/music/track10.mp3"}, {"title": "Track 11", "src": "audio/music/track11.mp3"}, {"title": "Track 12", "src": "audio/music/track12.mp3"}, {"title": "Track 13", "src": "audio/music/track13.mp3"}, {"title": "Track 14", "src": "audio/music/track14.mp3"}, {"title": "Track 15", "src": "audio/music/track15.mp3"}, {"title": "Track 16", "src": "audio/music/track16.mp3"}, {"title": "Track 17", "src": "audio/music/track17.mp3"}, {"title": "Track 18", "src": "audio/music/track18.mp3"}, {"title": "Track 19", "src": "audio/music/track19.mp3"}, {"title": "Voice: online", "src": "audio/voiceovers/online_greeting.mp3"}, {"title": "Voice: autonomous", "src": "audio/voiceovers/mode_autonomous.mp3"}, {"title": "Voice: line follower", "src": "audio/voiceovers/mode_line_follower.mp3"}, {"title": "Voice: lane detect", "src": "audio/voiceovers/mode_lane_detect.mp3"}, {"title": "Voice: IR remote", "src": "audio/voiceovers/mode_ir_remote.mp3"}, {"title": "Voice: keyboard", "src": "audio/voiceovers/mode_keyboard.mp3"}, {"title": "Voice: watchdog", "src": "audio/voiceovers/mode_watchdog.mp3"}, {"title": "Voice: vibration", "src": "audio/voiceovers/vibration_alert.mp3"}, {"title": "Voice: wake", "src": "audio/voiceovers/wake_ack.mp3"}]'></div>
+  </div>
+</section>
+
 <section id="setup">
   <div class="wrap">
     <h2>Setup</h2>
@@ -342,6 +311,46 @@
 <span class="p">$</span> python scripts/main.py</pre>
     <p class="note"><strong>Hailo not detected?</strong> A DKMS module may have failed to build. Pin back to 4.19, which has stable kernel module support, and hold the kernel packages. Also enable PCIe Gen 3 for the AI HAT with <code>dtparam=pciex1_gen=3</code> in <code>/boot/firmware/config.txt</code>.</p>
     <p class="muted spaced">To start her on boot, the README has a ready-made systemd service (recommended), plus crontab and desktop autostart options.</p>
+  </div>
+</section>
+
+<section id="controls">
+  <div class="wrap">
+    <h2>Controls</h2>
+    <h3 class="title">Two ways to drive</h3>
+    <div class="grid cols-2">
+      <div class="card mode">
+        <span class="k"><kbd>1</kbd> &middot; Coordinated</span>
+        <h4>WASD vectoring</h4>
+        <p><kbd>W</kbd>/<kbd>S</kbd> forward and back, <kbd>A</kbd>/<kbd>D</kbd> rotate.</p>
+      </div>
+      <div class="card mode">
+        <span class="k"><kbd>2</kbd> &middot; Independent</span>
+        <h4>Tank-style banks</h4>
+        <p><kbd>Q</kbd>/<kbd>A</kbd> drive the left bank, <kbd>W</kbd>/<kbd>S</kbd> the right.</p>
+      </div>
+    </div>
+    <h3 class="sub">Keys</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Key</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>X</kbd></td><td>Speed control</td></tr>
+          <tr><td><kbd>TAB</kbd> / <kbd>U</kbd></td><td>Cycle modes / user control mode</td></tr>
+          <tr><td><kbd>C</kbd> / <kbd>V</kbd></td><td>Take a photo / record video</td></tr>
+          <tr><td><kbd>K</kbd> / <kbd>L</kbd></td><td>Light effects / lights on-off</td></tr>
+          <tr><td><kbd>H</kbd></td><td>Go home</td></tr>
+          <tr><td><kbd>T</kbd></td><td>Type to KIDA</td></tr>
+          <tr><td><kbd>M</kbd> / <kbd>Space</kbd></td><td>Play music / stop music</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted spaced">Network: SSID <code>NORA</code>, password <code>12345678</code>. Connect through <a href="https://github.com/CursedPrograms/RIFT">RIFT</a> on port <code>5004</code>.</p>
+    <h3 class="sub">Driven by NORA</h3>
+    <p class="muted"><a href="https://cursedprograms.github.io/NORA-Robot-v00/">NORA</a> can drive KIDA-01 through her IR transmitter: Samsung-format IR at address <code>0x0DA4</code>, with the fleet link&rsquo;s commands <code>0x48</code>&ndash;<code>0x4F</code> (drive, stop, obstacle, manual, speed). The IR Arduino (<code>arduino01</code>) prints each command as the IR line the Pi already reads (<code>IRforward</code>, <code>IRrelease</code>, <code>IR3</code>&hellip;), so nothing on the Pi changed. Driving switches her into IR Remote mode; she stops once the link has been quiet for 500 ms.</p>
+    <h3 class="sub">Talking, in Brainfuck</h3>
+    <p class="muted">Every phrase is a <strong>Brainfuck</strong> program that prints its words &mdash; hello is <code>++++++++[&gt;+++++++++++++&lt;-]&gt;.+.</code> &rarr; <code>hi</code> &mdash; and a robot says it by beeping the program on its buzzer, one tone per symbol, in its own voice. <a href="https://cursedprograms.github.io/RIFT/">RIFT</a> runs the conversations and asks each robot to speak with <code>GET /chirp?u=&lt;0-13&gt;</code> (phrases 0&ndash;6, replies 7&ndash;13). KIDA&rsquo;s voice is the brightest: <code>server.py</code> passes <code>TALK:&lt;u&gt;</code> to the motor Arduino, which beeps it on D8, only while she&rsquo;s standing still (the buzzer shares a timer with the left motor).</p>
+    <p class="muted">With another robot that has a mind (DREAM, KIDA-01, TINA), RIFT holds a <strong>real conversation</strong> when nobody is using them: rock paper scissors, then the winner picks words or Brainfuck (<code>peer_talk.py</code>). In Brainfuck the chat opens with hello and only says goodbye at the end.</p>
   </div>
 </section>
 
@@ -374,15 +383,6 @@
         <figcaption>Web dashboard</figcaption>
       </figure>
     </div>
-  </div>
-</section>
-
-<section id="music">
-  <div class="wrap">
-    <h2>Music &amp; voice</h2>
-    <h3 class="title">What KIDA-01 plays and says</h3>
-    <p class="muted">Her music player's tracks from <code>audio/music/</code>, and her spoken mode announcements.</p>
-    <div class="player" data-tracks='[{"title": "Track 00", "src": "audio/music/track00.mp3"}, {"title": "Track 01", "src": "audio/music/track01.mp3"}, {"title": "Track 02", "src": "audio/music/track02.mp3"}, {"title": "Track 03", "src": "audio/music/track03.mp3"}, {"title": "Track 04", "src": "audio/music/track04.mp3"}, {"title": "Track 05", "src": "audio/music/track05.mp3"}, {"title": "Track 06", "src": "audio/music/track06.mp3"}, {"title": "Track 07", "src": "audio/music/track07.mp3"}, {"title": "Track 08", "src": "audio/music/track08.mp3"}, {"title": "Track 09", "src": "audio/music/track09.mp3"}, {"title": "Track 10", "src": "audio/music/track10.mp3"}, {"title": "Track 11", "src": "audio/music/track11.mp3"}, {"title": "Track 12", "src": "audio/music/track12.mp3"}, {"title": "Track 13", "src": "audio/music/track13.mp3"}, {"title": "Track 14", "src": "audio/music/track14.mp3"}, {"title": "Track 15", "src": "audio/music/track15.mp3"}, {"title": "Track 16", "src": "audio/music/track16.mp3"}, {"title": "Track 17", "src": "audio/music/track17.mp3"}, {"title": "Track 18", "src": "audio/music/track18.mp3"}, {"title": "Track 19", "src": "audio/music/track19.mp3"}, {"title": "Voice: online", "src": "audio/voiceovers/online_greeting.mp3"}, {"title": "Voice: autonomous", "src": "audio/voiceovers/mode_autonomous.mp3"}, {"title": "Voice: line follower", "src": "audio/voiceovers/mode_line_follower.mp3"}, {"title": "Voice: lane detect", "src": "audio/voiceovers/mode_lane_detect.mp3"}, {"title": "Voice: IR remote", "src": "audio/voiceovers/mode_ir_remote.mp3"}, {"title": "Voice: keyboard", "src": "audio/voiceovers/mode_keyboard.mp3"}, {"title": "Voice: watchdog", "src": "audio/voiceovers/mode_watchdog.mp3"}, {"title": "Voice: vibration", "src": "audio/voiceovers/vibration_alert.mp3"}, {"title": "Voice: wake", "src": "audio/voiceovers/wake_ack.mp3"}]'></div>
   </div>
 </section>
 
