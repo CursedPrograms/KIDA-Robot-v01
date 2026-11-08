@@ -24,6 +24,12 @@ app = Flask(
     static_folder=os.path.join(_here, '..', 'static'),
 )
 
+import talk_switch   # noqa: E402  her Brainfuck talking muted or not: /talkmute (RIFT's Fleet/talk_mute.py)
+TALK = talk_switch.TalkSwitch(os.path.join(_here, '..', 'talk_mute.json'))
+TALK.register(app)
+import web_bridge as _wb   # noqa: E402
+_wb.talk_muted = lambda: TALK.muted
+
 # ── Configuration ──────────────────────────────────────────────────────────────
 THIS_NAME = "KIDA01"
 THIS_PORT = 5004
@@ -265,6 +271,8 @@ def status():
         'music_on':     web_bridge.music_playing(),
         'inference_on': getattr(state, 'inference_on', False),
         'motor_lock':   getattr(state, 'motor_lock', False),
+        'talk_muted':   TALK.muted,
+        'chat_off':     TALK.chat_off,
         'tipped':       getattr(state, 'tipped', False),
         'ladder':       LADDER.status() if LADDER else None,
         'drive_scheme': getattr(state, 'drive_scheme', 'WASD'),
@@ -389,7 +397,8 @@ def _peer_body():
 import kida_mind_host   # noqa: E402 (already loaded by kida_chat_wakeword; MIND is None if it failed)
 
 PEER = peer_talk.PeerTalk(THIS_NAME, PEER_PERSONA, kida_mind_host.MIND, _peer_generate, _peer_thought,
-                          _peer_speak, _peer_chirp, _peer_available, extra=_peer_body)
+                          _peer_speak, _peer_chirp, _peer_available, extra=_peer_body, muted=lambda: TALK.muted,
+                          chat_off=lambda: TALK.chat_off)
 peer_talk.register_routes(app, PEER)
 
 
@@ -411,6 +420,10 @@ def music_together():
 def chirp():
     # RIFT's fleet conversations: /chirp?u=<0-16> says that utterance (a
     # Brainfuck phrase, beeped on the buzzer). `from` is only for the log.
+    if TALK.chat_off:       # her chat switch is off: RIFT leaves her out
+        return TALK.refuse()
+    if TALK.muted:          # her sound switch is off: said, not beeped
+        return TALK.silent()
     import web_bridge
     ok = web_bridge.action('chirp', text=request.args.get('u'))
     return jsonify({'ok': ok}), (200 if ok else 400)

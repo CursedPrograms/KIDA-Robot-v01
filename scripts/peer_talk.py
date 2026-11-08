@@ -61,13 +61,19 @@ class PeerTalk:
     screen) and return once it's been said. chirp(u): start beeping a phrasebook
     utterance (RIFT times how long the program beeps).
     available(): (bool, reason) - is she free to chat (nobody around, not busy)?
-    extra(): optional, more to share about her body, e.g. {"battery": 80, "mode": "patrol"}."""
+    extra(): optional, more to share about her body, e.g. {"battery": 80, "mode": "patrol"}.
+    muted(): optional, True while her sound switch is off (her /talkmute, RIFT's Fleet/talk_mute.py):
+    her Brainfuck lines still count, they just aren't beeped.
+    chat_off(): optional, True while her chat switch is off: she isn't free for conversations."""
 
-    def __init__(self, name, persona, mind, generate, add_thought, speak, chirp, available, extra=None):
+    def __init__(self, name, persona, mind, generate, add_thought, speak, chirp, available, extra=None,
+                 muted=None, chat_off=None):
         self.name, self.persona, self.mind = name, persona, mind
         self.generate, self.add_thought = generate, add_thought
         self.speak, self.chirp, self._available = speak, chirp, available
         self.extra = extra
+        self.muted = muted or (lambda: False)
+        self.chat_off = chat_off or (lambda: False)
         self.session = None    # {"peer", "mode", "lines": [(who, text)], "started"}
 
     # ---- her state
@@ -103,6 +109,8 @@ class PeerTalk:
         return snap
 
     def available(self):
+        if self.chat_off():
+            return False, "chat off"
         ok, reason = self._available()
         if ok and (self.snapshot().get("sleepy") or 0) > TOO_SLEEPY:
             return False, "too sleepy"
@@ -142,7 +150,8 @@ class PeerTalk:
         if mode == "brainfuck":
             u = self._pick_utterance(msg.get("u"), bool(msg.get("closing")))
             text = utterance_text(u)
-            self.chirp(u)
+            if not self.muted():    # sound off: the line still counts, it just isn't beeped
+                self.chirp(u)
             seconds = None          # RIFT knows how long each program beeps
         else:
             text = self._line(peer, peer_mind, bool(msg.get("closing")))

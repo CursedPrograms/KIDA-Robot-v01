@@ -68,6 +68,9 @@ function applyStatus(data) {
   // Lock button reflects live motor_lock state
   syncLockButton(!!data.motor_lock);
 
+  // Her Brainfuck talking with the fleet (/talkmute)
+  syncTalkButtons(data);
+
   // Drive scheme button reflects live state (also driven by the </> keys)
   syncSchemeButton(data.drive_scheme === 'QAWS' ? 'QAWS' : 'WASD');
 
@@ -150,6 +153,19 @@ async function sendAction(cmd, password) {
 }
 
 // Action buttons — send POST /action with {command}
+// Her Brainfuck talking with the fleet (/talkmute): muted, RIFT leaves her out of the beeping
+// (two switches: her beeps when she chats, and the chatting itself)
+function syncTalkButtons(d) {
+  if (d.talk_muted === undefined) return;
+  if ($('talk-btn')) $('talk-btn').textContent = d.talk_muted ? '🔇 Chat sound off' : '🔊 Chat sound';
+  if ($('chat-btn')) $('chat-btn').textContent = d.chat_off ? '💬 Fleet chat off' : '💬 Fleet chat';
+}
+async function flipTalk(which) {
+  try { syncTalkButtons(await (await fetch(`/talkmute?${which}=toggle`)).json()); } catch (e) {}
+}
+$('talk-btn')?.addEventListener('click', () => flipTalk('on'));
+$('chat-btn')?.addEventListener('click', () => flipTalk('chat_off'));
+
 document.querySelectorAll('.act-btn[data-cmd]').forEach(btn => {
   btn.addEventListener('click', () => sendAction(btn.dataset.cmd));
 });

@@ -114,8 +114,9 @@ def handle_events(events, buttons: list,
                 switch_mode(9)   # MIND, when a mind can drive her
 
             # Quit — Q kills the process for good; ESC just closes the UI
-            # and lets run.sh's restart loop bring it back up.
-            elif k == pygame.K_q:
+            # and lets run.sh's restart loop bring it back up. In the QAWS
+            # scheme Q drives the left motor, so there it's Shift+Q (as KIDA-00).
+            elif k == pygame.K_q and (event.mod & pygame.KMOD_SHIFT or state.drive_scheme != "QAWS"):
                 switch_mode_direct(DriveMode.IDLE)
                 signals["quit"]      = True
                 signals["hard_quit"] = True

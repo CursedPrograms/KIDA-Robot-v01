@@ -9,6 +9,7 @@ import threading
 import time
 
 _music_ctrl           = None
+talk_muted            = lambda: False   # server.py: her Brainfuck talking muted? (/talkmute)
 _inference_toggle_fn  = None
 
 # Fixed path, overwritten per upload — mirrors kida_chat_wakeword.AUDIO_PATH's
@@ -254,6 +255,8 @@ def action(command: str, password: str | None = None,
         except (TypeError, ValueError):
             return False
         if not 0 <= u <= 16:
+            return False
+        if talk_muted():        # muted: hello / dance / RIFT's chirps say nothing
             return False
         send_command("dev00", f"TALK:{u}")
     elif command in ('hello', 'dance'):
